@@ -1,4 +1,4 @@
-import { SignInForm } from "@/components/forms/sign-in.form"
+import { ForgotPasswordForm } from "@/components/forms/forgot-password.form"
 import { getI18n, getStaticParams } from "@/lib/i18n/server"
 import { Metadata } from "next"
 
@@ -9,8 +9,8 @@ export function generateStaticParams() {
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getI18n()
   return {
-    title: t("auth.signIn.meta.title"),
-    description: t("auth.signIn.meta.description"),
+    title: t("auth.forgotPassword.meta.title"),
+    description: t("auth.forgotPassword.meta.description"),
   }
 }
 export default async function page() {
@@ -19,13 +19,13 @@ export default async function page() {
     <div className="space-y-6">
       <div>
         <h3 className="text-xl leading-normal font-bold">
-          {t("auth.signIn.page.title")}
+          {t("auth.forgotPassword.page.title")}
         </h3>
         <p className="ext-xs leading-normal opacity-70">
-          {t("auth.signIn.page.description")}
+          {t("auth.forgotPassword.page.description")}
         </p>
       </div>
-      <SignInForm />
+      <ForgotPasswordForm />
     </div>
   )
 }

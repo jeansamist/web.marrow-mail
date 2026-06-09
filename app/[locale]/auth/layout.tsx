@@ -13,7 +13,7 @@ export default async function LocaleLayout({
 }) {
   return (
     <main className="flex min-h-svh flex-col items-center justify-center bg-primary">
-      <div className="flex w-full max-w-4xl gap-4 rounded-xl bg-background p-2">
+      <div className="flex w-full max-w-4xl items-center gap-4 rounded-xl bg-background p-2">
         <div className="flex-1 p-4">{children}</div>
         <div className="flex min-h-120 flex-1 items-end rounded-lg bg-primary p-6 text-primary-foreground">
           <div className="">
