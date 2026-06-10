@@ -13,17 +13,18 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>
 }) {
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center bg-primary">
-      <div className="space-y-6">
+    <main className="flex min-h-svh flex-col items-center justify-center bg-primary p-4">
+      <div className="w-full max-w-4xl space-y-6">
         <Image
           src={"/Marrowmaill-Logo-White.svg"}
           alt="Marrowmail Logo"
-          width={200}
-          height={75}
+          width={160}
+          height={60}
+          className="md:w-50 md:h-18.75"
         />
-        <div className="flex w-full max-w-4xl items-center gap-4 rounded-xl bg-background p-2">
+        <div className="flex w-full flex-col items-stretch gap-4 rounded-xl bg-background p-2 md:flex-row md:items-center">
           <div className="flex-1 p-4">{children}</div>
-          <div className="relative flex min-h-120 flex-1 items-end gap-6 rounded-lg bg-primary p-6 text-primary-foreground">
+          <div className="relative hidden min-h-120 flex-1 items-end gap-6 rounded-lg bg-primary p-6 text-primary-foreground md:flex">
             <div className="space-y-4">
               <Image
                 src={"/M-White.svg"}

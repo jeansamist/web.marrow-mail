@@ -77,6 +77,15 @@ export default {
   "auth.resetPassword.submit": "Reset password",
   "auth.resetPassword.signIn.link": "Back to sign in",
 
+  "onboarding.steps.domain.title": "Register your domain",
+  "onboarding.steps.domain.description": "Add your own domain or buy a new one",
+  "onboarding.steps.dns.title": "Configure DNS records",
+  "onboarding.steps.dns.description":
+    "Add the provided DNS records to your domain",
+  "onboarding.steps.email.title": "Create your email address",
+  "onboarding.steps.email.description":
+    "Create your email address and start sending emails",
+
   unknownError: "Something went wrong",
 } as const
 export type Locale = typeof import("./en").default
