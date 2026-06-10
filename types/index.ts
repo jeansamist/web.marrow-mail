@@ -18,3 +18,13 @@ export type AuthToken = {
   lastUsedAt: Date | null
   expiresAt: Date | null
 }
+
+export type Record = {
+  id: number
+  type: string
+  name: string
+  value: string
+  priority: number | null
+  createdAt: string
+  updatedAt: string | null
+}

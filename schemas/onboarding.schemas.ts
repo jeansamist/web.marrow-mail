@@ -1,6 +1,13 @@
 import { z } from "zod/v3"
 export const onboardingRegisterDomainSchema = z.object({
-  domain: z.string().min(1).trim(),
+  domain: z
+    .string()
+    .min(1)
+    .trim()
+    .regex(
+      /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*\.[a-zA-Z]{2,}$/,
+      "Invalid domain name (e.g. example.com)"
+    ),
   valueChanged: z.boolean().optional(),
   oldValue: z.string().optional(),
 })

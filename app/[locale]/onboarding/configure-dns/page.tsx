@@ -1,7 +1,6 @@
-import { Copy, Globe } from "lucide-react"
+import { Globe } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { OnboardingConfigureDNSTable } from "@/components/onboarding-configure-dns-table"
 import { Field, FieldLabel } from "@/components/ui/field"
 import {
   InputGroup,
@@ -9,16 +8,9 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@/components/ui/input-group"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { getI18n, getStaticParams } from "@/lib/i18n/server"
 import { Metadata } from "next"
+import { notFound } from "next/navigation"
 
 export function generateStaticParams() {
   return getStaticParams()
@@ -37,6 +29,7 @@ export default async function Page({
   searchParams: Promise<{ domain?: string }>
 }) {
   const { domain } = await searchParams
+  if (!domain) notFound()
   return (
     <div className="space-y-6">
       <div>
@@ -59,35 +52,7 @@ export default async function Page({
           </InputGroup>
         </Field>
       </div>
-      <Card>
-        <CardContent>
-          <div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-25">Name</TableHead>
-                  <TableHead className="w-25">Type</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead className="text-right">Priority</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell>www</TableCell>
-                  <TableCell className="font-medium">CNAME</TableCell>
-                  <TableCell className="flex items-center gap-2 font-medium">
-                    <Button variant={"ghost"} size={"icon-lg"}>
-                      <Copy />
-                    </Button>
-                    <span className="line-clamp-1">example.com</span>
-                  </TableCell>
-                  <TableCell className="text-right">10</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <OnboardingConfigureDNSTable domainParams={domain} />
     </div>
   )
 }

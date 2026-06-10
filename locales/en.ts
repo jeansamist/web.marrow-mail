@@ -86,6 +86,11 @@ export default {
   "onboarding.steps.email.description":
     "Create your email address and start sending emails",
 
+  "onboarding.registerDomain.form.domain.label": "Domain name",
+  "onboarding.registerDomain.form.domain.placeholder": "e.g. example.com",
+  "onboarding.registerDomain.continue": "Continue",
+  "onboarding.registerDomain.alreadyHaveDomain.link": "I already have a domain configured",
+
   unknownError: "Something went wrong",
 } as const
 export type Locale = typeof import("./en").default

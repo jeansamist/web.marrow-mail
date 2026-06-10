@@ -1,5 +1,6 @@
 "use client"
 
+import { useOnboarding } from "@/contexts/onboarding.context"
 import { useCurrentLocaleUrl, useI18n } from "@/lib/i18n/client"
 import {
   onboardingRegisterDomainSchema,
@@ -9,8 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { LoaderCircle } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { FunctionComponent, useState } from "react"
-import { useForm } from "react-hook-form"
+import { FunctionComponent, useEffect, useState } from "react"
+import { useForm, useWatch } from "react-hook-form"
 import { Alert, AlertDescription } from "../ui/alert"
 import { Button } from "../ui/button"
 import { Field, FieldGroup } from "../ui/field"
@@ -23,25 +24,46 @@ export type OnboardingRegisterDomainFormProps = {
 export const OnboardingRegisterDomainForm: FunctionComponent<
   OnboardingRegisterDomainFormProps
 > = () => {
+  const onboarding = useOnboarding()
+  const contextStepValues = onboarding.steps[0].values as
+    | OnboardingRegisterDomainSchema
+    | undefined
   const form = useForm<OnboardingRegisterDomainSchema>({
     resolver: zodResolver(onboardingRegisterDomainSchema),
     mode: "onChange",
     defaultValues: {
-      domain: "",
-      valueChanged: false,
+      domain: contextStepValues?.domain ?? "",
+      valueChanged: contextStepValues?.valueChanged ?? false,
+      oldValue: contextStepValues?.oldValue ?? "",
     },
   })
+
   const [errorMessage, setErrorMessage] = useState<string>()
   const t = useI18n()
   const { currentLocaleUrl } = useCurrentLocaleUrl()
   const router = useRouter()
+  const domainValue = useWatch({
+    control: form.control,
+    name: "domain",
+  })
 
-  async function onSubmit(data: OnboardingRegisterDomainSchema) {
-    const result = new Error("Not implemented")
-    if (result instanceof Error) {
-      setErrorMessage(result.message ?? t("unknownError"))
-      return
+  useEffect(() => {
+    const oldValue = form.getValues("oldValue")
+    if (domainValue !== oldValue) {
+      form.setValue("valueChanged", true)
+      form.setValue("oldValue", domainValue)
+    } else {
+      form.setValue("valueChanged", false)
     }
+  }, [domainValue, form])
+  async function onSubmit(data: OnboardingRegisterDomainSchema) {
+    // const result = new Error("Not implemented")
+    // if (result instanceof Error) {
+    //   setErrorMessage(result.message ?? t("unknownError"))
+    //   return
+    // }
+    console.log(data)
+    onboarding.setStepValues(0, data)
     setErrorMessage(undefined)
     router.push(
       currentLocaleUrl(
@@ -49,6 +71,11 @@ export const OnboardingRegisterDomainForm: FunctionComponent<
       )
     )
   }
+
+  // Update the context current step
+  useEffect(() => {
+    onboarding.setCurrentStep(0)
+  }, [onboarding])
   return (
     <form id="register-domain-form" onSubmit={form.handleSubmit(onSubmit)}>
       <FieldGroup className="gap-3">
