@@ -36,10 +36,10 @@ export const VerifyEmailForm: FunctionComponent<VerifyEmailFormProps> = ({
 
   async function onSubmit(data: VerifyEmailSchema) {
     const result = await verifyEmail(data)
-    // if (!result.success) {
-    //   setErrorMessage(result.message ?? t("unknownError"))
-    //   return
-    // }
+    if (result instanceof Error) {
+      setErrorMessage(result.message ?? t("unknownError"))
+      return
+    }
     setErrorMessage(undefined)
     router.push(currentLocaleUrl("/"))
   }

@@ -67,7 +67,11 @@ const apiRequest: ApiFunction = async <PAYLOAD, RESPONSE, RETURN = RESPONSE>(
     }
   } catch (error) {
     if (isAxiosError(error)) {
-      if ("message" in error.response?.data) {
+      if (
+        error.response?.data &&
+        typeof error.response.data === "object" &&
+        "message" in error.response.data
+      ) {
         return onError
           ? onError(new Error(error.response?.data.message))
           : new Error(error.response?.data.message)

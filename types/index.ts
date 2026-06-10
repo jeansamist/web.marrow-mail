@@ -9,3 +9,12 @@ export type User = {
   updatedAt: string | null
   initials: string
 }
+
+export type AuthToken = {
+  type: string
+  name: string | null
+  token: string | undefined
+  abilities: string[]
+  lastUsedAt: Date | null
+  expiresAt: Date | null
+}

@@ -42,10 +42,10 @@ export const ResetPasswordForm: FunctionComponent<ResetPasswordFormProps> = ({
 
   async function onSubmit(data: ResetPasswordSchema) {
     const result = await resetPassword(data)
-    // if (!result.success) {
-    //   setErrorMessage(result.message ?? t("unknownError"))
-    //   return
-    // }
+    if (result instanceof Error) {
+      setErrorMessage(result.message ?? t("unknownError"))
+      return
+    }
     setErrorMessage(undefined)
     router.push(currentLocaleUrl("/auth/sign-in"))
   }

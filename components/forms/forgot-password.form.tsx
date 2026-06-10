@@ -37,10 +37,10 @@ export const ForgotPasswordForm: FunctionComponent<
 
   async function onSubmit(data: ForgotPasswordSchema) {
     const result = await forgotPassword(data)
-    // if (!result.success) {
-    //   setErrorMessage(result.message ?? t("unknownError"))
-    //   return
-    // }
+    if (result instanceof Error) {
+      setErrorMessage(result.message ?? t("unknownError"))
+      return
+    }
     setErrorMessage(undefined)
     setSent(true)
   }

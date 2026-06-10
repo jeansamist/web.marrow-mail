@@ -35,10 +35,10 @@ export const SignUpForm: FunctionComponent<SignUpFormProps> = () => {
 
   async function onSubmit(data: SignUpSchema) {
     const result = await signUp(data)
-    // if (!result.success) {
-    //   setErrorMessage(result.message ?? t("unknownError"))
-    //   return
-    // }
+    if (result instanceof Error) {
+      setErrorMessage(result.message ?? t("unknownError"))
+      return
+    }
     setErrorMessage(undefined)
     router.push(
       currentLocaleUrl(

@@ -14,7 +14,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const token = request.cookies.get("token")?.value
+  const token = request.cookies.get("AUTH_TOKEN")?.value
 
   if (token && /\/auth(\/|$)/.test(pathname)) {
     const localeMatch = pathname.match(/^\/([a-z]{2})\//)

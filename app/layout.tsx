@@ -1,10 +1,10 @@
-import { Geist_Mono, Lexend } from "next/font/google"
+import { Geist_Mono, Urbanist } from "next/font/google"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import "./globals.css"
 
-const lexend = Lexend({
+const urbanist = Urbanist({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -28,7 +28,7 @@ export default function RootLayout({
         "antialiased",
         fontMono.variable,
         "font-sans",
-        lexend.variable
+        urbanist.variable
       )}
     >
       <body>
