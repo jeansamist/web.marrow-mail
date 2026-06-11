@@ -1,16 +1,7 @@
-import { Plus } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@/components/ui/input-group"
+import { OnboardingCreateEmailForm } from "@/components/forms/onboarding-create-email.form"
 import { getI18n, getStaticParams } from "@/lib/i18n/server"
 import { Metadata } from "next"
+import { notFound } from "next/navigation"
 
 export function generateStaticParams() {
   return getStaticParams()
@@ -29,6 +20,7 @@ export default async function Page({
   searchParams: Promise<{ domain?: string }>
 }) {
   const { domain } = await searchParams
+  if (!domain) notFound()
   return (
     <div className="space-y-6">
       <div>
@@ -39,32 +31,7 @@ export default async function Page({
           Create your email address and start sending emails
         </p>
       </div>
-      <Card>
-        <CardContent className="space-y-4">
-          <FieldGroup>
-            <div className="grid grid-cols-2 gap-4">
-              <Field>
-                <FieldLabel>Username</FieldLabel>
-                <InputGroup>
-                  <InputGroupInput id="input" />
-                  <InputGroupAddon align="inline-end">
-                    <InputGroupText>@{domain}</InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
-              </Field>
-              <Field>
-                <FieldLabel>Owner email</FieldLabel>
-                <InputGroup>
-                  <InputGroupInput id="input" />
-                </InputGroup>
-              </Field>
-            </div>
-          </FieldGroup>
-          <Button className="w-full" variant={"secondary"}>
-            <Plus /> Add one more
-          </Button>
-        </CardContent>
-      </Card>
+      <OnboardingCreateEmailForm domainParams={domain} />
     </div>
   )
 }

@@ -14,3 +14,16 @@ export const onboardingRegisterDomainSchema = z.object({
 export type OnboardingRegisterDomainSchema = z.infer<
   typeof onboardingRegisterDomainSchema
 >
+
+export const onboardingCreateEmailSchema = z.object({
+  data: z.array(
+    z.object({
+      username: z.string().trim(),
+      owner: z.string().trim().email(),
+    })
+  ),
+})
+
+export type OnboardingCreateEmailSchema = z.infer<
+  typeof onboardingCreateEmailSchema
+>
