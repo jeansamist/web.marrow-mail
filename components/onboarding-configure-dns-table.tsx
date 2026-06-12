@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/table"
 import { useOnboarding } from "@/contexts/onboarding.context"
 import { useCurrentLocaleUrl } from "@/lib/i18n/client"
+import {
+  checkDomainStatus,
+  getDNSRecords,
+} from "@/services/onboarding.services"
 import { Record } from "@/types"
 import { ArrowLeft, Check, Copy, Loader2 } from "lucide-react"
 import Link from "next/link"
@@ -57,44 +61,26 @@ export const OnboardingConfigureDNSTable: FunctionComponent<
   )
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setFetchedDNSRecords([
-        {
-          id: 1,
-          type: "MX",
-          name: domainParams,
-          value: `mail.${domainParams}`,
-          priority: 10,
-          createdAt: new Date().toISOString(),
-          updatedAt: null,
-        },
-        {
-          id: 2,
-          type: "TXT",
-          name: domainParams,
-          value: `v=spf1 include:${domainParams} ~all`,
-          priority: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: null,
-        },
-        {
-          id: 3,
-          type: "CNAME",
-          name: `mail.${domainParams}`,
-          value: `mta.${domainParams}`,
-          priority: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: null,
-        },
-      ])
-    }, 2000)
-    return () => clearTimeout(timer)
+    ;(async () => {
+      const result = await getDNSRecords(domainParams)
+      if (result instanceof Error) {
+        setFetchedDNSRecords([])
+        return
+      }
+      setFetchedDNSRecords(result)
+    })()
   }, [domainParams])
 
   // Update the context current step
   useEffect(() => {
     onboarding.setCurrentStep(1)
   }, [onboarding])
+
+  const checkDomainVerified = async () => {
+    setDomainVerified(undefined)
+    const verified = await checkDomainStatus(domainParams)
+    setDomainVerified(verified)
+  }
   return (
     <>
       <Card>

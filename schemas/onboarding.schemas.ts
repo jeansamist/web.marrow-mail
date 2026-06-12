@@ -1,6 +1,6 @@
 import { z } from "zod/v3"
 export const onboardingRegisterDomainSchema = z.object({
-  domain: z
+  name: z
     .string()
     .min(1)
     .trim()

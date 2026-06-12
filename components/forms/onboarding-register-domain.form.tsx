@@ -6,6 +6,7 @@ import {
   onboardingRegisterDomainSchema,
   OnboardingRegisterDomainSchema,
 } from "@/schemas/onboarding.schemas"
+import { registerDomain } from "@/services/onboarding.services"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LoaderCircle } from "lucide-react"
 import Link from "next/link"
@@ -32,7 +33,7 @@ export const OnboardingRegisterDomainForm: FunctionComponent<
     resolver: zodResolver(onboardingRegisterDomainSchema),
     mode: "onChange",
     defaultValues: {
-      domain: contextStepValues?.domain ?? "",
+      name: contextStepValues?.name ?? "",
       valueChanged: contextStepValues?.valueChanged ?? false,
       oldValue: contextStepValues?.oldValue ?? "",
     },
@@ -44,7 +45,7 @@ export const OnboardingRegisterDomainForm: FunctionComponent<
   const router = useRouter()
   const domainValue = useWatch({
     control: form.control,
-    name: "domain",
+    name: "name",
   })
 
   useEffect(() => {
@@ -57,17 +58,17 @@ export const OnboardingRegisterDomainForm: FunctionComponent<
     }
   }, [domainValue, form])
   async function onSubmit(data: OnboardingRegisterDomainSchema) {
-    // const result = new Error("Not implemented")
-    // if (result instanceof Error) {
-    //   setErrorMessage(result.message ?? t("unknownError"))
-    //   return
-    // }
+    const result = await registerDomain(data)
+    if (result instanceof Error) {
+      setErrorMessage(result.message ?? t("unknownError"))
+      return
+    }
     console.log(data)
     onboarding.setStepValues(0, data)
     setErrorMessage(undefined)
     router.push(
       currentLocaleUrl(
-        `/onboarding/configure-dns?domain=${encodeURIComponent(data.domain)}`
+        `/onboarding/configure-dns?domain=${encodeURIComponent(data.name)}`
       )
     )
   }
@@ -87,7 +88,7 @@ export const OnboardingRegisterDomainForm: FunctionComponent<
         <InputField
           formReturn={form}
           label={t("onboarding.registerDomain.form.domain.label")}
-          name="domain"
+          name="name"
           placeholder={t("onboarding.registerDomain.form.domain.placeholder")}
         />
         <Field orientation="horizontal">
