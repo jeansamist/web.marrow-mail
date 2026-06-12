@@ -134,6 +134,7 @@ export const OnboardingConfigureDNSTable: FunctionComponent<
                   disabled={
                     domainVerified === true || domainVerified === undefined
                   }
+                  onClick={checkDomainVerified}
                   className="w-full"
                 >
                   {domainVerified === true ? (

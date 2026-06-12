@@ -7,6 +7,7 @@ import {
   onboardingCreateEmailSchema,
   OnboardingCreateEmailSchema,
 } from "@/schemas/onboarding.schemas"
+import { setupMailAccount } from "@/services/onboarding.services"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, LoaderCircle, Plus, Trash } from "lucide-react"
 import Link from "next/link"
@@ -73,7 +74,18 @@ export const OnboardingCreateEmailForm: FunctionComponent<
     onboarding.setCurrentStep(2)
   }, [onboarding])
 
-  const onSubmit = async (data: OnboardingCreateEmailSchema) => {}
+  const onSubmit = async (data: OnboardingCreateEmailSchema) => {
+    const result = await setupMailAccount(data, domainParams)
+    if (result instanceof Error) {
+      setErrorMessage(result.message ?? t("unknownError"))
+      return
+    }
+    router.push(
+      currentLocaleUrl(
+        `/onboarding/pay?domain=${encodeURIComponent(domainParams)}`
+      )
+    )
+  }
   return (
     <>
       <form

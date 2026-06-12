@@ -28,6 +28,14 @@ export default async function LocaleLayout({
       title: t("onboarding.steps.email.title"),
       description: t("onboarding.steps.email.description"),
     },
+    {
+      title: t("onboarding.steps.pay.title"),
+      description: t("onboarding.steps.pay.description"),
+    },
+    {
+      title: t("onboarding.steps.success.title"),
+      description: t("onboarding.steps.success.description"),
+    },
   ]
   return (
     <OnboardingProvider steps={STEPS}>

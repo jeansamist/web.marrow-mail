@@ -56,7 +56,7 @@ export const VerifyEmailForm: FunctionComponent<VerifyEmailFormProps> = ({
           formReturn={form}
           name="emailVerificationCode"
           label={t("auth.verifyEmail.code.label")}
-          placeholder={t("auth.verifyEmail.code.description")}
+          placeholder={t("auth.verifyEmail.code.placeholder")}
         />
         <Field orientation="horizontal">
           <Button

@@ -56,7 +56,7 @@ export default {
   "auth.verifyEmail.sent": "We sent an email to",
   "auth.verifyEmail.checkInbox": ": check your mailbox or spams",
   "auth.verifyEmail.code.label": "Verification code",
-  "auth.verifyEmail.code.description":
+  "auth.verifyEmail.code.placeholder":
     "Enter the 6-digit code sent to your email address",
   "auth.verifyEmail.submit": "Verify email",
   "auth.verifyEmail.signIn.link": "Back to sign in",
@@ -69,9 +69,6 @@ export default {
   "auth.forgotPassword.success.description":
     "We sent a password reset link to your email address. Follow the link to reset your password.",
 
-  "auth.resetPassword.email.label": "Email",
-  "auth.resetPassword.token.label": "Reset token",
-  "auth.resetPassword.token.placeholder": "Enter the token from your email",
   "auth.resetPassword.newPassword.label": "New password",
   "auth.resetPassword.newPassword.placeholder": "Enter your new password",
   "auth.resetPassword.submit": "Reset password",
@@ -85,6 +82,40 @@ export default {
   "onboarding.steps.email.title": "Create your email address",
   "onboarding.steps.email.description":
     "Create your email address and start sending emails",
+  "onboarding.steps.pay.title": "Complete payment",
+  "onboarding.steps.pay.description": "Activate your plan to start using Marrow Mail",
+  "onboarding.steps.success.title": "All done!",
+  "onboarding.steps.success.description": "Your account is ready to use",
+
+  "onboarding.configure-dns.meta.title": "Configure DNS records",
+  "onboarding.configure-dns.meta.description":
+    "Add the provided DNS records to your domain registrar to verify ownership.",
+
+  "onboarding.create-addresses.meta.title": "Create email addresses",
+  "onboarding.create-addresses.meta.description":
+    "Set up the email addresses you want to use with your domain.",
+
+  "onboarding.pay.meta.title": "Complete payment",
+  "onboarding.pay.meta.description":
+    "Activate your Marrow Mail plan to start sending and receiving emails.",
+  "onboarding.pay.form.cardholderName.label": "Cardholder name",
+  "onboarding.pay.form.cardholderName.placeholder": "Full name on card",
+  "onboarding.pay.form.cardNumber.label": "Card number",
+  "onboarding.pay.form.cardNumber.placeholder": "1234567890123456",
+  "onboarding.pay.form.expiryDate.label": "Expiry date",
+  "onboarding.pay.form.expiryDate.placeholder": "MM/YY",
+  "onboarding.pay.form.cvv.label": "CVV",
+  "onboarding.pay.form.cvv.placeholder": "123",
+  "onboarding.pay.back": "Go back",
+  "onboarding.pay.submit": "Complete payment",
+
+  "onboarding.complete.meta.title": "You're all set!",
+  "onboarding.complete.meta.description":
+    "Your Marrow Mail account is ready. Start sending and receiving emails.",
+  "onboarding.complete.title": "You're all set!",
+  "onboarding.complete.description":
+    "Your domain is configured and your email addresses are ready to use.",
+  "onboarding.complete.cta": "Go to your inbox",
 
   "onboarding.registerDomain.form.domain.label": "Domain name",
   "onboarding.registerDomain.form.domain.placeholder": "e.g. example.com",

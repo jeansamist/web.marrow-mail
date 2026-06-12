@@ -63,7 +63,6 @@ export const OnboardingRegisterDomainForm: FunctionComponent<
       setErrorMessage(result.message ?? t("unknownError"))
       return
     }
-    console.log(data)
     onboarding.setStepValues(0, data)
     setErrorMessage(undefined)
     router.push(
