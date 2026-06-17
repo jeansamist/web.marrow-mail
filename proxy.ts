@@ -16,12 +16,25 @@ export function proxy(request: NextRequest) {
 
   const token = request.cookies.get("AUTH_TOKEN")?.value
 
-  if (token && /\/auth(\/|$)/.test(pathname)) {
+  if (token && /^\/[a-z]{2}\/auth(\/|$)/.test(pathname)) {
     const localeMatch = pathname.match(/^\/([a-z]{2})\//)
     const locale = localeMatch?.[1] ?? "en"
     const url = request.nextUrl.clone()
     url.pathname = `/${locale}/app/dashboard`
     return NextResponse.redirect(url)
+  }
+
+  const domainInboxMatch = pathname.match(
+    /^(\/[a-z]{2})\/domain\/([^/]+)\/inbox/
+  )
+  if (domainInboxMatch) {
+    const mailToken = request.cookies.get("MAIL_AUTH_TOKEN")?.value
+    if (!mailToken) {
+      const [, localePath, domainName] = domainInboxMatch
+      const url = request.nextUrl.clone()
+      url.pathname = `${localePath}/domain/${domainName}/auth/login`
+      return NextResponse.redirect(url)
+    }
   }
 
   return I18nMiddleware(request)

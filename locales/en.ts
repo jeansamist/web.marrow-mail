@@ -152,6 +152,16 @@ export default {
     "Your mail account is ready to use.",
   "mail.setup-profile.success.cta": "Go to inbox",
 
+  "mail.login.page.title": "Login to your mailbox",
+  "mail.login.page.description": "Enter your credentials to access your inbox",
+  "mail.login.meta.title": "Mailbox login",
+  "mail.login.meta.description": "Sign in to access your Marrow Mail inbox.",
+  "mail.login.email.label": "Email",
+  "mail.login.email.placeholder": "Enter your mail address",
+  "mail.login.password.label": "Password",
+  "mail.login.password.placeholder": "Enter your password",
+  "mail.login.submit": "Access mailbox",
+
   unknownError: "Something went wrong",
 } as const
 export type Locale = typeof import("./en").default
