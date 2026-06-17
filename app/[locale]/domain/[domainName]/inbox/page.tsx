@@ -10,6 +10,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ComposeEmailDialog } from "@/components/compose-email-dialog"
 import { getI18n, getStaticParams } from "@/lib/i18n/server"
 import { Metadata } from "next"
 
@@ -231,13 +232,16 @@ export default async function InboxPage() {
           minSize={300}
           className="flex flex-col rounded-2xl bg-background"
         >
-          <div className="shrink-0 p-6 lg:p-8">
-            <h3 className="text-2xl leading-normal font-bold">
-              {t("mail.inbox.title")}
-            </h3>
-            <p className="text-sm leading-normal opacity-70">
-              {t("mail.inbox.description")}
-            </p>
+          <div className="shrink-0 space-y-4 p-6 lg:p-8">
+            <div>
+              <h3 className="text-2xl leading-normal font-bold">
+                {t("mail.inbox.title")}
+              </h3>
+              <p className="text-sm leading-normal opacity-70">
+                {t("mail.inbox.description")}
+              </p>
+            </div>
+            <ComposeEmailDialog />
           </div>
           <ScrollArea className="flex-1">
             <div className="flex flex-col gap-1 px-2 pb-4">
