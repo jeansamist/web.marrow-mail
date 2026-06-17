@@ -1,5 +1,4 @@
-import { ComposeEmailDialog } from "@/components/compose-email-dialog"
-import { InboxEmailItem } from "@/components/inbox-email-item"
+import { InboxSidebar } from "@/components/inbox-sidebar"
 import {
   InboxEmailPreview,
   InboxEmptyPreview,
@@ -9,7 +8,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { MOCK_EMAILS } from "@/data/mock-emails"
 import { getI18n, getStaticParams } from "@/lib/i18n/server"
 import { Metadata } from "next"
@@ -38,52 +36,51 @@ export default async function InboxPage({
     ? (MOCK_EMAILS.find((m) => m.id === selectedId) ?? null)
     : null
 
+  const sidebarProps = {
+    selectedId,
+    title: t("mail.inbox.title"),
+    description: t("mail.inbox.description"),
+  }
+
   return (
-    <div className="flex h-screen gap-2 bg-primary p-2">
-      <ResizablePanelGroup orientation="horizontal" className="gap-1">
-        <ResizablePanel
-          defaultSize={450}
-          maxSize={600}
-          minSize={300}
-          className="flex flex-col rounded-2xl bg-background"
-        >
-          <div className="shrink-0 space-y-4 p-6 lg:p-8">
-            <div>
-              <h3 className="text-2xl leading-normal font-bold">
-                {t("mail.inbox.title")}
-              </h3>
-              <p className="text-sm leading-normal opacity-70">
-                {t("mail.inbox.description")}
-              </p>
-            </div>
-            <ComposeEmailDialog />
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="flex flex-col gap-1 px-2 pb-4">
-              {MOCK_EMAILS.map((mail) => (
-                <InboxEmailItem
-                  key={mail.id}
-                  mail={mail}
-                  isSelected={mail.id === selectedId}
-                />
-              ))}
-            </div>
-          </ScrollArea>
-        </ResizablePanel>
-
-        <ResizableHandle
-          withHandle
-          className="opacity-0 transition-opacity hover:opacity-100"
-        />
-
-        <ResizablePanel className="rounded-2xl bg-background">
+    <>
+      {/* ── Mobile: single-panel, list ↔ preview ── */}
+      <div className="flex h-dvh flex-col bg-primary p-2 md:hidden">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-background">
           {selectedEmail ? (
-            <InboxEmailPreview mail={selectedEmail} />
+            <InboxEmailPreview mail={selectedEmail} showBackButton />
           ) : (
-            <InboxEmptyPreview />
+            <InboxSidebar {...sidebarProps} />
           )}
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    </div>
+        </div>
+      </div>
+
+      {/* ── Desktop: resizable two-panel ── */}
+      <div className="hidden h-screen gap-2 bg-primary p-2 md:flex">
+        <ResizablePanelGroup orientation="horizontal" className="gap-1">
+          <ResizablePanel
+            defaultSize={450}
+            maxSize={600}
+            minSize={280}
+            className="flex flex-col rounded-2xl bg-background"
+          >
+            <InboxSidebar {...sidebarProps} />
+          </ResizablePanel>
+
+          <ResizableHandle
+            withHandle
+            className="opacity-0 transition-opacity hover:opacity-100"
+          />
+
+          <ResizablePanel className="rounded-2xl bg-background">
+            {selectedEmail ? (
+              <InboxEmailPreview mail={selectedEmail} />
+            ) : (
+              <InboxEmptyPreview />
+            )}
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+    </>
   )
 }

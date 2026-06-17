@@ -1,7 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import type { MockEmail } from "@/data/mock-emails"
-import { MailOpen } from "lucide-react"
+import { ArrowLeft, MailOpen } from "lucide-react"
+import Link from "next/link"
 import { FunctionComponent } from "react"
 
 export const InboxEmptyPreview: FunctionComponent = () => {
@@ -15,14 +16,26 @@ export const InboxEmptyPreview: FunctionComponent = () => {
 
 type InboxEmailPreviewProps = {
   mail: MockEmail
+  showBackButton?: boolean
 }
 
 export const InboxEmailPreview: FunctionComponent<InboxEmailPreviewProps> = ({
   mail,
+  showBackButton = false,
 }) => {
   return (
     <div className="flex h-full flex-col">
-      <div className="space-y-4 p-6 lg:p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
+        {showBackButton && (
+          <Link
+            href="?"
+            scroll={false}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            Back to inbox
+          </Link>
+        )}
         <h2 className="text-xl font-bold leading-snug">{mail.subject}</h2>
         <div className="flex items-center gap-3">
           <Avatar className="size-10 shrink-0">
@@ -46,7 +59,7 @@ export const InboxEmailPreview: FunctionComponent<InboxEmailPreviewProps> = ({
 
       <Separator />
 
-      <div className="flex-1 overflow-auto p-6 lg:p-8">
+      <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
         <p className="whitespace-pre-line text-sm leading-relaxed">{mail.body}</p>
       </div>
     </div>
