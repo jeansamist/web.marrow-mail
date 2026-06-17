@@ -152,6 +152,11 @@ export default {
     "Your mail account is ready to use.",
   "mail.setup-profile.success.cta": "Go to inbox",
 
+  "mail.inbox.meta.title": "Inbox",
+  "mail.inbox.meta.description": "Read and manage your incoming messages.",
+  "mail.inbox.title": "Inbox",
+  "mail.inbox.description": "Your recent messages",
+
   "mail.login.page.title": "Login to your mailbox",
   "mail.login.page.description": "Enter your credentials to access your inbox",
   "mail.login.meta.title": "Mailbox login",
