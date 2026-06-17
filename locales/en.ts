@@ -122,6 +122,35 @@ export default {
   "onboarding.registerDomain.continue": "Continue",
   "onboarding.registerDomain.alreadyHaveDomain.link": "I already have a domain configured",
 
+  "mail.setup-profile.prev": "Previous",
+  "mail.setup-profile.next": "Next",
+  "mail.setup-profile.submit": "Submit",
+
+  "mail.setup-profile.form.update-password.title": "Set your password",
+  "mail.setup-profile.form.update-password.description":
+    "Choose a secure password for your mail account.",
+  "mail.setup-profile.form.update-password.newPassword.label": "New password",
+  "mail.setup-profile.form.update-password.newPassword.placeholder":
+    "Enter a new password",
+  "mail.setup-profile.form.update-password.confirmPassword.label":
+    "Confirm password",
+  "mail.setup-profile.form.update-password.confirmPassword.placeholder":
+    "Re-enter your password",
+
+  "mail.setup-profile.form.update-profile.title": "Complete your profile",
+  "mail.setup-profile.form.update-profile.description":
+    "Add your name to personalize your account.",
+  "mail.setup-profile.form.update-profile.firstName.label": "First name",
+  "mail.setup-profile.form.update-profile.firstName.placeholder":
+    "Enter your first name",
+  "mail.setup-profile.form.update-profile.lastName.label": "Last name",
+  "mail.setup-profile.form.update-profile.lastName.placeholder":
+    "Enter your last name",
+
+  "mail.setup-profile.success.title": "You're all set!",
+  "mail.setup-profile.success.description":
+    "Your mail account is ready to use.",
+
   unknownError: "Something went wrong",
 } as const
 export type Locale = typeof import("./en").default
