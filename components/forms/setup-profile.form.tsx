@@ -5,6 +5,7 @@ import {
   setupMailAccountProfileSchema,
   SetupMailAccountProfileSchema,
 } from "@/schemas/auth.schemas"
+import { setupMailAccountProfile } from "@/services/mail.services"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
@@ -54,7 +55,7 @@ export const SetupProfileForm: FunctionComponent<SetupProfileFormProps> = ({
   const router = useRouter()
 
   async function onSubmit(data: SetupMailAccountProfileSchema) {
-    const result = new Error("not implemented")
+    const result = await setupMailAccountProfile(data)
     if (result instanceof Error) {
       setErrorMessage(result.message ?? t("unknownError"))
       return
@@ -72,7 +73,7 @@ export const SetupProfileForm: FunctionComponent<SetupProfileFormProps> = ({
         setErrorMessage(firstError?.message ?? t("unknownError"))
         return
       }
-      form.handleSubmit(onSubmit)()
+      await onSubmit(form.getValues() as SetupMailAccountProfileSchema)
       return
     }
     const valid = await form.trigger(stepFields[step])
@@ -230,7 +231,7 @@ export const SetupProfileForm: FunctionComponent<SetupProfileFormProps> = ({
             animate="center"
             exit="exit"
             transition={{ duration: 0.22, ease: "easeInOut" }}
-            className="flex flex-col items-center justify-center py-12 text-center space-y-4"
+            className="flex flex-col items-center justify-center space-y-4 py-12 text-center"
           >
             <h3 className="text-2xl leading-normal font-bold">
               {t("mail.setup-profile.success.title")}
@@ -238,6 +239,13 @@ export const SetupProfileForm: FunctionComponent<SetupProfileFormProps> = ({
             <p className="text-sm leading-normal opacity-70">
               {t("mail.setup-profile.success.description")}
             </p>
+            <Button
+              onClick={() =>
+                router.push(currentLocaleUrl(`/domain/${domainName}/inbox`))
+              }
+            >
+              {t("mail.setup-profile.success.cta")}
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>

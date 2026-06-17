@@ -150,6 +150,7 @@ export default {
   "mail.setup-profile.success.title": "You're all set!",
   "mail.setup-profile.success.description":
     "Your mail account is ready to use.",
+  "mail.setup-profile.success.cta": "Go to inbox",
 
   unknownError: "Something went wrong",
 } as const

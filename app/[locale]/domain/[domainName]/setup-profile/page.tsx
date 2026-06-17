@@ -16,11 +16,14 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 export default async function page({
+  params,
   searchParams,
 }: {
+  params: Promise<{ domainName: string }>
   searchParams: Promise<{ cuid?: string }>
 }) {
   const { cuid } = await searchParams
+  const { domainName } = await params
   if (!cuid) {
     notFound()
   }
@@ -35,7 +38,7 @@ export default async function page({
           className="md:h-18.75 md:w-50"
         />
         <div className="relative w-full flex-1 overflow-y-auto rounded-2xl bg-background p-6">
-          <SetupProfileForm cuid={cuid} />
+          <SetupProfileForm cuid={cuid} domainName={domainName} />
         </div>
       </div>
     </div>

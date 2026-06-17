@@ -37,7 +37,7 @@ export const setupMailAccountProfileSchema = z
     firstName: z.string().min(1).max(255),
     lastName: z.string().min(1).max(255),
     avatar: z.string().nullable(),
-    cuid: z.string().min(1).max(20),
+    cuid: z.string().min(1),
     newPassword: z.string().min(8),
     confirmPassword: z.string().min(8),
   })
@@ -45,4 +45,6 @@ export const setupMailAccountProfileSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   })
-export type SetupMailAccountProfileSchema = z.infer<typeof setupMailAccountProfileSchema>
+export type SetupMailAccountProfileSchema = z.infer<
+  typeof setupMailAccountProfileSchema
+>
