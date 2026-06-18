@@ -24,13 +24,13 @@ export function MailboxAccessForm() {
       <Input
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
-        placeholder={t("home.mailbox.placeholder")}
+        placeholder={t("landing.mailbox.placeholder")}
         className="flex-1"
         autoComplete="off"
         spellCheck={false}
       />
       <Button type="submit" disabled={!domain.trim()}>
-        {t("home.mailbox.open")}
+        {t("landing.mailbox.open")}
       </Button>
     </form>
   )
