@@ -1,5 +1,5 @@
 import { SetupProfileForm } from "@/components/forms/setup-profile.form"
-import { getI18n, getStaticParams } from "@/lib/i18n/server"
+import { getI18n, getStaticParams, setStaticParamsLocale } from "@/lib/i18n/server"
 import { Metadata } from "next"
 import Image from "next/image"
 import { notFound } from "next/navigation"
@@ -8,7 +8,9 @@ export function generateStaticParams() {
   return getStaticParams()
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  setStaticParamsLocale(locale)
   const t = await getI18n()
   return {
     title: t("mail.setup-profile.meta.title"),
@@ -19,11 +21,12 @@ export default async function page({
   params,
   searchParams,
 }: {
-  params: Promise<{ domainName: string }>
+  params: Promise<{ locale: string; domainName: string }>
   searchParams: Promise<{ cuid?: string }>
 }) {
+  const { locale, domainName } = await params
+  setStaticParamsLocale(locale)
   const { cuid } = await searchParams
-  const { domainName } = await params
   if (!cuid) {
     notFound()
   }

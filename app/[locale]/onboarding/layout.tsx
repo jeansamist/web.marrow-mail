@@ -1,6 +1,6 @@
 import { OnboardingSteps } from "@/components/onboarding-steps"
 import { OnboardingProvider } from "@/contexts/onboarding.context"
-import { getI18n, getStaticParams } from "@/lib/i18n/server"
+import { getI18n, getStaticParams, setStaticParamsLocale } from "@/lib/i18n/server"
 import Image from "next/image"
 
 export function generateStaticParams() {
@@ -14,6 +14,8 @@ export default async function LocaleLayout({
   children: React.ReactNode
   params: Promise<{ locale: string }>
 }) {
+  const { locale } = await params
+  setStaticParamsLocale(locale)
   const t = await getI18n()
   const STEPS = [
     {

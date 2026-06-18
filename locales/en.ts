@@ -122,6 +122,8 @@ export default {
   "onboarding.registerDomain.continue": "Continue",
   "onboarding.registerDomain.alreadyHaveDomain.link": "I already have a domain configured",
 
+  "mail.setup-profile.meta.title": "Set up your profile",
+  "mail.setup-profile.meta.description": "Complete your profile to get started with Marrow Mail.",
   "mail.setup-profile.prev": "Previous",
   "mail.setup-profile.next": "Next",
   "mail.setup-profile.submit": "Submit",

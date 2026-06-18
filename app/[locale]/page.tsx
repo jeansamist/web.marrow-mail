@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button"
-import { getI18n } from "@/lib/i18n/server"
+import { getI18n, getStaticParams, setStaticParamsLocale } from "@/lib/i18n/server"
 
-export default async function Page() {
+export function generateStaticParams() {
+  return getStaticParams()
+}
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setStaticParamsLocale(locale)
   const t = await getI18n()
 
   return (

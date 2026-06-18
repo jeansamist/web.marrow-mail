@@ -1,5 +1,5 @@
 import { ResetPasswordForm } from "@/components/forms/reset-password.form"
-import { getI18n, getStaticParams } from "@/lib/i18n/server"
+import { getI18n, getStaticParams, setStaticParamsLocale } from "@/lib/i18n/server"
 import { Metadata } from "next"
 import { redirect } from "next/navigation"
 
@@ -7,7 +7,9 @@ export function generateStaticParams() {
   return getStaticParams()
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  setStaticParamsLocale(locale)
   const t = await getI18n()
   return {
     title: t("auth.resetPassword.meta.title"),
@@ -16,10 +18,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ email?: string; resetPasswordToken?: string }>
 }) {
+  const { locale } = await params
+  setStaticParamsLocale(locale)
   const { email, resetPasswordToken } = await searchParams
 
   if (!email || !resetPasswordToken) {

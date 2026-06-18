@@ -1,12 +1,14 @@
 import { VerifyEmailForm } from "@/components/forms/verify-email.form"
-import { getI18n, getStaticParams } from "@/lib/i18n/server"
+import { getI18n, getStaticParams, setStaticParamsLocale } from "@/lib/i18n/server"
 import { Metadata } from "next"
 
 export function generateStaticParams() {
   return getStaticParams()
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  setStaticParamsLocale(locale)
   const t = await getI18n()
   return {
     title: t("auth.verifyEmail.meta.title"),
@@ -14,10 +16,14 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 export default async function Page({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ email?: string }>
 }) {
+  const { locale } = await params
+  setStaticParamsLocale(locale)
   const { email } = await searchParams
   const t = await getI18n()
   return (

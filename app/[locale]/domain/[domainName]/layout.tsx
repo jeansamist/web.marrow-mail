@@ -9,6 +9,7 @@ export default async function LocaleLayout({
   params,
 }: {
   children: React.ReactNode
+  params: Promise<{ domainName: string }>
 }) {
   return children
 }
