@@ -4,7 +4,7 @@ import {
   SetupMailAccountProfileSchema,
   SignInSchema,
 } from "@/schemas/auth.schemas"
-import type { Mail, MailAccountProfile } from "@/types"
+import type { Mail, MailAccountProfile, UploadLink } from "@/types"
 import { cookies } from "next/headers"
 
 export const getMailAccountProfile =
@@ -23,6 +23,31 @@ export const getReceivedMails = async (): Promise<Mail[]> => {
 export const getSentMails = async (): Promise<Mail[]> => {
   const resp = await GET<Mail[]>("/mails/sent")
   if (resp instanceof Error) return []
+  return resp
+}
+
+export const createUploadLinks = async (
+  files: { originalName: string; mimeType?: string; size?: number }[]
+): Promise<UploadLink[]> => {
+  const resp = await POST<
+    { files: { originalName: string; mimeType?: string; size?: number }[] },
+    UploadLink[]
+  >("/storage/upload-links", { files })
+  if (resp instanceof Error) return []
+  return resp
+}
+
+export const sendMail = async (payload: {
+  to: string[]
+  cc?: string[]
+  bcc?: string[]
+  replyTo?: string
+  subject: string
+  bodyHtml?: string
+  bodyText?: string
+}): Promise<Mail | null> => {
+  const resp = await POST<typeof payload, Mail>("/mails", payload)
+  if (resp instanceof Error) return null
   return resp
 }
 

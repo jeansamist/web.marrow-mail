@@ -38,6 +38,22 @@ export type Mail = {
   updatedAt: string | null
 }
 
+export type UploadedFile = {
+  id: number
+  key: string
+  originalName: string
+  mimeType: string | null
+  size: number | null
+  mailAccountId: number | null
+  publicUrl: string
+  createdAt: string
+}
+
+export type UploadLink = {
+  uploadUrl: string
+  file: UploadedFile
+}
+
 export type MailAccountProfile = {
   id: number
   email: string
