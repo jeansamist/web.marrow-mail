@@ -41,7 +41,7 @@ export const VerifyEmailForm: FunctionComponent<VerifyEmailFormProps> = ({
       return
     }
     setErrorMessage(undefined)
-    router.push(currentLocaleUrl("/"))
+    router.push(currentLocaleUrl("/onboarding"))
   }
 
   return (

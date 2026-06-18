@@ -241,7 +241,7 @@ export const SetupProfileForm: FunctionComponent<SetupProfileFormProps> = ({
             </p>
             <Button
               onClick={() =>
-                router.push(currentLocaleUrl(`/domain/${domainName}/inbox`))
+                router.push(currentLocaleUrl(`/domain/${domainName}/auth/login`))
               }
             >
               {t("mail.setup-profile.success.cta")}

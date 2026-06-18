@@ -54,7 +54,7 @@ export const OnboardingPayForm: FunctionComponent<OnboardingPayFormProps> = ({
   const onSubmit = async (data: OnboardingPaySchema) => {
     // TODO: replace with Stripe payment intent
     onboarding.setStepValues(3, data as unknown as Record<string, unknown>)
-    router.push(currentLocaleUrl("/onboarding/complete"))
+    router.push(currentLocaleUrl(`/onboarding/complete?domain=${encodeURIComponent(domainParams)}`))
   }
 
   return (

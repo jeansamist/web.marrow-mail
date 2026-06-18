@@ -8,12 +8,13 @@ import { FunctionComponent, useEffect } from "react"
 import { Button } from "./ui/button"
 
 export type OnboardingCompleteProps = {
+  domainName: string
   [key: string]: unknown
 }
 
 export const OnboardingComplete: FunctionComponent<
   OnboardingCompleteProps
-> = () => {
+> = ({ domainName }) => {
   const onboarding = useOnboarding()
   const t = useI18n()
   const { currentLocaleUrl } = useCurrentLocaleUrl()
@@ -32,7 +33,9 @@ export const OnboardingComplete: FunctionComponent<
         </p>
       </div>
       <Button asChild>
-        <Link href={currentLocaleUrl("/")}>{t("onboarding.complete.cta")}</Link>
+        <Link href={currentLocaleUrl(`/domain/${domainName}/auth/login`)}>
+          {t("onboarding.complete.cta")}
+        </Link>
       </Button>
     </div>
   )

@@ -39,7 +39,7 @@ export const SignInForm: FunctionComponent<SignInFormProps> = () => {
       return
     }
     setErrorMessage(undefined)
-    router.push(currentLocaleUrl("/"))
+    router.push("/app/dashboard")
   }
 
   return (

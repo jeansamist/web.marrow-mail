@@ -16,6 +16,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   }
 }
 
-export default function Page() {
-  return <OnboardingComplete />
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ domain?: string }>
+}) {
+  const { domain } = await searchParams
+  return <OnboardingComplete domainName={domain ?? ""} />
 }
