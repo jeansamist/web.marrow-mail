@@ -1,10 +1,18 @@
 "use server"
-import { POST } from "@/lib/api-mail"
+import { GET, POST } from "@/lib/api-mail"
 import {
   SetupMailAccountProfileSchema,
   SignInSchema,
 } from "@/schemas/auth.schemas"
+import type { MailAccountProfile } from "@/types"
 import { cookies } from "next/headers"
+
+export const getMailAccountProfile =
+  async (): Promise<MailAccountProfile | null> => {
+    const resp = await GET<MailAccountProfile>("/auth/profile")
+    if (resp instanceof Error) return null
+    return resp
+  }
 
 export const setupMailAccountProfile = async (
   data: SetupMailAccountProfileSchema

@@ -19,6 +19,17 @@ export type AuthToken = {
   expiresAt: Date | null
 }
 
+export type MailAccountProfile = {
+  id: number
+  email: string
+  firstName: string
+  lastName: string
+  avatar: string | null
+  initials: string
+  createdAt: string
+  updatedAt: string | null
+}
+
 export type Record = {
   id: number
   type: string

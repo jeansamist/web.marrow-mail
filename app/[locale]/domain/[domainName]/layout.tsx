@@ -1,3 +1,6 @@
+import { AuthMailAccountProvider } from "@/contexts/auth-mail-account.context"
+import { getMailAccountProfile } from "@/services/mail.services"
+
 export const dynamic = "force-dynamic"
 
 export default async function LocaleLayout({
@@ -5,5 +8,10 @@ export default async function LocaleLayout({
 }: {
   children: React.ReactNode
 }) {
-  return children
+  const profile = await getMailAccountProfile()
+  return (
+    <AuthMailAccountProvider profile={profile}>
+      {children}
+    </AuthMailAccountProvider>
+  )
 }
