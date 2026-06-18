@@ -1,5 +1,6 @@
 "use client"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,40 +11,44 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { composeEmailSchema, ComposeEmailSchema } from "@/schemas/mail.schemas"
 import { createUploadLinks, sendMail } from "@/services/mail.services"
 import type { UploadedFile } from "@/types"
-import { FileText, Loader2, Paperclip, PenLine, Send, Trash2, X } from "lucide-react"
-import { FunctionComponent, useRef, useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Editor, EditorContent, useEditor, useEditorState } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
+import { useEffect, useRef } from "react"
+import {
+  Bold,
+  FileText,
+  Heading1,
+  Heading2,
+  Heading3,
+  Italic,
+  List,
+  ListOrdered,
+  Loader2,
+  Paperclip,
+  PenLine,
+  Quote,
+  Redo2,
+  Send,
+  Strikethrough,
+  Trash2,
+  Undo2,
+  X,
+} from "lucide-react"
+import { FunctionComponent, useState } from "react"
+import { Controller, useForm } from "react-hook-form"
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function buildEmailHtml(bodyText: string, files: UploadedFile[]): string {
-  const paragraphs = bodyText
-    .split("\n")
-    .map((line) =>
-      line.trim()
-        ? `<p style="margin:0 0 12px 0;">${line}</p>`
-        : `<br />`
-    )
-    .join("")
-
-  const attachmentsHtml =
-    files.length > 0
-      ? `<div style="margin-top:28px;padding-top:16px;border-top:1px solid #e2e8f0;">
-  <p style="margin:0 0 10px 0;color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Attachments</p>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;">
-    ${files.map((f) => fileAnchorHtml(f)).join("")}
-  </div>
-</div>`
-      : ""
-
-  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#0f172a;">${paragraphs}${attachmentsHtml}</div>`
 }
 
 function fileAnchorHtml(file: UploadedFile): string {
@@ -54,93 +59,238 @@ function fileAnchorHtml(file: UploadedFile): string {
   return `<a href="${file.publicUrl}" style="display:inline-flex;align-items:center;gap:7px;padding:9px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;text-decoration:none;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;font-weight:500;line-height:1;">${icon}${file.originalName}${sizeLabel}</a>`
 }
 
+function buildAttachmentsHtml(files: UploadedFile[]): string {
+  if (files.length === 0) return ""
+  return `<div style="margin-top:28px;padding-top:16px;border-top:1px solid #e2e8f0;"><p style="margin:0 0 10px 0;color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Attachments</p><div style="display:flex;flex-wrap:wrap;gap:8px;">${files.map(fileAnchorHtml).join("")}</div></div>`
+}
+
+// ─── Toolbar ──────────────────────────────────────────────────────────────────
+
+type ToolbarProps = { editor: Editor; disabled: boolean }
+
+const Toolbar: FunctionComponent<ToolbarProps> = ({ editor, disabled }) => {
+  const s = useEditorState({
+    editor,
+    selector: (ctx) => ({
+      isBold: ctx.editor.isActive("bold"),
+      canBold: ctx.editor.can().chain().toggleBold().run(),
+      isItalic: ctx.editor.isActive("italic"),
+      canItalic: ctx.editor.can().chain().toggleItalic().run(),
+      isStrike: ctx.editor.isActive("strike"),
+      canStrike: ctx.editor.can().chain().toggleStrike().run(),
+      isH1: ctx.editor.isActive("heading", { level: 1 }),
+      isH2: ctx.editor.isActive("heading", { level: 2 }),
+      isH3: ctx.editor.isActive("heading", { level: 3 }),
+      isBulletList: ctx.editor.isActive("bulletList"),
+      isOrderedList: ctx.editor.isActive("orderedList"),
+      isBlockquote: ctx.editor.isActive("blockquote"),
+      canUndo: ctx.editor.can().chain().undo().run(),
+      canRedo: ctx.editor.can().chain().redo().run(),
+    }),
+  })
+
+  function btn(
+    isActive: boolean,
+    canRun: boolean,
+    onClick: () => void,
+    icon: React.ReactNode,
+    title: string
+  ) {
+    return (
+      <Button
+        type="button"
+        size="icon-sm"
+        variant={isActive ? "secondary" : "ghost"}
+        disabled={disabled || !canRun}
+        onClick={onClick}
+        title={title}
+      >
+        {icon}
+      </Button>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-0.5 border-b px-4 py-2">
+      <div className="flex gap-0.5">
+        {btn(s?.isBold ?? false, s?.canBold ?? false, () => editor.chain().focus().toggleBold().run(), <Bold />, "Bold")}
+        {btn(s?.isItalic ?? false, s?.canItalic ?? false, () => editor.chain().focus().toggleItalic().run(), <Italic />, "Italic")}
+        {btn(s?.isStrike ?? false, s?.canStrike ?? false, () => editor.chain().focus().toggleStrike().run(), <Strikethrough />, "Strikethrough")}
+      </div>
+      <Separator orientation="vertical" className="mx-1 h-4" />
+      <div className="flex gap-0.5">
+        {btn(s?.isH1 ?? false, true, () => editor.chain().focus().toggleHeading({ level: 1 }).run(), <Heading1 />, "Heading 1")}
+        {btn(s?.isH2 ?? false, true, () => editor.chain().focus().toggleHeading({ level: 2 }).run(), <Heading2 />, "Heading 2")}
+        {btn(s?.isH3 ?? false, true, () => editor.chain().focus().toggleHeading({ level: 3 }).run(), <Heading3 />, "Heading 3")}
+      </div>
+      <Separator orientation="vertical" className="mx-1 h-4" />
+      <div className="flex gap-0.5">
+        {btn(s?.isBulletList ?? false, true, () => editor.chain().focus().toggleBulletList().run(), <List />, "Bullet list")}
+        {btn(s?.isOrderedList ?? false, true, () => editor.chain().focus().toggleOrderedList().run(), <ListOrdered />, "Numbered list")}
+        {btn(s?.isBlockquote ?? false, true, () => editor.chain().focus().toggleBlockquote().run(), <Quote />, "Blockquote")}
+      </div>
+      <Separator orientation="vertical" className="mx-1 h-4" />
+      <div className="flex gap-0.5">
+        {btn(false, s?.canUndo ?? false, () => editor.chain().focus().undo().run(), <Undo2 />, "Undo")}
+        {btn(false, s?.canRedo ?? false, () => editor.chain().focus().redo().run(), <Redo2 />, "Redo")}
+      </div>
+    </div>
+  )
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type AttachmentEntry = {
+  file: File
+  status: "uploading" | "done" | "error"
+  uploadedFile?: UploadedFile
+}
+
+// ─── Dialog ───────────────────────────────────────────────────────────────────
+
 export const ComposeEmailDialog: FunctionComponent = () => {
   const [open, setOpen] = useState(false)
-  const [attachments, setAttachments] = useState<File[]>([])
-  const [isSending, setIsSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const formRef = useRef<HTMLFormElement>(null)
+  const [attachments, setAttachments] = useState<AttachmentEntry[]>([])
+  const [globalError, setGlobalError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<Editor | null>(null)
 
-  function handleDiscard() {
-    formRef.current?.reset()
+  const form = useForm<ComposeEmailSchema>({
+    resolver: zodResolver(composeEmailSchema),
+    mode: "onChange",
+    defaultValues: { to: "", subject: "" },
+  })
+
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: "",
+    immediatelyRender: false,
+    editorProps: {
+      handlePaste(_view, event) {
+        const plain = event.clipboardData?.getData("text/plain") ?? ""
+        const html = event.clipboardData?.getData("text/html") ?? ""
+        // If clipboard already carries HTML let ProseMirror handle it
+        if (html) return false
+        // If plain text looks like HTML markup, parse and insert it as HTML
+        if (/<[a-z][\s\S]*>/i.test(plain)) {
+          event.preventDefault()
+          editorRef.current?.commands.insertContent(plain)
+          return true
+        }
+        return false
+      },
+    },
+  })
+
+  useEffect(() => {
+    editorRef.current = editor
+  }, [editor])
+
+  const isSubmitting = form.formState.isSubmitting
+  const hasUploading = attachments.some((a) => a.status === "uploading")
+
+  function handleClose() {
+    form.reset()
+    editor?.commands.clearContent()
     setAttachments([])
-    setError(null)
+    setGlobalError(null)
     setOpen(false)
   }
 
-  async function handleSend(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setIsSending(true)
-    setError(null)
+  // Upload files immediately on selection
+  async function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files ?? [])
+    e.target.value = ""
+    if (selected.length === 0) return
+
+    // Filter out already-added files
+    const fresh = selected.filter(
+      (f) => !attachments.some((a) => a.file.name + a.file.size === f.name + f.size)
+    )
+    if (fresh.length === 0) return
+
+    // Add as uploading
+    setAttachments((prev) => [
+      ...prev,
+      ...fresh.map((file) => ({ file, status: "uploading" as const })),
+    ])
 
     try {
-      const formData = new FormData(e.currentTarget)
-      const to = formData.get("to") as string
-      const subject = (formData.get("subject") as string) || ""
-      const bodyText = (formData.get("body") as string) || ""
+      const links = await createUploadLinks(
+        fresh.map((f) => ({
+          originalName: f.name,
+          mimeType: f.type || undefined,
+          size: f.size,
+        }))
+      )
 
-      // Request presigned upload URLs, then PUT each file directly to S3
-      let uploadedFiles: UploadedFile[] = []
-      if (attachments.length > 0) {
-        const links = await createUploadLinks(
-          attachments.map((f) => ({
-            originalName: f.name,
-            mimeType: f.type || undefined,
-            size: f.size,
-          }))
-        )
-
-        await Promise.all(
-          links.map(({ uploadUrl }, i) =>
-            fetch(uploadUrl, {
-              method: "PUT",
-              body: attachments[i],
-              headers: {
-                "Content-Type":
-                  attachments[i].type || "application/octet-stream",
-              },
-            })
-          )
-        )
-
-        uploadedFiles = links.map((l) => l.file)
-      }
-
-      const bodyHtml = buildEmailHtml(bodyText, uploadedFiles)
-
-      await sendMail({
-        to: [to],
-        subject,
-        bodyHtml,
-        bodyText,
-      })
-
-      formRef.current?.reset()
-      setAttachments([])
-      setOpen(false)
+      await Promise.allSettled(
+        links.map(async ({ uploadUrl, file: uploadedFile }, i) => {
+          const target = fresh[i]
+          try {
+            // Proxy through Next.js to avoid browser CORS restrictions on S3 PUT.
+            const form = new FormData()
+            form.append("file", target)
+            form.append("uploadUrl", uploadUrl)
+            if (uploadedFile.mimeType) form.append("mimeType", uploadedFile.mimeType)
+            const res = await fetch("/api/s3-upload", { method: "POST", body: form })
+            if (!res.ok) throw new Error(`Upload failed: ${res.status}`)
+            setAttachments((prev) =>
+              prev.map((a) =>
+                a.file === target ? { ...a, status: "done", uploadedFile } : a
+              )
+            )
+          } catch {
+            setAttachments((prev) =>
+              prev.map((a) =>
+                a.file === target ? { ...a, status: "error" } : a
+              )
+            )
+          }
+        })
+      )
     } catch {
-      setError("Failed to send. Please try again.")
-    } finally {
-      setIsSending(false)
+      // createUploadLinks failed — mark all fresh files as error
+      setAttachments((prev) =>
+        prev.map((a) =>
+          fresh.includes(a.file) ? { ...a, status: "error" } : a
+        )
+      )
     }
-  }
-
-  function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
-    setAttachments((prev) => {
-      const existing = new Set(prev.map((f) => f.name + f.size))
-      return [...prev, ...files.filter((f) => !existing.has(f.name + f.size))]
-    })
-    e.target.value = ""
   }
 
   function removeAttachment(index: number) {
     setAttachments((prev) => prev.filter((_, i) => i !== index))
   }
 
+  async function onSubmit(data: ComposeEmailSchema) {
+    setGlobalError(null)
+    try {
+      const uploadedFiles = attachments
+        .filter((a) => a.status === "done" && a.uploadedFile)
+        .map((a) => a.uploadedFile!)
+
+      let bodyHtml = editor?.getHTML() ?? ""
+      if (uploadedFiles.length > 0) {
+        bodyHtml += buildAttachmentsHtml(uploadedFiles)
+      }
+
+      const result = await sendMail({
+        to: [data.to],
+        subject: data.subject,
+        bodyHtml,
+      })
+
+      if (!result) throw new Error("Send failed")
+
+      handleClose()
+    } catch {
+      setGlobalError("Failed to send. Please try again.")
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true) }}>
       <DialogTrigger asChild>
         <Button className="w-full gap-2">
           <PenLine className="size-4" />
@@ -154,11 +304,11 @@ export const ComposeEmailDialog: FunctionComponent = () => {
         </DialogHeader>
 
         <form
-          ref={formRef}
-          id="compose-email-form"
-          onSubmit={handleSend}
-          className="flex flex-col"
+          id="compose-form"
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-col overflow-hidden"
         >
+          {/* To */}
           <fieldset className="flex items-center gap-3 border-b px-6 py-3">
             <Label
               htmlFor="compose-to"
@@ -166,17 +316,24 @@ export const ComposeEmailDialog: FunctionComponent = () => {
             >
               To
             </Label>
-            <Input
-              id="compose-to"
+            <Controller
+              control={form.control}
               name="to"
-              type="email"
-              placeholder="recipient@example.com"
-              required
-              disabled={isSending}
-              className="border-none bg-transparent px-0 shadow-none focus-visible:ring-0"
+              render={({ field, fieldState }) => (
+                <Input
+                  id="compose-to"
+                  type="email"
+                  placeholder="recipient@example.com"
+                  disabled={isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  className="border-none bg-transparent px-0 shadow-none focus-visible:ring-0"
+                  {...field}
+                />
+              )}
             />
           </fieldset>
 
+          {/* Subject */}
           <fieldset className="flex items-center gap-3 border-b px-6 py-3">
             <Label
               htmlFor="compose-subject"
@@ -184,56 +341,102 @@ export const ComposeEmailDialog: FunctionComponent = () => {
             >
               Subject
             </Label>
-            <Input
-              id="compose-subject"
+            <Controller
+              control={form.control}
               name="subject"
-              type="text"
-              placeholder="Subject"
-              disabled={isSending}
-              className="border-none bg-transparent px-0 shadow-none focus-visible:ring-0"
+              render={({ field }) => (
+                <Input
+                  id="compose-subject"
+                  type="text"
+                  placeholder="Subject"
+                  disabled={isSubmitting}
+                  className="border-none bg-transparent px-0 shadow-none focus-visible:ring-0"
+                  {...field}
+                />
+              )}
             />
           </fieldset>
 
-          <Textarea
-            name="body"
-            placeholder="Write your message here..."
-            disabled={isSending}
-            className="min-h-56 resize-none rounded-none border-none bg-transparent px-6 py-4 shadow-none focus-visible:ring-0"
+          {/* Toolbar */}
+          {editor && <Toolbar editor={editor} disabled={isSubmitting} />}
+
+          {/* Editor */}
+          <EditorContent
+            editor={editor}
+            className={cn(
+              "min-h-48 flex-1 overflow-auto px-6 py-4 text-sm",
+              "[&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-40",
+              "[&_.ProseMirror_h1]:text-2xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:my-1",
+              "[&_.ProseMirror_h2]:text-xl [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:my-1",
+              "[&_.ProseMirror_h3]:text-lg [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:my-1",
+              "[&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-4",
+              "[&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-4",
+              "[&_.ProseMirror_li]:my-0.5",
+              "[&_.ProseMirror_blockquote]:border-l-2 [&_.ProseMirror_blockquote]:border-muted-foreground/40 [&_.ProseMirror_blockquote]:pl-3 [&_.ProseMirror_blockquote]:text-muted-foreground",
+              "[&_.ProseMirror_code]:bg-muted [&_.ProseMirror_code]:rounded [&_.ProseMirror_code]:px-1 [&_.ProseMirror_code]:font-mono [&_.ProseMirror_code]:text-xs",
+              "[&_.ProseMirror_pre]:bg-muted [&_.ProseMirror_pre]:rounded-lg [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:my-2 [&_.ProseMirror_pre]:font-mono [&_.ProseMirror_pre]:text-xs",
+            )}
           />
 
+          {/* Attachments */}
           {attachments.length > 0 && (
             <ul className="flex flex-wrap gap-2 border-t px-6 py-3">
-              {attachments.map((file, i) => (
+              {attachments.map((entry, i) => (
                 <li
                   key={i}
-                  className="flex max-w-48 items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-xs"
+                  className={cn(
+                    "flex max-w-48 items-center gap-2 rounded-lg border px-3 py-1.5 text-xs",
+                    entry.status === "error"
+                      ? "border-destructive/30 bg-destructive/5 text-destructive"
+                      : "bg-muted/50"
+                  )}
                 >
-                  <FileText className="size-3.5 shrink-0 text-muted-foreground" />
-                  <span className="truncate font-medium">{file.name}</span>
-                  <span className="shrink-0 text-muted-foreground">
-                    {formatBytes(file.size)}
-                  </span>
+                  {entry.status === "uploading" ? (
+                    <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+                  ) : (
+                    <FileText
+                      className={cn(
+                        "size-3.5 shrink-0",
+                        entry.status === "error"
+                          ? "text-destructive"
+                          : "text-muted-foreground"
+                      )}
+                    />
+                  )}
+                  <span className="truncate font-medium">{entry.file.name}</span>
+                  {entry.status === "done" && (
+                    <span className="shrink-0 text-muted-foreground">
+                      {formatBytes(entry.file.size)}
+                    </span>
+                  )}
+                  {entry.status === "error" && (
+                    <span className="shrink-0 text-destructive">Error</span>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeAttachment(i)}
-                    disabled={isSending}
-                    className="ml-1 shrink-0 rounded-sm text-muted-foreground hover:text-foreground disabled:pointer-events-none"
+                    disabled={isSubmitting}
+                    className="ml-auto shrink-0 rounded-sm opacity-60 hover:opacity-100 disabled:pointer-events-none"
                   >
                     <X className="size-3" />
-                    <span className="sr-only">Remove {file.name}</span>
+                    <span className="sr-only">Remove {entry.file.name}</span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
 
-          {error && (
-            <p className="border-t px-6 py-2 text-xs text-destructive">
-              {error}
-            </p>
+          {/* Global error */}
+          {globalError && (
+            <div className="border-t px-6 py-3">
+              <Alert variant="destructive">
+                <AlertDescription>{globalError}</AlertDescription>
+              </Alert>
+            </div>
           )}
         </form>
 
+        {/* Footer */}
         <div className="flex items-center gap-2 border-t px-4 py-3">
           <input
             ref={fileInputRef}
@@ -247,12 +450,15 @@ export const ComposeEmailDialog: FunctionComponent = () => {
             type="button"
             variant="ghost"
             size="icon"
-            disabled={isSending}
+            disabled={isSubmitting}
             onClick={() => fileInputRef.current?.click()}
             title="Attach files"
           >
             <Paperclip
-              className={cn("size-4", attachments.length > 0 && "text-primary")}
+              className={cn(
+                "size-4",
+                attachments.length > 0 && "text-primary"
+              )}
             />
             <span className="sr-only">Attach files</span>
           </Button>
@@ -260,8 +466,8 @@ export const ComposeEmailDialog: FunctionComponent = () => {
             type="button"
             variant="ghost"
             size="icon"
-            disabled={isSending}
-            onClick={handleDiscard}
+            disabled={isSubmitting}
+            onClick={handleClose}
             className="text-muted-foreground hover:text-destructive"
             title="Discard"
           >
@@ -270,16 +476,16 @@ export const ComposeEmailDialog: FunctionComponent = () => {
           </Button>
           <Button
             type="submit"
-            form="compose-email-form"
-            disabled={isSending}
+            form="compose-form"
+            disabled={!form.formState.isValid || isSubmitting || hasUploading}
             className="ml-auto gap-2"
           >
-            {isSending ? (
+            {isSubmitting ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <Send className="size-4" />
             )}
-            {isSending ? "Sending…" : "Send"}
+            {isSubmitting ? "Sending…" : hasUploading ? "Uploading…" : "Send"}
           </Button>
         </div>
       </DialogContent>
