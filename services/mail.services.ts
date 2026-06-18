@@ -4,7 +4,7 @@ import {
   SetupMailAccountProfileSchema,
   SignInSchema,
 } from "@/schemas/auth.schemas"
-import type { MailAccountProfile } from "@/types"
+import type { Mail, MailAccountProfile } from "@/types"
 import { cookies } from "next/headers"
 
 export const getMailAccountProfile =
@@ -13,6 +13,18 @@ export const getMailAccountProfile =
     if (resp instanceof Error) return null
     return resp
   }
+
+export const getReceivedMails = async (): Promise<Mail[]> => {
+  const resp = await GET<Mail[]>("/mails/received")
+  if (resp instanceof Error) return []
+  return resp
+}
+
+export const getSentMails = async (): Promise<Mail[]> => {
+  const resp = await GET<Mail[]>("/mails/sent")
+  if (resp instanceof Error) return []
+  return resp
+}
 
 export const setupMailAccountProfile = async (
   data: SetupMailAccountProfileSchema

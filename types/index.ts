@@ -19,6 +19,25 @@ export type AuthToken = {
   expiresAt: Date | null
 }
 
+export type Mail = {
+  id: number
+  mailAccountId: number
+  fromEmail: string
+  toAddresses: string[]
+  ccAddresses: string[] | null
+  bccAddresses: string[] | null
+  replyTo: string | null
+  subject: string
+  bodyHtml: string | null
+  bodyText: string | null
+  status: string
+  direction: "inbound" | "outbound"
+  sesMessageId: string | null
+  attachmentIds: string[] | null
+  createdAt: string
+  updatedAt: string | null
+}
+
 export type MailAccountProfile = {
   id: number
   email: string

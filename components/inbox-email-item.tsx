@@ -1,6 +1,6 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import {
   ContextMenu,
@@ -11,20 +11,34 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import { cn } from "@/lib/utils"
-import type { MockEmail } from "@/data/mock-emails"
-import {
-  Archive,
-  Forward,
-  MailOpen,
-  Reply,
-  Star,
-  Trash2,
-} from "lucide-react"
+import type { Mail } from "@/types"
+import { Archive, Forward, MailOpen, Reply, Star, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { FunctionComponent } from "react"
 
+function emailInitials(email: string) {
+  const local = email.split("@")[0]
+  const parts = local.split(/[._-]/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return local.slice(0, 2).toUpperCase()
+}
+
+function formatMailDate(dateStr: string) {
+  const date = new Date(dateStr)
+  const now = new Date()
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday"
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86400000)
+  if (diffDays < 7) return date.toLocaleDateString([], { weekday: "short" })
+  return date.toLocaleDateString([], { month: "short", day: "numeric" })
+}
+
 type InboxEmailItemProps = {
-  mail: MockEmail
+  mail: Mail
   isSelected: boolean
 }
 
@@ -32,6 +46,16 @@ export const InboxEmailItem: FunctionComponent<InboxEmailItemProps> = ({
   mail,
   isSelected,
 }) => {
+  const displayEmail =
+    mail.direction === "inbound"
+      ? mail.fromEmail
+      : (mail.toAddresses[0] ?? "")
+  const initials = emailInitials(displayEmail)
+  const preview =
+    mail.bodyText?.slice(0, 120) ??
+    mail.bodyHtml?.replace(/<[^>]+>/g, "").slice(0, 120) ??
+    ""
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -44,29 +68,25 @@ export const InboxEmailItem: FunctionComponent<InboxEmailItemProps> = ({
           )}
         >
           <Avatar className="mt-0.5 size-12 shrink-0">
-            <AvatarImage
-              src={`https://i.pravatar.cc/48?u=${mail.avatarSeed}`}
-              alt={mail.sender}
-            />
-            <AvatarFallback>{mail.initials}</AvatarFallback>
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate text-sm font-semibold">
-                {mail.sender}
+                {displayEmail}
               </span>
               <span className="shrink-0 text-xs text-muted-foreground">
-                {mail.time}
+                {formatMailDate(mail.createdAt)}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <h4 className="truncate text-sm font-medium">{mail.subject}</h4>
-              {mail.unread && (
+              {mail.status === "pending" && (
                 <Badge className="size-2 shrink-0 rounded-full p-0" />
               )}
             </div>
             <p className="line-clamp-2 text-xs text-muted-foreground">
-              {mail.preview}
+              {preview}
             </p>
           </div>
         </Link>
@@ -88,7 +108,7 @@ export const InboxEmailItem: FunctionComponent<InboxEmailItemProps> = ({
 
         <ContextMenuItem>
           <MailOpen className="size-4" />
-          {mail.unread ? "Mark as read" : "Mark as unread"}
+          Mark as read
           <ContextMenuShortcut>⌘U</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuItem>
