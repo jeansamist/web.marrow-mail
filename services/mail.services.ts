@@ -4,7 +4,7 @@ import {
   SetupMailAccountProfileSchema,
   SignInSchema,
 } from "@/schemas/auth.schemas"
-import type { Mail, MailAccountProfile, UploadLink } from "@/types"
+import type { Mail, MailAccountProfile, UploadedFile, UploadLink } from "@/types"
 import { cookies } from "next/headers"
 
 export const getMailAccountProfile =
@@ -26,15 +26,32 @@ export const getSentMails = async (): Promise<Mail[]> => {
   return resp
 }
 
-export const createUploadLinks = async (
-  files: { originalName: string; mimeType?: string; size?: number }[]
-): Promise<UploadLink[]> => {
-  const resp = await POST<
+export const uploadFiles = async (
+  files: { name: string; type: string; size: number; data: Uint8Array }[]
+): Promise<(UploadedFile | null)[]> => {
+  const links = await POST<
     { files: { originalName: string; mimeType?: string; size?: number }[] },
     UploadLink[]
-  >("/storage/upload-links", { files })
-  if (resp instanceof Error) return []
-  return resp
+  >("/storage/upload-links", {
+    files: files.map((f) => ({
+      originalName: f.name,
+      mimeType: f.type || undefined,
+      size: f.size,
+    })),
+  })
+  if (links instanceof Error) return files.map(() => null)
+
+  const results = await Promise.allSettled(
+    links.map(async ({ uploadUrl, file }, i) => {
+      const headers: HeadersInit = {}
+      if (file.mimeType) headers["Content-Type"] = file.mimeType
+      const res = await fetch(uploadUrl, { method: "PUT", body: Buffer.from(files[i].data), headers })
+      if (!res.ok) throw new Error(`S3 PUT failed: ${res.status}`)
+      return file
+    })
+  )
+
+  return results.map((r) => (r.status === "fulfilled" ? r.value : null))
 }
 
 export const sendMail = async (payload: {

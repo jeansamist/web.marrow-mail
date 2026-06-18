@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { composeEmailSchema, ComposeEmailSchema } from "@/schemas/mail.schemas"
-import { createUploadLinks, sendMail } from "@/services/mail.services"
+import { sendMail, uploadFiles } from "@/services/mail.services"
 import type { UploadedFile } from "@/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Editor, EditorContent, useEditor, useEditorState } from "@tiptap/react"
@@ -197,64 +197,40 @@ export const ComposeEmailDialog: FunctionComponent = () => {
     setOpen(false)
   }
 
-  // Upload files immediately on selection
   async function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files ?? [])
     e.target.value = ""
-    if (selected.length === 0) return
-
-    // Filter out already-added files
     const fresh = selected.filter(
       (f) => !attachments.some((a) => a.file.name + a.file.size === f.name + f.size)
     )
-    if (fresh.length === 0) return
+    if (!fresh.length) return
 
-    // Add as uploading
     setAttachments((prev) => [
       ...prev,
       ...fresh.map((file) => ({ file, status: "uploading" as const })),
     ])
 
     try {
-      const links = await createUploadLinks(
-        fresh.map((f) => ({
-          originalName: f.name,
-          mimeType: f.type || undefined,
+      const fileData = await Promise.all(
+        fresh.map(async (f) => ({
+          name: f.name,
+          type: f.type,
           size: f.size,
+          data: new Uint8Array(await f.arrayBuffer()),
         }))
       )
-
-      await Promise.allSettled(
-        links.map(async ({ uploadUrl, file: uploadedFile }, i) => {
-          const target = fresh[i]
-          try {
-            // Proxy through Next.js to avoid browser CORS restrictions on S3 PUT.
-            const form = new FormData()
-            form.append("file", target)
-            form.append("uploadUrl", uploadUrl)
-            if (uploadedFile.mimeType) form.append("mimeType", uploadedFile.mimeType)
-            const res = await fetch("/api/s3-upload", { method: "POST", body: form })
-            if (!res.ok) throw new Error(`Upload failed: ${res.status}`)
-            setAttachments((prev) =>
-              prev.map((a) =>
-                a.file === target ? { ...a, status: "done", uploadedFile } : a
-              )
-            )
-          } catch {
-            setAttachments((prev) =>
-              prev.map((a) =>
-                a.file === target ? { ...a, status: "error" } : a
-              )
-            )
-          }
+      const results = await uploadFiles(fileData)
+      setAttachments((prev) =>
+        prev.map((a) => {
+          const idx = fresh.indexOf(a.file)
+          if (idx === -1) return a
+          const uploadedFile = results[idx]
+          return uploadedFile ? { ...a, status: "done", uploadedFile } : { ...a, status: "error" }
         })
       )
     } catch {
-      // createUploadLinks failed — mark all fresh files as error
       setAttachments((prev) =>
-        prev.map((a) =>
-          fresh.includes(a.file) ? { ...a, status: "error" } : a
-        )
+        prev.map((a) => (fresh.includes(a.file) ? { ...a, status: "error" } : a))
       )
     }
   }
