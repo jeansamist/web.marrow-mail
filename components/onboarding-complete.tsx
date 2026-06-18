@@ -2,7 +2,7 @@
 
 import { useOnboarding } from "@/contexts/onboarding.context"
 import { useCurrentLocaleUrl, useI18n } from "@/lib/i18n/client"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, Mail } from "lucide-react"
 import Link from "next/link"
 import { FunctionComponent, useEffect } from "react"
 import { Button } from "./ui/button"
@@ -31,6 +31,10 @@ export const OnboardingComplete: FunctionComponent<
         <p className="text-sm leading-normal opacity-70">
           {t("onboarding.complete.description")}
         </p>
+      </div>
+      <div className="flex max-w-sm items-start gap-3 rounded-xl border bg-muted/50 px-4 py-3 text-left text-sm text-muted-foreground">
+        <Mail className="mt-0.5 size-4 shrink-0" />
+        <p className="leading-relaxed">{t("onboarding.complete.profileNotice")}</p>
       </div>
       <Button asChild>
         <Link href={currentLocaleUrl(`/domain/${domainName}/auth/login`)}>

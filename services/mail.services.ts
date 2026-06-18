@@ -26,6 +26,12 @@ export const getSentMails = async (): Promise<Mail[]> => {
   return resp
 }
 
+export const getFiles = async (): Promise<UploadedFile[]> => {
+  const resp = await GET<UploadedFile[]>("/storage/files")
+  if (resp instanceof Error) return []
+  return resp
+}
+
 export const uploadFiles = async (
   files: { name: string; type: string; size: number; data: Uint8Array }[]
 ): Promise<(UploadedFile | null)[]> => {

@@ -1,13 +1,14 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Inbox, Send } from "lucide-react"
+import { Inbox, Paperclip, Send } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const NAV_ITEMS = [
   { label: "Inbox", icon: Inbox, segment: "inbox" },
   { label: "Sent", icon: Send, segment: "sent" },
+  { label: "Files", icon: Paperclip, segment: "files" },
 ]
 
 type Props = { locale: string; domainName: string }

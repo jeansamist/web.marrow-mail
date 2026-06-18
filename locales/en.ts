@@ -257,6 +257,8 @@ export default {
   "onboarding.complete.title": "You're all set!",
   "onboarding.complete.description":
     "Your domain is configured and your email addresses are ready to use.",
+  "onboarding.complete.profileNotice":
+    "Each address owner will receive a welcome email — they should check their inbox to set up their profile and password.",
   "onboarding.complete.cta": "Go to your inbox",
 
   "onboarding.registerDomain.form.domain.label": "Domain name",

@@ -7,6 +7,7 @@ import { useParams, usePathname } from "next/navigation"
 const NAV_ITEMS = [
   { label: "Inbox", segment: "inbox" },
   { label: "Sent", segment: "sent" },
+  { label: "Files", segment: "files" },
 ]
 
 export function MailboxMobileNav() {
