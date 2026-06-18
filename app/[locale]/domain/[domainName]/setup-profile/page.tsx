@@ -1,12 +1,9 @@
 import { SetupProfileForm } from "@/components/forms/setup-profile.form"
-import { getI18n, getStaticParams, setStaticParamsLocale } from "@/lib/i18n/server"
+import { getI18n, setStaticParamsLocale } from "@/lib/i18n/server"
 import { Metadata } from "next"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 
-export function generateStaticParams() {
-  return getStaticParams()
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params

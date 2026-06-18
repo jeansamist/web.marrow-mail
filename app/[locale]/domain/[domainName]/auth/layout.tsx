@@ -1,9 +1,5 @@
-import { getStaticParams } from "@/lib/i18n/server"
 import Image from "next/image"
 
-export function generateStaticParams() {
-  return getStaticParams()
-}
 
 export default async function DomainAuthLayout({
   children,

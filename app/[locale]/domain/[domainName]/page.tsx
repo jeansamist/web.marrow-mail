@@ -1,9 +1,5 @@
-import { getStaticParams } from "@/lib/i18n/server"
 import { redirect } from "next/navigation"
 
-export function generateStaticParams() {
-  return getStaticParams()
-}
 
 export default async function DomainPage({
   params,
