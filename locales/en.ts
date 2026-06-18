@@ -1,5 +1,24 @@
 export default {
-  "common.app-name": "AppName",
+  "common.app-name": "Marrow Mail",
+
+  "home.hero.title": "Your domain.\nYour inbox.",
+  "home.hero.description": "Professional email hosting built around your domain. Own your communications, secure your identity, and stay connected — all in one place.",
+
+  "home.mailbox.title": "My Mailbox",
+  "home.mailbox.description": "Enter your domain to access your inbox",
+  "home.mailbox.placeholder": "yourdomain.com",
+  "home.mailbox.open": "Open",
+
+  "home.features.own.title": "Own your domain",
+  "home.features.own.description": "Use any domain you own for professional email addresses.",
+  "home.features.secure.title": "Private by default",
+  "home.features.secure.description": "End-to-end encrypted. Your messages stay yours.",
+  "home.features.simple.title": "Simple setup",
+  "home.features.simple.description": "Go live in minutes with guided DNS configuration.",
+
+  "home.cta.no-account": "Don't have an account?",
+  "home.cta.get-started": "Get started free",
+  "home.nav.sign-in": "Sign in",
 
   "home.ready.title": "Project ready!",
   "home.ready.description": "You may now add components and start building.",

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useCurrentLocaleUrl } from "@/lib/i18n/client"
+import { useCurrentLocaleUrl, useI18n } from "@/lib/i18n/client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -10,6 +10,7 @@ export function MailboxAccessForm() {
   const [domain, setDomain] = useState("")
   const { currentLocaleUrl } = useCurrentLocaleUrl()
   const router = useRouter()
+  const t = useI18n()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -19,17 +20,17 @@ export function MailboxAccessForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm gap-2">
+    <form onSubmit={handleSubmit} className="flex w-full gap-2">
       <Input
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
-        placeholder="yourdomain.com"
+        placeholder={t("home.mailbox.placeholder")}
         className="flex-1"
         autoComplete="off"
         spellCheck={false}
       />
       <Button type="submit" disabled={!domain.trim()}>
-        Open
+        {t("home.mailbox.open")}
       </Button>
     </form>
   )
