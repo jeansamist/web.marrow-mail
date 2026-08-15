@@ -72,9 +72,10 @@ const apiRequest: ApiFunction = async <PAYLOAD, RESPONSE, RETURN = RESPONSE>(
         typeof error.response.data === "object" &&
         "message" in error.response.data
       ) {
-        return onError
-          ? onError(new Error(error.response?.data.message))
-          : new Error(error.response?.data.message)
+        const apiError = Object.assign(new Error(error.response.data.message), {
+          status: error.response.status,
+        })
+        return onError ? onError(apiError) : apiError
       }
     }
     console.error("[API] Unexpected error:", error)

@@ -1,0 +1,1203 @@
+{
+  "Metadata": {
+    "home": {
+      "title": "MarrowMail — Professional Business Email on Your Own Domain",
+      "description": "Get a professional business email like hello@yourbusiness.com. AI-powered tools, high inbox deliverability, and Mobile Money billing. Setup takes minutes, no card required."
+    },
+    "signup": {
+      "title": "Get Your Business Email — Sign Up",
+      "description": "Create your professional business email account in minutes. No card required — pay with Mobile Money, Visa, or MTN MoMo."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "description": "The terms that govern your use of MarrowMail's business email service."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "How MarrowMail collects, uses, and protects your information."
+    }
+  },
+  "Legal": {
+    "backLabel": "Back to home",
+    "lastUpdated": "Last updated: July 2026",
+    "terms": {
+      "title": "Terms of Service",
+      "intro": "These Terms of Service govern your access to and use of MarrowMail's business email hosting, mailboxes, and related tools. Please read them carefully.",
+      "sections": [
+        {
+          "heading": "Acceptance of Terms",
+          "body": "By creating a MarrowMail account or using our services, you agree to these Terms of Service. If you don't agree, please don't use MarrowMail."
+        },
+        {
+          "heading": "What MarrowMail Provides",
+          "body": "MarrowMail provides professional business email hosting on your own domain, including mailboxes, role-based addresses, storage, and optional AI-powered tools such as summarization, translation, and rewrite assistance."
+        },
+        {
+          "heading": "Your Account",
+          "body": "You're responsible for keeping your login credentials secure and for all activity under your account. You must provide accurate information when signing up and keep it up to date."
+        },
+        {
+          "heading": "Billing & Payment",
+          "body": "Mailboxes are billed per seat, per month, in XAF. We accept Orange Money, MTN MoMo, and major cards. Subscriptions renew automatically unless cancelled before the next billing date; fees already paid are non-refundable except where required by law."
+        },
+        {
+          "heading": "Acceptable Use",
+          "body": "You agree not to use MarrowMail to send spam, malware, or unlawful content, or to impersonate others. We may suspend or terminate accounts that violate this policy or put other customers' deliverability at risk."
+        },
+        {
+          "heading": "AI Features",
+          "body": "Optional AI tools process your email content to generate summaries, translations, and suggested rewrites. We do not use the content of your emails to train AI models or for advertising."
+        },
+        {
+          "heading": "Domains & DNS",
+          "body": "If you connect a domain you already own, you're responsible for maintaining accurate DNS records. MarrowMail is not responsible for delivery issues caused by DNS misconfiguration outside our control."
+        },
+        {
+          "heading": "Service Availability",
+          "body": "We work to keep MarrowMail reliable, but we don't guarantee uninterrupted service. Planned maintenance and unplanned outages may occasionally affect availability."
+        },
+        {
+          "heading": "Termination",
+          "body": "You may cancel your subscription at any time from your dashboard. We may suspend or terminate accounts that violate these terms, with notice where practical."
+        },
+        {
+          "heading": "Limitation of Liability",
+          "body": "MarrowMail is provided \"as is.\" To the extent permitted by law, we aren't liable for indirect or consequential damages arising from your use of the service."
+        },
+        {
+          "heading": "Changes to These Terms",
+          "body": "We may update these terms from time to time. We'll post the updated version here with a new effective date; continued use after changes means you accept them."
+        },
+        {
+          "heading": "Contact",
+          "body": "Questions about these terms? Reach us at support@marrowmail.com."
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "This Privacy Policy explains what information MarrowMail collects, how we use it, and the choices you have.",
+      "sections": [
+        {
+          "heading": "Information We Collect",
+          "body": "We collect account information (name, email, business domain), the content of emails you send and receive through MarrowMail, and basic usage data needed to operate the service."
+        },
+        {
+          "heading": "How We Use Your Information",
+          "body": "We use this information to provide and improve the email service, process payments, respond to support requests, and keep your account secure."
+        },
+        {
+          "heading": "AI Processing",
+          "body": "When you use AI features like summarization or rewrite suggestions, your email content is processed to generate that specific result. We don't use your conversations to train AI models or for ad targeting."
+        },
+        {
+          "heading": "Payments",
+          "body": "Payments are processed by our Mobile Money and card payment partners. MarrowMail does not store your full card number or Mobile Money PIN."
+        },
+        {
+          "heading": "Data Storage & Security",
+          "body": "Your data is encrypted in transit and at rest. We apply industry-standard safeguards to protect your mailbox from unauthorized access."
+        },
+        {
+          "heading": "Sharing of Information",
+          "body": "We don't sell your data. We only share information with service providers who help us run MarrowMail, such as payment processors and infrastructure providers, under confidentiality obligations."
+        },
+        {
+          "heading": "Data Retention",
+          "body": "We retain your account and email data for as long as your account is active. If you close your account, we delete or anonymize your data within a reasonable period, except where we're required to keep it longer by law."
+        },
+        {
+          "heading": "Your Rights",
+          "body": "You can access, export, or request deletion of your data at any time by contacting support or using the tools in your dashboard."
+        },
+        {
+          "heading": "Cookies",
+          "body": "We use essential cookies to keep you signed in and remember your preferences, such as language and sidebar settings."
+        },
+        {
+          "heading": "Children's Privacy",
+          "body": "MarrowMail is intended for business use and isn't directed at children under 16."
+        },
+        {
+          "heading": "Changes to This Policy",
+          "body": "We may update this policy periodically. We'll post changes here with a new effective date."
+        },
+        {
+          "heading": "Contact",
+          "body": "Questions about your data? Reach us at privacy@marrowmail.com."
+        }
+      ]
+    }
+  },
+  "Nav": {
+    "announcement": "NEW: AI Rewrite Assistant is now in every inbox",
+    "links": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "compare": "Compare",
+      "faq": "FAQ",
+      "support": "Support"
+    },
+    "signIn": "Sign in",
+    "cta": "Get my business email"
+  },
+  "Hero": {
+    "badge": "Available now · Pay with Mobile Money",
+    "headline": "Your business deserves better than a Gmail address.",
+    "subhead": "First impressions happen before anyone reads your email — a professional address like hello@yourbusiness.com earns instant trust.",
+    "cta": "Get my business email",
+    "ctaMicroTitle": "Setup in minutes.",
+    "ctaMicroSubtitle": "No card required.",
+    "modulesLabel": "Everything your inbox needs",
+    "modules": [
+      "AI Summaries",
+      "Rewrite Assistant",
+      "Translation",
+      "Role-based inboxes",
+      "Follow-up Reminders",
+      "Encrypted Mail",
+      "Mobile Money"
+    ],
+    "mockup": {
+      "senderName": "Grace Johnson",
+      "senderEmail": "grace@johnsonconsulting.com",
+      "time": "2:30 PM",
+      "subject": "Partnership proposal — Johnson Consulting",
+      "bodyPreview": "Hi Victor, following our call I'd like to formally move forward with the partnership. Could you send the invoice over so we can process payment before the...",
+      "aiTranslateBadge": "AI Summary ready · Translate to French",
+      "storageLabel": "Storage",
+      "storageValue": "10 GB / mailbox",
+      "roleAddressesLabel": "Role addresses"
+    },
+    "trustedLabel": "Trusted by"
+  },
+  "Features": {
+    "eyebrow": "Features",
+    "title": "Everything you need to communicate professionally.",
+    "description": "Built into your inbox — no extra apps, no complicated setup.",
+    "summaries": {
+      "title": "AI summaries",
+      "description": "Long threads, condensed into what actually matters.",
+      "example": "Grace confirmed the partnership and asked for the invoice by Friday."
+    },
+    "roles": {
+      "title": "Role-based addresses",
+      "description": "support@, sales@, info@ — up to 10, free. Competitors charge per seat."
+    },
+    "translation": {
+      "title": "Built-in translation"
+    },
+    "followup": {
+      "title": "Follow-up reminders",
+      "badge": "No reply in 3 days"
+    },
+    "rewrite": {
+      "title": "AI rewrite",
+      "before": "rough draft..."
+    },
+    "secure": {
+      "title": "Private & secure"
+    }
+  },
+  "Compare": {
+    "eyebrow": "Compare",
+    "title": "Why businesses choose MarrowMail.",
+    "description": "Built for professional communication — without the enterprise clutter.",
+    "pickLabel": "Our pick",
+    "headers": {
+      "feature": "Feature",
+      "marrow": "MarrowMail",
+      "google": "Google Workspace",
+      "ms": "Microsoft 365"
+    },
+    "rows": [
+      { "label": "Starting price", "marrow": "2,500 XAF/mo", "google": "6,000 XAF/mo", "ms": "7,500 XAF/mo" },
+      { "label": "Setup experience", "marrow": "Simple & guided", "google": "Complex & technical", "ms": "Complex & technical" },
+      { "label": "Built-in AI tools", "marrow": true, "google": false, "ms": false },
+      { "label": "Role-based emails", "marrow": "5 free (10 on Plus)", "google": "Extra cost per user", "ms": "Extra cost per user" },
+      { "label": "Payment options", "marrow": "Mobile Money + cards", "google": "Cards only", "ms": "Cards only" },
+      { "label": "Focus", "marrow": "Email-first productivity", "google": "Full office suite", "ms": "Full office suite" }
+    ],
+    "cta": "Get my biz email",
+    "footnote": "Competitor pricing converted to XAF for comparison. Actual pricing varies by plan and exchange rate."
+  },
+  "Testimonials": {
+    "eyebrow": "Testimonials",
+    "title": "Businesses are already making the switch.",
+    "items": [
+      { "quote": "Switching to MarrowMail took less than ten minutes. Our client emails finally match our domain, and support has been fast every time we needed it.", "name": "Grace Johnson", "role": "Founder, Johnson Consulting" },
+      { "quote": "The built-in AI tools save my team hours every week. We write better replies faster, and paying with Mobile Money means no more card headaches.", "name": "Mark Davis", "role": "Operations Lead, Davis Logistics" },
+      { "quote": "We moved five role-based inboxes over from Google Workspace and cut our email bill by more than half without losing any features we actually used.", "name": "Sarah Miller", "role": "CEO, Miller Boutique" },
+      { "quote": "Our clients used to ask if we were a real company when they saw our Gmail address. That question stopped the day we switched.", "name": "James Carter", "role": "Managing Director, Carter & Partners" },
+      { "quote": "Setup was genuinely guided, not just documentation. Someone helped us verify our domain and we were sending branded emails the same day.", "name": "Emily Brooks", "role": "Founder, Brooks Beauty Supplies" },
+      { "quote": "Paying with Mobile Money instead of hunting for a card that works internationally saved us so much friction every renewal.", "name": "Laura Bennett", "role": "Owner, Bennett Fashion House" }
+    ]
+  },
+  "Reliability": {
+    "eyebrow": "Reliability",
+    "title": "Business communication starts with a professional email.",
+    "description": "Every proposal, invoice, quotation, and customer reply shapes how people see your business. With professional email that is secure, reliable, and always available, you can communicate with confidence and focus on growing your business.",
+    "points": [
+      {
+        "lead": "Reliable inbox delivery",
+        "description": "So your important emails reach customers when they matter."
+      },
+      {
+        "lead": "Enterprise-grade security",
+        "description": "Protect your business with encrypted email and advanced threat protection."
+      },
+      {
+        "lead": "Intelligent spam & phishing defense",
+        "description": "Keep unwanted emails out while protecting sensitive information."
+      },
+      {
+        "lead": "Easy migration from Gmail",
+        "description": "Move your existing emails with guided support and minimal downtime."
+      },
+      {
+        "lead": "Real human support",
+        "description": "Get help from real people whenever you need it."
+      }
+    ],
+    "card": {
+      "title": "New Customer Reply",
+      "quote": "Looks great! Let's move forward."
+    },
+    "cta": "Start with Professional Email"
+  },
+  "Pricing": {
+    "eyebrow": "Pricing",
+    "title": "Simple pricing. Pick your plan.",
+    "description": "Every plan includes AI tools, secure storage, and Mobile Money billing. Add voice notes with Plus.",
+    "popularBadge": "Most popular",
+    "priceSuffix": "XAF / mailbox / mo",
+    "core": {
+      "name": "Core Plan",
+      "price": "2,500",
+      "storage": "10 GB storage per mailbox",
+      "roleAliases": "5 free role-based addresses"
+    },
+    "plus": {
+      "name": "Plus Plan",
+      "price": "3,500",
+      "storage": "15 GB storage per mailbox",
+      "roleAliases": "10 free role-based addresses",
+      "voiceNotes": "Voice notes for compose & replies"
+    },
+    "included": [
+      "Your own branded email address",
+      "AI summaries & email rewriting",
+      "Built-in translation tools",
+      "Follow-up reminders",
+      "Encrypted email security",
+      "High inbox deliverability",
+      "Guided setup experience"
+    ],
+    "cta": "Get my business email",
+    "microcopy": "Setup in minutes · No card required to start"
+  },
+  "Faq": {
+    "eyebrow": "FAQ",
+    "title": "Frequently asked.",
+    "items": [
+      { "q": "Can I pay with Mobile Money?", "a": "Yes — MarrowMail supports Orange Money and MTN MoMo payments alongside local bank cards. No USD card required." },
+      { "q": "Can I use my existing domain name?", "a": "Yes. During setup we guide you through connecting a domain you already own, or you can register a new one." },
+      { "q": "How long does setup take?", "a": "Most businesses are sending branded email within minutes. Domain verification can take longer depending on your registrar." },
+      { "q": "What are role-based email addresses?", "a": "Shared inboxes like support@, sales@, or info@ that route to your team — up to 10 included free on every plan." },
+      { "q": "Is my email secure?", "a": "All mail is encrypted in transit and at rest. We don't use your conversations for ad targeting or model training." },
+      { "q": "Do I need technical experience?", "a": "No. Setup is guided step by step, and our support team can help verify your domain if you get stuck." }
+    ]
+  },
+  "Cta": {
+    "title": "Ready to leave Gmail behind?",
+    "description": "Build a stronger brand with a professional email address that helps customers trust your business from the very first message.",
+    "reassurance": "No technical setup. No long-term contracts. Just professional email in minutes.",
+    "cta": "Get my business email today",
+    "microcopy": "Setup in minutes · Cards or Mobile Money · Cancel anytime"
+  },
+  "Footer": {
+    "tagline": "Premium, lightweight business email built for modern SMEs and professionals. Pay how you actually pay.",
+    "columns": [
+      {
+        "title": "Product",
+        "links": [
+          { "label": "Features", "href": "/#features" },
+          { "label": "Pricing", "href": "/#pricing" },
+          { "label": "Compare", "href": "/#compare" },
+          { "label": "Setup Guide", "href": "#" },
+          { "label": "Service Status", "href": "#" }
+        ]
+      },
+      {
+        "title": "Resources",
+        "links": [
+          { "label": "Help Center", "href": "/assistance" },
+          { "label": "Migration", "href": "#" },
+          { "label": "Domain Setup", "href": "#" },
+          { "label": "Security", "href": "#" }
+        ]
+      },
+      {
+        "title": "Company",
+        "links": [
+          { "label": "About", "href": "#" },
+          { "label": "Contact", "href": "/assistance" },
+          { "label": "Privacy Policy", "href": "/privacy" },
+          { "label": "Terms", "href": "/terms" }
+        ]
+      }
+    ],
+    "copyright": "© {year} MarrowMail. All rights reserved."
+  },
+  "MobileCta": {
+    "cta": "Get my business email"
+  },
+  "Onboarding": {
+    "back": "Back",
+    "stepLabel": "Step {current} of {total}",
+    "choice": {
+      "title": "Do You Already Have a Domain?",
+      "description": "We'll set things up a little differently depending on your answer.",
+      "yesTitle": "Yes, I have a domain",
+      "yesDescription": "I'll connect a domain I already own, like yourbusiness.com.",
+      "noTitle": "No, I need one",
+      "noDescription": "Help me search for and register a new domain.",
+      "continue": "Continue"
+    },
+    "domainEnter": {
+      "title": "Enter Your Domain",
+      "description": "Enter the domain you already own. We'll show you the DNS records to add once you've set up your mailboxes.",
+      "label": "Domain name",
+      "placeholder": "yourbusiness.com",
+      "error": "Enter a valid domain, like yourbusiness.com.",
+      "continue": "Continue",
+      "submitting": "Registering…",
+      "registerError": "Something went wrong registering your domain. Please try again.",
+      "domainTakenError": "This domain is already registered to another account."
+    },
+    "domainSearch": {
+      "title": "Find Your Domain",
+      "description": "Search for a domain name for your business email.",
+      "placeholder": "Your business name",
+      "search": "Search",
+      "perYear": "{price}/yr",
+      "available": "Available",
+      "taken": "Taken",
+      "continue": "Continue"
+    },
+    "plan": {
+      "title": "Choose Your Plan",
+      "description": "Pick the package that fits your team. You can switch plans anytime from Subscription settings.",
+      "coreName": "Core Plan",
+      "plusName": "Plus Plan",
+      "priceSuffix": "/ mailbox / mo",
+      "storage": "{gb} GB storage per mailbox",
+      "roleAliases": "{count} free role-based addresses",
+      "voiceNotes": "Voice notes for compose & replies",
+      "popularBadge": "Most popular",
+      "continue": "Continue"
+    },
+    "mailboxes": {
+      "title": "Set Up Your Mailboxes",
+      "description": "You're the account owner. Create mailboxes for yourself or your team, and assign them to teammates now or leave that for later.",
+      "mailboxLabel": "Mailbox {index}",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "hello",
+      "assignLabel": "Assign to a team member",
+      "assignedTo": "Assigned to {email}",
+      "assignedToNamed": "Assigned to {name} ({email})",
+      "fullNamePlaceholder": "Full name",
+      "assignPlaceholder": "teammate@personalmail.com",
+      "removeAssign": "Remove assignment",
+      "rowError": "Enter a username.",
+      "addAnother": "Add another mailbox",
+      "billingDurationLabel": "Billing duration",
+      "durationLabel": "{months, plural, one {# month} other {# months}}",
+      "save": "Save {percent}%",
+      "noDiscount": "No discount",
+      "summaryLine": "{count, plural, one {# mailbox} other {# mailboxes}} × {months, plural, one {# month} other {# months}}",
+      "perMonth": "{price}/mo per mailbox",
+      "totalLabel": "Total due today",
+      "continue": "Continue to Payment",
+      "creatingAccounts": "Setting up your mailboxes…",
+      "creationError": "Payment succeeded, but we couldn't create your mailboxes. Please try again."
+    },
+    "payment": {
+      "domainTitle": "Pay for Your Domain",
+      "domainDescription": "This registers the domain and configures its DNS automatically.",
+      "mailboxTitle": "Pay for Your Mailboxes",
+      "mailboxDescription": "One charge covers every mailbox you set up today.",
+      "total": "Total",
+      "payWith": "Pay with",
+      "processing": "Processing payment…",
+      "pay": "Pay {amount}",
+      "declinedTitle": "Payment couldn't be completed",
+      "declinedDescription": "Your {method} payment was declined. No charge was made — try again or use a different payment method.",
+      "retry": "Retry payment",
+      "simulateDecline": "Preview: simulate a declined payment",
+      "phoneLabel": "Mobile money phone number",
+      "phonePlaceholder": "e.g. 677123456",
+      "phoneRequired": "Enter the phone number linked to your mobile money account",
+      "waitingTitle": "Approve the payment on your phone",
+      "waitingDescription": "We sent a payment prompt to {phone}. Approve it on your phone to continue.",
+      "waitingTimeoutTitle": "Still waiting for approval",
+      "waitingTimeoutDescription": "This is taking longer than expected. You can keep waiting or try a different payment method.",
+      "keepWaiting": "Keep waiting",
+      "cardSectionLabel": "Card details",
+      "genericErrorTitle": "Something went wrong",
+      "genericErrorDescription": "We couldn't reach the payment provider. Please try again.",
+      "cardUnavailableError": "Card payments aren't available right now. Please pay with mobile money instead."
+    },
+    "registeringDomain": {
+      "title": "Registering {domain}…",
+      "description": "We're registering your domain and configuring its DNS automatically. This only takes a moment.",
+      "successTitle": "{domain} is yours!",
+      "successDescription": "Your payment was successful and your domain is registered. Next, let's set up your mailboxes.",
+      "continueCta": "Set up my mailboxes"
+    },
+    "dns": {
+      "title": "Add These DNS Records",
+      "description": "Copy each record into {domain}'s DNS settings at your registrar. Changes usually apply within minutes, but can take up to 24 to 48 hours to fully propagate.",
+      "loadingRecords": "Loading your DNS records…",
+      "priority": "priority {value}",
+      "pendingMessage": "Not detected yet. DNS changes can take a little time to propagate, so try again shortly or finish this later from your dashboard.",
+      "checking": "Checking DNS…",
+      "verified": "Verified",
+      "verify": "Verify DNS",
+      "finishLater": "Finish this later, take me to my dashboard",
+      "stillStuck": "Still not verifying?",
+      "troubleshootTip1": "Double-check each record was copied exactly, with no extra spaces.",
+      "troubleshootTip2": "Confirm the records were saved at your domain registrar, not just added locally.",
+      "troubleshootTip3": "DNS changes can take up to 24–48 hours to fully propagate worldwide.",
+      "contactSupport": "Contact support"
+    },
+    "success": {
+      "title": "You're All Set!",
+      "description": "{domain} is ready and your mailboxes are live.",
+      "mailboxesLabel": "Your mailboxes",
+      "unassigned": "Not assigned yet",
+      "cta": "Go to My Dashboard"
+    }
+  },
+  "Dashboard": {
+    "nav": {
+      "overview": "Workspace",
+      "mailboxes": "Mailboxes",
+      "domains": "Domains",
+      "storage": "Storage",
+      "aiCredits": "AI Credits",
+      "subscription": "Subscription",
+      "settings": "Team Login",
+      "openMailbox": "Open Mailbox",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "addMailbox": "Add mailbox"
+    },
+    "adminConsole": "Admin console",
+    "adminLabel": "Admin",
+    "dnsIncompleteTitle": "DNS setup incomplete",
+    "dnsIncompleteDescription": "Your mailboxes won't send or receive mail until DNS is verified for {domain}.",
+    "finishDns": "Finish DNS setup",
+    "planSummary": "{count, plural, one {# mailbox} other {# mailboxes}}",
+    "systemsOperational": "All systems operational",
+    "greeting": {
+      "morning": "Good morning 👋",
+      "morningNamed": "Good morning, {name} 👋",
+      "afternoon": "Good afternoon 👋",
+      "afternoonNamed": "Good afternoon, {name} 👋",
+      "evening": "Good evening 👋",
+      "eveningNamed": "Good evening, {name} 👋"
+    },
+    "adaptive": {
+      "firstLogin": "Let's set up your first mailbox to get started.",
+      "domainNotVerified": "Your domain still needs verification — complete setup to start sending professional email.",
+      "pendingInvites": "{count, plural, one {A teammate is} other {# teammates are}} waiting to join. Resend invitations or monitor their progress.",
+      "lowStorage": "Storage is running low on {count, plural, one {a mailbox} other {# mailboxes}}. Purchase additional storage to avoid interruptions.",
+      "healthy": "Everything is running smoothly today. Your business email is ready to go."
+    },
+    "loginLink": {
+      "title": "Team login link",
+      "description": "Share this with your team — anyone with a mailbox at {name} signs in here.",
+      "copy": "Copy link",
+      "copied": "Copied"
+    },
+    "storageWarning": {
+      "warningMessage": "Your mailbox ‘{email}’ has reached {percent}% of its {total} GB limit. Free up space or add storage to avoid delivery interruptions.",
+      "criticalMessage": "Your mailbox ‘{email}’ has reached {percent}% of its {total} GB limit. Incoming mail may soon bounce — free up space or add storage right away."
+    },
+    "hero": {
+      "label": "Workspace",
+      "domains": "Domains",
+      "mailboxes": "Mailboxes",
+      "storageUsed": "Total storage",
+      "verified": "Verified workspace",
+      "verificationPending": "Verification pending",
+      "openMailbox": "Open Mailbox"
+    },
+    "create": {
+      "title": "Create",
+      "mailbox": "Create Mailbox",
+      "mailboxDescription": "Create an email account for a team member.",
+      "roleEmail": "Create Role Email",
+      "roleEmailDescription": "Create addresses like support@company.com.",
+      "domain": "Add Domain",
+      "domainDescription": "Connect your business domain to MarrowMail.",
+      "storage": "Buy Storage",
+      "storageDescription": "Expand mailbox storage as your business grows."
+    },
+    "health": {
+      "title": "Workspace health",
+      "allGood": "🟢 Workspace Healthy",
+      "needsAttention": "🟡 Needs Your Attention",
+      "noAction": "No action is required today.",
+      "domainVerified": "Domain verified",
+      "mailboxesHealthy": "Mailboxes healthy",
+      "storageAvailable": "Storage available",
+      "aiCreditsAvailable": "AI credits available",
+      "domainsPending": "Domain verification pending",
+      "pendingInvites": "{count, plural, one {# pending invitation} other {# pending invitations}}",
+      "storageNearLimit": "{count, plural, one {# mailbox} other {# mailboxes}} approaching storage limit"
+    },
+    "activity": {
+      "title": "Activity",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "empty": "Nothing here yet. Activity will show up as you set things up.",
+      "mailboxCreated": "Mailbox {address} created",
+      "invitationAccepted": "{address} accepted their invitation",
+      "roleCreated": "Role email {address} created",
+      "domainConnected": "Domain {address} connected",
+      "storagePurchased": "Storage purchased for {address}"
+    },
+    "mailboxesPage": {
+      "title": "Mailboxes",
+      "subtitle": "Create and manage your company's email accounts.",
+      "addMailbox": "Create Mailbox",
+      "individualTitle": "Individual Mailboxes",
+      "emptyIndividual": "You haven't created a mailbox yet. Create your first professional email address.",
+      "roleTitle": "Role Email Mailboxes",
+      "storageUsage": "{used} GB / {total} GB",
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled",
+        "invitationPending": "Invitation pending",
+        "accepted": "Accepted",
+        "notApplicable": "Not applicable"
+      },
+      "drawer": {
+        "close": "Close",
+        "status": "Status",
+        "invitation": "Invitation",
+        "assignedTo": "Assigned to",
+        "unassigned": "You (not assigned)",
+        "lastLogin": "Last login",
+        "never": "Never",
+        "storage": "Storage",
+        "storageAdded": "{gb} GB added to this mailbox",
+        "passwordResetSent": "Password reset link sent to {email}",
+        "loginLinkCopied": "Login link copied",
+        "inviteLinkCopied": "Invite link copied",
+        "invitationResent": "Invitation resent to {email}",
+        "mailboxDisabled": "Mailbox disabled",
+        "mailboxEnabled": "Mailbox enabled",
+        "deleteConfirm": "Delete {email}? This can't be undone.",
+        "mailboxDeleted": "Mailbox deleted",
+        "deleteError": "Couldn't delete this mailbox. Please try again.",
+        "unavailableSoon": "Coming soon",
+        "storagePolicy": "This mailbox includes {amount} GB of storage. Buy more anytime."
+      },
+      "actions": {
+        "resetPassword": "Reset Password",
+        "copyLoginLink": "Copy Login Link",
+        "copyInviteLink": "Copy Invite Link",
+        "resendInvitation": "Resend Invitation",
+        "disableMailbox": "Disable Mailbox",
+        "enableMailbox": "Enable Mailbox",
+        "deleteMailbox": "Delete Mailbox"
+      },
+      "roles": {
+        "description": "Free, included with your plan — {used} of {limit} used.",
+        "forwardsTo": "Forwards to {email}",
+        "remove": "Remove",
+        "create": "Create Role Email",
+        "createDescription": "Shared inbox like support@ or sales@.",
+        "cancel": "Cancel",
+        "limitReached": "Free limit reached",
+        "created": "{alias} created",
+        "deleted": "Role email removed"
+      }
+    },
+    "addMailboxPage": {
+      "back": "Back to mailboxes",
+      "creationError": "Payment succeeded but we couldn't create your mailbox. Please contact support.",
+      "success": {
+        "title": "Mailbox Created Successfully",
+        "invitationSent": "Invitation sent to {assignedTo}",
+        "createAnother": "Create Another",
+        "viewMailboxes": "View Mailboxes"
+      }
+    },
+    "domainsPage": {
+      "title": "Domains",
+      "subtitle": "Add, verify and monitor the domains connected to your workspace.",
+      "addDomain": "Add Domain",
+      "addDomainPlaceholder": "yourbusiness.com",
+      "addDomainSubmit": "Add",
+      "addDomainError": "Something went wrong adding that domain. Please try again.",
+      "addDomainSuccess": "{domain} was added.",
+      "setDefaultSoon": "Setting a default domain is coming soon",
+      "verified": "Verified",
+      "pending": "DNS pending",
+      "finishSetup": "Finish DNS setup",
+      "finishSetupHint": "One of your domains still needs DNS verification.",
+      "viewDns": "View DNS",
+      "setDefault": "Set Default Domain",
+      "remove": "Remove Domain",
+      "removeConfirm": "Remove {domain}? This can't be undone.",
+      "removeSuccess": "{domain} was removed.",
+      "removeError": "Something went wrong removing that domain. Please try again.",
+      "empty": "No domains yet. Add one to get started.",
+      "dnsDrawer": {
+        "title": "DNS Records",
+        "description": "These are the records added to {domain}'s registrar during setup.",
+        "close": "Close"
+      }
+    },
+    "storagePage": {
+      "title": "Storage",
+      "subtitle": "Monitor how much space your mailboxes are using.",
+      "buyMore": "Buy More Storage",
+      "purchased": "Purchased",
+      "used": "Used",
+      "available": "Available",
+      "purchasedBreakdown": "{base} GB base · {count, plural, one {# active mailbox} other {# active mailboxes}}",
+      "purchasedBreakdownExtra": "{base} GB base + {extra} GB purchased · {count, plural, one {# active mailbox} other {# active mailboxes}}",
+      "topUsageTitle": "Per-mailbox usage",
+      "manage": "Manage"
+    },
+    "aiCreditsPage": {
+      "title": "AI Credits",
+      "subtitle": "Track how your team is using AI writing tools.",
+      "buyMore": "Buy More AI Credits",
+      "purchaseComingSoon": "AI credit purchases are coming soon",
+      "remaining": "Remaining",
+      "ofTotal": "of {total} included",
+      "usedThisMonth": "Used this month",
+      "estimatedRemaining": "Estimated remaining",
+      "days": "{count} days",
+      "mostUsedTitle": "Most used features",
+      "creditsUsed": "{credits} credits · {percent}%",
+      "features": {
+        "rewrite": "Rewrite emails",
+        "summarize": "Summarize emails",
+        "translate": "Translate emails"
+      }
+    },
+    "subscriptionPage": {
+      "title": "Subscription",
+      "subtitle": "Review your plan and manage billing for the workspace.",
+      "currentPlan": "Current plan",
+      "monthlyCost": "Monthly cost",
+      "renewalDate": "Renewal date",
+      "mailboxesLabel": "Mailboxes",
+      "mailboxCount": "{count, plural, one {# mailbox} other {# mailboxes}}",
+      "workspaceStorage": "Workspace storage",
+      "includedAiCredits": "Included AI credits",
+      "costBreakdown": "{count, plural, one {# mailbox at {price}/mo} other {# mailboxes at {price}/mo each}}",
+      "addMailbox": "Add Mailbox",
+      "buyStorage": "Buy Storage",
+      "buyAiCredits": "Buy AI Credits",
+      "yourPlan": "Your plan",
+      "currentPlanBadge": "Current plan",
+      "switchTo": "Switch to {plan}",
+      "planChanged": "Switched to {plan}",
+      "canceledBanner": "Your subscription is canceled. Access continues until {date}.",
+      "reactivate": "Reactivate subscription",
+      "reactivated": "Subscription reactivated",
+      "downgradeModalTitle": "Switch to {plan}?",
+      "downgradeModalRoleAliasWarning": "{plan} only includes {limit} free role-based addresses, but you're using {count}. Remove the extra ones after switching or they'll stop working.",
+      "downgradeModalVoiceNotesWarning": "Voice notes won't be available in compose and replies anymore.",
+      "downgradeModalConfirm": "Switch anyway",
+      "downgradeModalCancel": "Keep current plan",
+      "dangerZoneTitle": "Danger zone",
+      "dangerZoneDescription": "Canceling stops billing at the end of your current period. Your data isn't deleted.",
+      "cancelSubscription": "Cancel subscription",
+      "cancelModalTitle": "Cancel your subscription?",
+      "cancelModalDescription": "Your workspace stays active until {date}. After that, mailboxes will stop sending and receiving mail until you resubscribe.",
+      "cancelModalConfirm": "Cancel subscription",
+      "cancelModalKeep": "Keep my subscription",
+      "subscriptionCanceled": "Subscription canceled"
+    },
+    "settingsPage": {
+      "title": "Team Login",
+      "subtitle": "Shared workspace settings — the domain, language, and login page your whole team uses. Not personal account settings.",
+      "domainLabel": "Connected domain",
+      "languageLabel": "Language",
+      "branding": {
+        "title": "Login page branding",
+        "description": "Customize how the shared login link above looks for your team.",
+        "logoLabel": "Company logo",
+        "logoAlt": "Company logo",
+        "upload": "Upload",
+        "removeLogo": "Remove logo",
+        "companyNameLabel": "Company name",
+        "companyNamePlaceholder": "ABC Company",
+        "welcomeMessageLabel": "Welcome message",
+        "accentColorLabel": "Accent color",
+        "resetAccentColor": "Reset",
+        "customUrlLabel": "Custom login URL",
+        "comingSoon": "Coming soon",
+        "save": "Save changes",
+        "saved": "Login branding saved",
+        "previewTitle": "Example login page",
+        "previewWelcome": "Welcome to {name}",
+        "previewEmail": "Email address",
+        "previewPassword": "Password",
+        "previewSignIn": "Sign In"
+      },
+      "dataSection": {
+        "title": "Your data",
+        "description": "Download a copy of your workspace data, or permanently delete your account.",
+        "exportData": "Export workspace data",
+        "exported": "Workspace data downloaded",
+        "dangerZoneTitle": "Danger zone",
+        "deleteAccount": "Delete account",
+        "deleteModalTitle": "Delete your account?",
+        "deleteModalDescription": "This permanently deletes {domain} and all its mailboxes, role addresses, and settings. This can't be undone.",
+        "deleteModalConfirmLabel": "Type {domain} to confirm",
+        "deleteModalConfirm": "Delete account permanently",
+        "deleteModalCancel": "Keep my account"
+      }
+    },
+    "mailPage": {
+      "folders": {
+        "inbox": "Inbox",
+        "important": "Important",
+        "sent": "Sent",
+        "drafts": "Drafts",
+        "scheduled": "Scheduled",
+        "spam": "Spam",
+        "trash": "Trash"
+      },
+      "foldersSection": "Folders",
+      "addFolder": "Add folder",
+      "newFolderPrompt": "Folder name",
+      "noFolder": "No folder",
+      "moveToFolder": "Move to folder",
+      "contacts": "Contacts",
+      "contactsEmpty": "No contacts yet. They'll show up here once you send or receive mail.",
+      "searchContactsPlaceholder": "Search contacts",
+      "noContactsFound": "No contacts match your search.",
+      "addContactComingSoon": "Adding contacts is coming soon",
+      "teamContacts": "Your team",
+      "externalContacts": "External",
+      "composeToContact": "Email this contact",
+      "messagesCount": "{count, plural, one {# message} other {# messages}}",
+      "lastContacted": "Last contacted {date}",
+      "addToContacts": "Add to contacts",
+      "scheduleMailTo": "Schedule a message",
+      "viewDetails": "View details",
+      "phone": "Phone",
+      "phoneNotProvided": "Not provided",
+      "organization": "Organization",
+      "recentInteractions": "Recent interactions",
+      "noInteractions": "No previous messages with this contact.",
+      "saveContact": "Save contact",
+      "saveContactComingSoon": "Saving contacts is coming soon",
+      "chat": "Chat",
+      "chatComingSoon": "Chat is coming soon",
+      "settingsNav": "Settings",
+      "mailSettingsTitle": "Mail Settings",
+      "displayName": "Display name",
+      "signature": "Signature",
+      "signaturePlaceholder": "Sent from my MarrowMail inbox",
+      "settingsSaved": "Settings saved",
+      "settings": {
+        "pageSubtitle": "Manage your profile, appearance, security, and mail forwarding preferences.",
+        "profileTitle": "Profile",
+        "profileDescription": "Your name and photo appear on every message you send.",
+        "jobTitle": "Job title",
+        "jobTitlePlaceholder": "e.g. Head of Partnerships",
+        "preferredLanguage": "Preferred language",
+        "editPhoto": "Edit",
+        "profileSaved": "Profile saved",
+        "appearanceTitle": "Appearance",
+        "appearanceDescription": "Choose how MarrowMail looks on this device.",
+        "themeLight": "Light",
+        "themeDark": "Dark",
+        "securityTitle": "Security",
+        "securityDescription": "Protect your account with a strong password and extra verification.",
+        "changePassword": "Change password",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "updatePassword": "Update password",
+        "passwordMismatch": "Passwords don't match",
+        "passwordComingSoon": "Changing your password is coming soon",
+        "twoFactorAuth": "Two-factor authentication",
+        "twoFactorEnabled": "Enabled",
+        "twoFactorDisabled": "Disabled",
+        "recoveryEmail": "Recovery email",
+        "recoveryEmailNotSet": "Not set",
+        "addRecoveryEmail": "Add",
+        "recoveryEmailComingSoon": "Recovery email is coming soon",
+        "activeSessions": "Active sessions",
+        "activeSessionsCurrent": "This device • current session",
+        "viewAllSessions": "View all",
+        "sessionsComingSoon": "Viewing active sessions is coming soon",
+        "forwardingTitle": "Email forwarding",
+        "forwardingDescription": "Automatically send a copy of every incoming message to another address.",
+        "forwardingEmailLabel": "Forward to",
+        "forwardingEmailPlaceholder": "you@example.com",
+        "verifyEmail": "Verify email",
+        "verifyEmailSent": "Verification email sent to {email}",
+        "forwardingVerified": "Address verified",
+        "forwardingVerifyRequired": "Verify the address before saving",
+        "keepCopyLabel": "Keep a copy in MarrowMail",
+        "forwardingSaved": "Forwarding settings saved",
+        "signatureTitle": "Email signature",
+        "signatureDescription": "Build a professional sign-off with your contact details and socials.",
+        "includePhoto": "Include profile photo",
+        "phone": "Phone",
+        "phonePlaceholder": "+1 555 000 1234",
+        "website": "Website",
+        "websitePlaceholder": "yourbusiness.com",
+        "businessAddress": "Business address",
+        "businessAddressPlaceholder": "123 Market Street, Suite 400",
+        "includeInNewEmails": "Include signature in new emails",
+        "includeInReplies": "Include signature in replies",
+        "signaturePreview": "Live preview",
+        "signaturePreviewEmpty": "Fill in the fields to preview your signature.",
+        "signatureSaved": "Signature saved",
+        "signatureSaveError": "Couldn't save your signature. Please try again.",
+        "importTitle": "Import mail",
+        "importDescription": "Bring your messages over from Gmail, Outlook, or any other provider."
+      },
+      "import": {
+        "modalTitle": "Import your mail",
+        "selectTitle": "Where's your mail coming from?",
+        "selectDescription": "Choose your current provider and we'll bring your messages into MarrowMail.",
+        "gmailLabel": "Gmail",
+        "gmailSublabel": "Google Workspace or personal Gmail",
+        "outlookLabel": "Outlook",
+        "outlookSublabel": "Microsoft 365 or Outlook.com",
+        "yahooLabel": "Yahoo Mail",
+        "yahooSublabel": "Yahoo or AOL Mail",
+        "icloudLabel": "iCloud Mail",
+        "icloudSublabel": "Apple iCloud Mail",
+        "imapLabel": "Other provider",
+        "imapSublabel": "Connect with an IMAP server address",
+        "connectTitle": "Sign in to {provider}",
+        "connectDescription": "MarrowMail will request read-only access to import your messages. This is a preview experience — no real account is contacted yet.",
+        "emailAddress": "Email address",
+        "emailAddressPlaceholder": "you@example.com",
+        "password": "Password",
+        "passwordPlaceholder": "••••••••",
+        "imapHost": "IMAP server",
+        "imapHostPlaceholder": "imap.example.com",
+        "imapPort": "Port",
+        "back": "Back",
+        "continue": "Continue",
+        "optionsTitle": "What should we import?",
+        "optionsDescription": "Pick which folders to bring over. You can run this again later for anything you skip.",
+        "scopeInbox": "Inbox",
+        "scopeSent": "Sent mail",
+        "scopeAll": "All mail, including archived",
+        "dateRangeLabel": "Date range",
+        "dateRangeAll": "All time",
+        "dateRangeYear": "Last 12 months",
+        "dateRangeMonth": "Last 30 days",
+        "startImport": "Start import",
+        "importingTitle": "Importing your mail from {provider}…",
+        "importingDescription": "This can take a few minutes depending on how much mail you have. Feel free to keep using MarrowMail — we'll let you know when it's done.",
+        "importingCount": "{count} of {total} messages",
+        "successTitle": "All done!",
+        "successDescription": "We imported {count} messages from {provider} into your inbox.",
+        "goToInbox": "Go to inbox",
+        "importedBadge": "Imported",
+        "importedToast": "Imported {count} messages from {provider}"
+      },
+      "save": "Save",
+      "compose": "Compose",
+      "composeTitle": "New Message",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "to": "To",
+      "sendingTo": "Sending to",
+      "addCc": "Cc",
+      "addBcc": "Bcc",
+      "subject": "Subject",
+      "subjectPlaceholder": "Subject",
+      "bodyPlaceholder": "Write your message…",
+      "send": "Send",
+      "cancel": "Cancel",
+      "scheduleSend": "Schedule send",
+      "scheduleSendOff": "Remove scheduled send",
+      "sendAt": "Send at",
+      "messageScheduled": "Message scheduled",
+      "sendsAt": "Sends {date}",
+      "searchPlaceholder": "Search mail",
+      "selectMessage": "Select a message to read",
+      "emptyFolder": "Nothing here yet.",
+      "noMessagesFound": "No messages match your search.",
+      "reply": "Reply",
+      "delete": "Delete",
+      "deleteForever": "Delete forever",
+      "star": "Mark as important",
+      "unstar": "Unmark as important",
+      "markSpam": "Mark as spam",
+      "notSpam": "Not spam",
+      "movedToSpam": "Moved to spam",
+      "markedNotSpam": "Marked as not spam",
+      "messageSent": "Message sent",
+      "movedToTrash": "Moved to trash",
+      "messageDeleted": "Message deleted permanently",
+      "replyComingSoon": "Replying is coming soon",
+      "forward": "Forward",
+      "forwardComingSoon": "Forwarding is coming soon",
+      "archive": "Archive",
+      "messageArchived": "Message archived",
+      "markRead": "Mark as read",
+      "markUnread": "Mark as unread",
+      "replyingTo": "Replying to {email}",
+      "replyPlaceholder": "Write your reply…",
+      "formattingOptions": "Formatting options",
+      "fontFamily": "Font",
+      "fontSize": "Size",
+      "fontSizeSmall": "Small",
+      "fontSizeNormal": "Normal",
+      "fontSizeLarge": "Large",
+      "fontSizeHuge": "Huge",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "textColor": "Text color",
+      "alignLeft": "Align left",
+      "alignCenter": "Align center",
+      "alignRight": "Align right",
+      "alignJustify": "Justify",
+      "indent": "Indent",
+      "outdent": "Decrease indent",
+      "bulletList": "Bulleted list",
+      "numberedList": "Numbered list",
+      "insertLink": "Insert link",
+      "insertLinkPrompt": "Enter a URL",
+      "addFile": "Add file",
+      "insertImage": "Insert image",
+      "recordVoiceMessage": "Record voicemail",
+      "voiceNotesUpsellTitle": "Voice notes are a Plus plan feature",
+      "voiceNotesUpsell": "Voice notes are available on the Plus plan. Upgrade from Settings → Subscription to unlock them.",
+      "stopRecording": "Stop recording",
+      "cancelRecording": "Cancel recording",
+      "micPermissionDenied": "We couldn't access your microphone. Check your browser permissions and try again.",
+      "voiceMessageName": "Voice message ({duration})",
+      "cardColor": "Card color",
+      "reRecord": "Re-record",
+      "attachToMail": "Attach to mail",
+      "playVoiceMessage": "Play voice message",
+      "playVoiceNoteLabel": "Play voice note",
+      "pauseVoiceMessage": "Pause voice message",
+      "confidentialMode": "Turn on confidential mode",
+      "confidentialOn": "Turn off confidential mode",
+      "confidentialNotice": "Confidential mode is on — this message will expire in 7 days.",
+      "insertSignature": "Insert signature",
+      "noSignatureSet": "Create your signature",
+      "discard": "Discard",
+      "replySent": "Reply sent",
+      "downloadAttachment": "Download attachment",
+      "downloadComingSoon": "Downloading is coming soon",
+      "aiAssistant": "AI assistant",
+      "aiComingSoon": "AI assistant is coming soon",
+      "from": "From",
+      "cc": "Cc",
+      "bcc": "Bcc",
+      "backToList": "Back",
+      "logout": "Log out"
+    }
+  },
+  "Signup": {
+    "backLabel": "Back to home",
+    "signInPrompt": "Already have an account?",
+    "signInCta": "Sign in",
+    "panel": {
+      "eyebrow": "Get started",
+      "title": "Set up your business email in minutes.",
+      "description": "Join hundreds of businesses that switched from Gmail to a professional address their customers trust.",
+      "points": [
+        "Your own branded email address",
+        "10 GB secure storage per mailbox",
+        "AI summaries, translation & rewrite tools",
+        "5 free role-based addresses (10 on Plus)",
+        "Pay with Orange Money, MTN MoMo, or card"
+      ],
+      "price": "2,500",
+      "priceSuffix": "XAF / mailbox / mo",
+      "quote": "Switching to MarrowMail took less than ten minutes. Our client emails finally match our domain.",
+      "quoteName": "Grace Johnson",
+      "quoteRole": "Founder, Johnson Consulting"
+    },
+    "form": {
+      "title": "Create Your Account",
+      "description": "No credit card required to get started.",
+      "firstNameLabel": "First name",
+      "firstNamePlaceholder": "Victor",
+      "lastNameLabel": "Last name",
+      "lastNamePlaceholder": "Ilome",
+      "businessNameLabel": "Business name",
+      "businessNamePlaceholder": "Johnson Consulting",
+      "emailLabel": "Your email",
+      "emailHint": "Use an email you already check, like Gmail. You'll create your business email next.",
+      "emailPlaceholder": "you@gmail.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "submit": "Create my business email",
+      "terms": "By continuing, you agree to MarrowMail's <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
+      "submitting": "Creating your account…",
+      "submitError": "Something went wrong. Please try again.",
+      "emailTakenError": "An account with this email already exists."
+    }
+  },
+  "SignIn": {
+    "backLabel": "Back to home",
+    "signUpPrompt": "Don't have an account?",
+    "signUpCta": "Sign up",
+    "eyebrow": "Welcome back",
+    "title": "Sign in to your workspace",
+    "description": "Enter your email and password to access your MarrowMail dashboard.",
+    "panel": {
+      "eyebrow": "Welcome back",
+      "title": "Your business email, right where you left it.",
+      "description": "Sign in to manage every mailbox, domain, and teammate from one dashboard.",
+      "points": [
+        "Enterprise-grade security on every mailbox",
+        "Real-time delivery across your whole team",
+        "Support that responds in minutes, not days"
+      ],
+      "stat": "99.9%",
+      "statLabel": "uptime SLA",
+      "secureBadge": "Encrypted sign-in",
+      "quote": "Switching to MarrowMail took less than ten minutes. Our client emails finally match our domain.",
+      "quoteName": "Grace Johnson",
+      "quoteRole": "Founder, Johnson Consulting"
+    },
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@gmail.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "forgotPassword": "Forgot password?",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "unverifiedTitle": "Verify your email to continue",
+    "unverifiedDescription": "We sent a verification code to {email}. Enter it to activate your account.",
+    "unverifiedCta": "Verify my email",
+    "invalidCredentialsError": "Incorrect email or password.",
+    "terms": "By continuing, you agree to MarrowMail's <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>."
+  },
+  "ForgotPassword": {
+    "backLabel": "Back to sign in",
+    "eyebrow": "Reset your password",
+    "title": "Forgot your password?",
+    "description": "Enter the email you sign in with and we'll send you a link to reset your password.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@gmail.com",
+    "submit": "Send reset link",
+    "submitting": "Sending…",
+    "sentTitle": "Check your email",
+    "sentDescription": "If an account exists for {email}, we've sent a link to reset your password.",
+    "sentBackCta": "Back to sign in",
+    "resendPrompt": "Didn't get it?",
+    "resendCta": "Send again",
+    "submitError": "Something went wrong. Please try again."
+  },
+  "ResetPassword": {
+    "backLabel": "Back to sign in",
+    "eyebrow": "Reset your password",
+    "title": "Choose a new password",
+    "description": "Enter a new password for your MarrowMail workspace.",
+    "passwordLabel": "New password",
+    "passwordPlaceholder": "At least 8 characters",
+    "confirmLabel": "Confirm new password",
+    "confirmPlaceholder": "Re-enter your new password",
+    "mismatchError": "Passwords don't match.",
+    "submit": "Reset password",
+    "submitting": "Resetting…",
+    "successTitle": "Password updated",
+    "successDescription": "Your password has been reset. You can now sign in with your new password.",
+    "successCta": "Go to sign in",
+    "invalidLinkTitle": "This link is no longer valid",
+    "invalidLinkDescription": "Reset links expire after an hour, or this one is missing its token. Request a new one to continue.",
+    "invalidLinkCta": "Request a new link",
+    "tokenError": "This reset link is invalid or has expired. Please request a new one.",
+    "submitError": "Something went wrong. Please try again."
+  },
+  "Logout": {
+    "signingOut": "Signing you out…"
+  },
+  "VerifyEmail": {
+    "backLabel": "Back to sign in",
+    "eyebrow": "Almost there",
+    "title": "Verify your email",
+    "description": "We sent a 6-digit code to {email}. Enter it below to activate your account.",
+    "emailLabel": "Email",
+    "codeLabel": "Verification code",
+    "codePlaceholder": "123456",
+    "submit": "Verify email",
+    "submitting": "Verifying…",
+    "invalidCodeError": "That code is invalid or has expired. Double-check it or request a new one.",
+    "backToSignupCta": "Wrong email or need a new code? <link>Go back to sign up</link>"
+  },
+  "AcceptInvite": {
+    "backLabel": "Back to home",
+    "eyebrow": "You're invited",
+    "title": "Join {domain}",
+    "description": "{email} has been invited to a mailbox on {domain}. Set a name and password to finish setting up your account.",
+    "genericDescription": "You've been invited to join a MarrowMail workspace. Set a name and password to finish setting up your account.",
+    "nameLabel": "Your name",
+    "namePlaceholder": "e.g. Grace Johnson",
+    "passwordLabel": "Create a password",
+    "passwordPlaceholder": "At least 8 characters",
+    "submit": "Accept invitation",
+    "successTitle": "You're all set",
+    "successDescription": "Your account is ready. Sign in to {email} whenever you're ready to check your mail.",
+    "successCta": "Sign in to your mailbox",
+    "invalidTitle": "This invite link looks incomplete",
+    "invalidDescription": "Ask whoever invited you to resend the invitation link."
+  },
+  "TeamLogin": {
+    "title": "Team sign in",
+    "welcomeTitle": "Welcome to {name}",
+    "description": "Sign in to access your mailbox.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@{domain}",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "submit": "Sign in",
+    "mailboxNotFound": "We couldn't find a mailbox with that email address.",
+    "notFoundTitle": "We couldn't find that workspace",
+    "notFoundDescription": "There's no MarrowMail workspace connected to {domain} in this browser.",
+    "ownerNote": "Are you the workspace owner? <link>Sign in to the admin dashboard</link>."
+  },
+  "Assistance": {
+    "backLabel": "Back to home",
+    "eyebrow": "We're here to help",
+    "title": "Request free technical assistance",
+    "description": "Stuck on domain setup, DNS verification, or mailboxes? Tell us what's going on and our team will personally help you get set up — no charge.",
+    "nameLabel": "Your name",
+    "namePlaceholder": "Victor Ilome",
+    "emailLabel": "Your email",
+    "emailPlaceholder": "you@gmail.com",
+    "domainLabel": "Business domain (if you have one)",
+    "domainPlaceholder": "yourbusiness.com",
+    "topicLabel": "What do you need help with?",
+    "topicDomain": "Domain & DNS setup",
+    "topicMailboxes": "Creating mailboxes",
+    "topicBilling": "Billing & payments",
+    "topicOther": "Something else",
+    "messageLabel": "Details",
+    "messagePlaceholder": "Tell us what you're stuck on...",
+    "submit": "Send request",
+    "successTitle": "Request received",
+    "successDescription": "Thanks, {name}. Our team will reach out to {email} within one business day.",
+    "successCta": "Back to home"
+  }
+}

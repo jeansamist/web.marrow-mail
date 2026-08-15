@@ -1,190 +1,209 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:ital,wght@0,100..900;1,100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Manual (button-toggled) dark mode, scoped via a `.dark` ancestor class — used by the mail app only */
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: oklch(0.9213 0.0277 67.4735);
-  --foreground: oklch(0.3147 0.0887 28.0498);
-  --card: oklch(0.9611 0.0221 80.6881);
-  --card-foreground: oklch(0.3147 0.0887 28.0498);
-  --popover: oklch(0.9611 0.0221 80.6881);
-  --popover-foreground: oklch(0.3147 0.0887 28.0498);
-  --primary: oklch(0.3906 0.1487 6.5412);
-  --primary-foreground: oklch(0.9611 0.0221 80.6881);
-  --secondary: oklch(0.9611 0.0221 80.6881);
-  --secondary-foreground: oklch(0.3147 0.0887 28.0498);
-  --muted: oklch(0.8771 0.043 74.1099);
-  --muted-foreground: oklch(0.3147 0.0887 28.0498);
-  --accent: oklch(0.9611 0.0221 80.6881);
-  --accent-foreground: oklch(0.3147 0.0887 28.0498);
-  --destructive: oklch(0.583 0.2387 28.4765);
-  --destructive-foreground: oklch(0.9611 0.0221 80.6881);
-  --border: oklch(0.7523 0.0247 24.2211);
-  --input: oklch(0.9611 0.0221 80.6881);
-  --ring: oklch(0.3906 0.1487 6.5412);
-  --chart-1: oklch(0.3906 0.1487 6.5412);
-  --chart-2: oklch(0.3906 0.1487 6.5412);
-  --chart-3: oklch(0.3906 0.1487 6.5412);
-  --chart-4: oklch(0.3906 0.1487 6.5412);
-  --chart-5: oklch(0.3906 0.1487 6.5412);
-  --sidebar: oklch(0.9611 0.0221 80.6881);
-  --sidebar-foreground: oklch(0.3147 0.0887 28.0498);
-  --sidebar-primary: oklch(0.3906 0.1487 6.5412);
-  --sidebar-primary-foreground: oklch(0.8771 0.043 74.1099);
-  --sidebar-accent: oklch(0.8771 0.043 74.1099);
-  --sidebar-accent-foreground: oklch(0.3147 0.0887 28.0498);
-  --sidebar-border: oklch(0.7523 0.0247 24.2211);
-  --sidebar-ring: oklch(0.3147 0.0887 28.0498);
-  --font-sans: Plus Jakarta Sans, ui-sans-serif, sans-serif, system-ui;
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono: Geist Mono, ui-monospace, monospace;
-  --radius: 0.8rem;
-  --shadow-x: 0;
-  --shadow-y: 1px;
-  --shadow-blur: 3px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.2;
-  --shadow-color: #561b16;
-  --shadow-2xs: 0 1px 3px 0px hsl(4.6875 59.2593% 21.1765% / 0.1);
-  --shadow-xs: 0 1px 3px 0px hsl(4.6875 59.2593% 21.1765% / 0.1);
-  --shadow-sm:
-    0 1px 3px 0px hsl(4.6875 59.2593% 21.1765% / 0.2),
-    0 1px 2px -1px hsl(4.6875 59.2593% 21.1765% / 0.2);
-  --shadow:
-    0 1px 3px 0px hsl(4.6875 59.2593% 21.1765% / 0.2),
-    0 1px 2px -1px hsl(4.6875 59.2593% 21.1765% / 0.2);
-  --shadow-md:
-    0 1px 3px 0px hsl(4.6875 59.2593% 21.1765% / 0.2),
-    0 2px 4px -1px hsl(4.6875 59.2593% 21.1765% / 0.2);
-  --shadow-lg:
-    0 1px 3px 0px hsl(4.6875 59.2593% 21.1765% / 0.2),
-    0 4px 6px -1px hsl(4.6875 59.2593% 21.1765% / 0.2);
-  --shadow-xl:
-    0 1px 3px 0px hsl(4.6875 59.2593% 21.1765% / 0.2),
-    0 8px 10px -1px hsl(4.6875 59.2593% 21.1765% / 0.2);
-  --shadow-2xl: 0 1px 3px 0px hsl(4.6875 59.2593% 21.1765% / 0.5);
-  --tracking-normal: 0em;
-  --spacing: 0.3rem;
+  --radius: 0.75rem;
+
+  /* MarrowMail brand background — near-white per approved palette */
+  --background: #fafaff;
+  --foreground: oklch(0.2 0 0);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0 0);
+
+  /* brand green — the site's dark-surface color (nav banner, closing CTA, signup panel) */
+  --ink: var(--secondary);
+  --ink-foreground: var(--secondary-foreground);
+
+  /* brand green — dashboard admin sidebar */
+  --sidebar: var(--secondary);
+  --sidebar-foreground: var(--secondary-foreground);
+
+  /* standalone webmail app palette — crisp light sidebar, deliberately distinct from the dark admin shell */
+  --mail-sidebar: #f8f9fa;
+  --mail-sidebar-foreground: oklch(0.2 0 0);
+  --mail-canvas: #fafafc;
+
+  /* MarrowMail brand — Flame, primary actions/links/highlights */
+  --primary: #fb6107;
+  --primary-foreground: #fafaff;
+  --primary-dark: #e2710d;
+
+  /* MarrowMail brand — Moss, secondary actions/safe-state accents */
+  --secondary: #5c8001;
+  --secondary-foreground: #fafaff;
+
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.46 0 0);
+
+  /* MarrowMail brand — Amber, soft accent wash, paired with dark gold text */
+  --accent: color-mix(in oklab, #fbb02d 16%, white);
+  --accent-foreground: #9b7316;
+
+  /* MarrowMail brand — Danger */
+  --destructive: #c0271c;
+
+  /* MarrowMail brand — Sprout, success/positive-state accents */
+  --success: #7cb518;
+  --success-foreground: #1f2e04;
+
+  /* reserved exclusively for AI-assisted actions, never used for brand/primary UI */
+  --ai-accent: oklch(0.58 0.2 300);
+  --ai-accent-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: #fb6107;
 }
 
+/* Dark theme — toggled on the mail app only, via the ThemeMenu control */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.269 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.371 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.275 0 0);
-  --input: oklch(0.325 0 0);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.81 0.1 252);
-  --chart-2: oklch(0.62 0.19 260);
-  --chart-3: oklch(0.55 0.22 263);
-  --chart-4: oklch(0.49 0.22 264);
-  --chart-5: oklch(0.42 0.18 266);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.275 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
-  --font-sans: Plus Jakarta Sans, ui-sans-serif, sans-serif, system-ui;
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono: Geist Mono, ui-monospace, monospace;
-  --radius: 0.8rem;
-  --shadow-x: 0;
-  --shadow-y: 1px;
-  --shadow-blur: 3px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.2;
-  --shadow-color: oklch(0 0 0);
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.1);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.1);
-  --shadow-sm:
-    0 1px 3px 0px hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.2);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.2);
-  --shadow-md:
-    0 1px 3px 0px hsl(0 0% 0% / 0.2), 0 2px 4px -1px hsl(0 0% 0% / 0.2);
-  --shadow-lg:
-    0 1px 3px 0px hsl(0 0% 0% / 0.2), 0 4px 6px -1px hsl(0 0% 0% / 0.2);
-  --shadow-xl:
-    0 1px 3px 0px hsl(0 0% 0% / 0.2), 0 8px 10px -1px hsl(0 0% 0% / 0.2);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.5);
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+
+  --mail-sidebar: #0f172a;
+  --mail-sidebar-foreground: #f1f5f9;
+  --mail-canvas: #0b1220;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  /* dark-adjusted amber wash: light mode uses a near-white tint, so invert to a dark tint here */
+  --accent: color-mix(in oklab, #fbb02d 18%, #1e293b);
+  --accent-foreground: #f5c869;
+
+  --border: #334155;
+  --input: #334155;
 }
 
 @theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-mail-sidebar: var(--mail-sidebar);
+  --color-mail-sidebar-foreground: var(--mail-sidebar-foreground);
+  --color-mail-canvas: var(--mail-canvas);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-dark: var(--primary-dark);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-ai-accent: var(--ai-accent);
+  --color-ai-accent-foreground: var(--ai-accent-foreground);
   --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
-  --shadow-2xs: var(--shadow-2xs);
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow: var(--shadow);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
-  --shadow-2xl: var(--shadow-2xl);
+  --container-2xl: 1240px;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
+    outline-color: var(--ring);
   }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    /* @theme inline doesn't expose --font-sans as a real runtime custom property (it's
+       only usable by generated Tailwind utilities like `font-sans`), so this raw
+       declaration must reference the next/font variable directly. */
+    font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+@utility container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+  max-width: var(--container-2xl);
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@utility shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in oklab, var(--muted), white 60%) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Slim, unobtrusive scrollbar for internally-scrolling panels (e.g. the mail reading card) */
+@utility custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+}
+
+/* Shows a placeholder in an empty contentEditable rich-text area (the reply composer body) */
+@utility rich-text-editor {
+  &:empty::before {
+    content: attr(data-placeholder);
+    color: var(--muted-foreground);
+    pointer-events: none;
   }
 }

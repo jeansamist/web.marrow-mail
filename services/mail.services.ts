@@ -1,9 +1,18 @@
 "use server"
-import { GET, POST } from "@/lib/api-mail"
+import { DELETE, GET, POST, PUT } from "@/lib/api-mail"
 import {
   SetupMailAccountProfileSchema,
   SignInSchema,
 } from "@/schemas/auth.schemas"
+import type {
+  DraftMailSchema,
+  ForwardMailSchema,
+  MarkImportantSchema,
+  MarkSpamSchema,
+  MoveMailToFolderSchema,
+  RescheduleMailSchema,
+  ScheduleMailSchema,
+} from "@/schemas/mail.schemas"
 import type { Mail, MailAccountProfile, UploadedFile, UploadLink } from "@/types"
 import { cookies } from "next/headers"
 
@@ -70,6 +79,101 @@ export const sendMail = async (payload: {
   bodyText?: string
 }): Promise<Mail | null> => {
   const resp = await POST<typeof payload, Mail>("/mails", payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const getDrafts = async (): Promise<Mail[]> => {
+  const resp = await GET<Mail[]>("/mails/drafts")
+  if (resp instanceof Error) return []
+  return resp
+}
+
+export const saveDraft = async (payload: DraftMailSchema): Promise<Mail | null> => {
+  const resp = await POST<DraftMailSchema, Mail>("/mails/drafts", payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const updateDraft = async (
+  id: number,
+  payload: DraftMailSchema
+): Promise<Mail | null> => {
+  const resp = await PUT<DraftMailSchema, Mail>(`/mails/drafts/${id}`, payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const deleteDraft = async (id: number): Promise<boolean> => {
+  const resp = await DELETE(`/mails/drafts/${id}`)
+  return !(resp instanceof Error)
+}
+
+export const sendDraft = async (id: number): Promise<Mail | null> => {
+  const resp = await POST<null, Mail>(`/mails/drafts/${id}/send`, null)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const moveMailToFolder = async (
+  id: number,
+  payload: MoveMailToFolderSchema
+): Promise<Mail | null> => {
+  const resp = await PUT<MoveMailToFolderSchema, Mail>(`/mails/${id}/folder`, payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const markMailSpam = async (
+  id: number,
+  payload: MarkSpamSchema
+): Promise<Mail | null> => {
+  const resp = await PUT<MarkSpamSchema, Mail>(`/mails/${id}/spam`, payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const markMailImportant = async (
+  id: number,
+  payload: MarkImportantSchema
+): Promise<Mail | null> => {
+  const resp = await PUT<MarkImportantSchema, Mail>(`/mails/${id}/star`, payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const forwardMail = async (
+  id: number,
+  payload: ForwardMailSchema
+): Promise<Mail | null> => {
+  const resp = await POST<ForwardMailSchema, Mail>(`/mails/${id}/forward`, payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const getScheduledMails = async (): Promise<Mail[]> => {
+  const resp = await GET<Mail[]>("/mails/scheduled")
+  if (resp instanceof Error) return []
+  return resp
+}
+
+export const scheduleMail = async (payload: ScheduleMailSchema): Promise<Mail | null> => {
+  const resp = await POST<ScheduleMailSchema, Mail>("/mails/schedule", payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const rescheduleMail = async (
+  id: number,
+  payload: RescheduleMailSchema
+): Promise<Mail | null> => {
+  const resp = await PUT<RescheduleMailSchema, Mail>(`/mails/${id}/schedule`, payload)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const cancelScheduledMail = async (id: number): Promise<Mail | null> => {
+  const resp = await DELETE<Mail>(`/mails/${id}/schedule`)
   if (resp instanceof Error) return null
   return resp
 }

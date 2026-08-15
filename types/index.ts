@@ -3,6 +3,7 @@ export type User = {
   avatar: string | null
   firstName: string
   lastName: string
+  businessName: string | null
   email: string
   emailVerified: boolean
   createdAt: string
@@ -23,17 +24,43 @@ export type Mail = {
   id: number
   mailAccountId: number
   fromEmail: string
-  toAddresses: string[]
+  toAddresses: string[] | null
   ccAddresses: string[] | null
   bccAddresses: string[] | null
   replyTo: string | null
-  subject: string
+  subject: string | null
   bodyHtml: string | null
   bodyText: string | null
   status: string
   direction: "inbound" | "outbound"
   sesMessageId: string | null
   attachmentIds: string[] | null
+  important: boolean
+  isSpam: boolean
+  deleted: boolean
+  folderId: number | null
+  scheduledAt: string | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export type Folder = {
+  id: number
+  mailAccountId: number
+  name: string
+  createdAt: string
+  updatedAt: string | null
+}
+
+export type Contact = {
+  id: number
+  mailAccountId: number
+  firstName: string
+  lastName: string | null
+  email: string
+  phone: string | null
+  company: string | null
+  notes: string | null
   createdAt: string
   updatedAt: string | null
 }
@@ -61,6 +88,68 @@ export type MailAccountProfile = {
   lastName: string
   avatar: string | null
   initials: string
+  createdAt: string
+  updatedAt: string | null
+}
+
+export type Signature = {
+  id: number
+  mailAccountId: number
+  name: string | null
+  jobTitle: string | null
+  includePhoto: boolean
+  phone: string | null
+  website: string | null
+  address: string | null
+  linkedin: string | null
+  facebook: string | null
+  instagram: string | null
+  includeInNewEmails: boolean
+  includeInReplies: boolean
+  createdAt: string
+  updatedAt: string | null
+}
+
+export type PaymentProvider = "stripe" | "elgiopay"
+
+export type SubscriptionStatus =
+  | "pending"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "expired"
+  | "failed"
+
+export type Subscription = {
+  id: number
+  provider: PaymentProvider
+  status: SubscriptionStatus
+  planId: "core" | "plus"
+  mailboxQuantity: number
+  billingMonths: number
+  currency: string
+  amountTotal: number
+  currentPeriodEnd: string | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export type CheckoutResult =
+  | (Subscription & { clientSecret: string | null })
+  | (Subscription & { transactionId: string })
+
+export type MailAccount = {
+  id: number
+  username: string
+  ownerEmail: string | null
+  createdAt: string
+}
+
+export type Domain = {
+  id: number
+  name: string
+  description: string | null
+  verified: boolean
   createdAt: string
   updatedAt: string | null
 }

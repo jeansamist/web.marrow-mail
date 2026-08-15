@@ -2,10 +2,9 @@
 import { GET, POST } from "@/lib/api"
 import {
   OnboardingCreateEmailSchema,
-  OnboardingPaySchema,
   OnboardingRegisterDomainSchema,
 } from "@/schemas/onboarding.schemas"
-import { Record } from "@/types"
+import { MailAccount, Record } from "@/types"
 
 export const registerDomain = async (data: OnboardingRegisterDomainSchema) => {
   return POST<OnboardingRegisterDomainSchema, Record[]>(
@@ -34,18 +33,9 @@ export const setupMailAccount = async (
   data: OnboardingCreateEmailSchema,
   domainName: string
 ) => {
-  return POST<OnboardingCreateEmailSchema, unknown>(
+  return POST<OnboardingCreateEmailSchema, MailAccount[]>(
     `/onboarding/setup-mail-account?domainName=${domainName}`,
     data
   )
 }
 
-export const processPayment = async (
-  data: OnboardingPaySchema,
-  domainName: string
-) => {
-  return POST<OnboardingPaySchema, unknown>(
-    `/onboarding/process-payment?domainName=${domainName}`,
-    data
-  )
-}
