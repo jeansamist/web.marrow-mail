@@ -70,7 +70,7 @@
         },
         {
           "heading": "Contact",
-          "body": "Questions about these terms? Reach us at support@marrowmail.com."
+          "body": "Questions about these terms? Reach us at support@marrowmails.com."
         }
       ]
     },
@@ -124,7 +124,7 @@
         },
         {
           "heading": "Contact",
-          "body": "Questions about your data? Reach us at privacy@marrowmail.com."
+          "body": "Questions about your data? Reach us at privacy@marrowmails.com."
         }
       ]
     }
@@ -211,12 +211,42 @@
       "ms": "Microsoft 365"
     },
     "rows": [
-      { "label": "Starting price", "marrow": "2,500 XAF/mo", "google": "6,000 XAF/mo", "ms": "7,500 XAF/mo" },
-      { "label": "Setup experience", "marrow": "Simple & guided", "google": "Complex & technical", "ms": "Complex & technical" },
-      { "label": "Built-in AI tools", "marrow": true, "google": false, "ms": false },
-      { "label": "Role-based emails", "marrow": "5 free (10 on Plus)", "google": "Extra cost per user", "ms": "Extra cost per user" },
-      { "label": "Payment options", "marrow": "Mobile Money + cards", "google": "Cards only", "ms": "Cards only" },
-      { "label": "Focus", "marrow": "Email-first productivity", "google": "Full office suite", "ms": "Full office suite" }
+      {
+        "label": "Starting price",
+        "marrow": "2,500 XAF/mo",
+        "google": "6,000 XAF/mo",
+        "ms": "7,500 XAF/mo"
+      },
+      {
+        "label": "Setup experience",
+        "marrow": "Simple & guided",
+        "google": "Complex & technical",
+        "ms": "Complex & technical"
+      },
+      {
+        "label": "Built-in AI tools",
+        "marrow": true,
+        "google": false,
+        "ms": false
+      },
+      {
+        "label": "Role-based emails",
+        "marrow": "5 free (10 on Plus)",
+        "google": "Extra cost per user",
+        "ms": "Extra cost per user"
+      },
+      {
+        "label": "Payment options",
+        "marrow": "Mobile Money + cards",
+        "google": "Cards only",
+        "ms": "Cards only"
+      },
+      {
+        "label": "Focus",
+        "marrow": "Email-first productivity",
+        "google": "Full office suite",
+        "ms": "Full office suite"
+      }
     ],
     "cta": "Get my biz email",
     "footnote": "Competitor pricing converted to XAF for comparison. Actual pricing varies by plan and exchange rate."
@@ -225,12 +255,36 @@
     "eyebrow": "Testimonials",
     "title": "Businesses are already making the switch.",
     "items": [
-      { "quote": "Switching to MarrowMail took less than ten minutes. Our client emails finally match our domain, and support has been fast every time we needed it.", "name": "Grace Johnson", "role": "Founder, Johnson Consulting" },
-      { "quote": "The built-in AI tools save my team hours every week. We write better replies faster, and paying with Mobile Money means no more card headaches.", "name": "Mark Davis", "role": "Operations Lead, Davis Logistics" },
-      { "quote": "We moved five role-based inboxes over from Google Workspace and cut our email bill by more than half without losing any features we actually used.", "name": "Sarah Miller", "role": "CEO, Miller Boutique" },
-      { "quote": "Our clients used to ask if we were a real company when they saw our Gmail address. That question stopped the day we switched.", "name": "James Carter", "role": "Managing Director, Carter & Partners" },
-      { "quote": "Setup was genuinely guided, not just documentation. Someone helped us verify our domain and we were sending branded emails the same day.", "name": "Emily Brooks", "role": "Founder, Brooks Beauty Supplies" },
-      { "quote": "Paying with Mobile Money instead of hunting for a card that works internationally saved us so much friction every renewal.", "name": "Laura Bennett", "role": "Owner, Bennett Fashion House" }
+      {
+        "quote": "Switching to MarrowMail took less than ten minutes. Our client emails finally match our domain, and support has been fast every time we needed it.",
+        "name": "Grace Johnson",
+        "role": "Founder, Johnson Consulting"
+      },
+      {
+        "quote": "The built-in AI tools save my team hours every week. We write better replies faster, and paying with Mobile Money means no more card headaches.",
+        "name": "Mark Davis",
+        "role": "Operations Lead, Davis Logistics"
+      },
+      {
+        "quote": "We moved five role-based inboxes over from Google Workspace and cut our email bill by more than half without losing any features we actually used.",
+        "name": "Sarah Miller",
+        "role": "CEO, Miller Boutique"
+      },
+      {
+        "quote": "Our clients used to ask if we were a real company when they saw our Gmail address. That question stopped the day we switched.",
+        "name": "James Carter",
+        "role": "Managing Director, Carter & Partners"
+      },
+      {
+        "quote": "Setup was genuinely guided, not just documentation. Someone helped us verify our domain and we were sending branded emails the same day.",
+        "name": "Emily Brooks",
+        "role": "Founder, Brooks Beauty Supplies"
+      },
+      {
+        "quote": "Paying with Mobile Money instead of hunting for a card that works internationally saved us so much friction every renewal.",
+        "name": "Laura Bennett",
+        "role": "Owner, Bennett Fashion House"
+      }
     ]
   },
   "Reliability": {
@@ -300,12 +354,30 @@
     "eyebrow": "FAQ",
     "title": "Frequently asked.",
     "items": [
-      { "q": "Can I pay with Mobile Money?", "a": "Yes — MarrowMail supports Orange Money and MTN MoMo payments alongside local bank cards. No USD card required." },
-      { "q": "Can I use my existing domain name?", "a": "Yes. During setup we guide you through connecting a domain you already own, or you can register a new one." },
-      { "q": "How long does setup take?", "a": "Most businesses are sending branded email within minutes. Domain verification can take longer depending on your registrar." },
-      { "q": "What are role-based email addresses?", "a": "Shared inboxes like support@, sales@, or info@ that route to your team — up to 10 included free on every plan." },
-      { "q": "Is my email secure?", "a": "All mail is encrypted in transit and at rest. We don't use your conversations for ad targeting or model training." },
-      { "q": "Do I need technical experience?", "a": "No. Setup is guided step by step, and our support team can help verify your domain if you get stuck." }
+      {
+        "q": "Can I pay with Mobile Money?",
+        "a": "Yes — MarrowMail supports Orange Money and MTN MoMo payments alongside local bank cards. No USD card required."
+      },
+      {
+        "q": "Can I use my existing domain name?",
+        "a": "Yes. During setup we guide you through connecting a domain you already own, or you can register a new one."
+      },
+      {
+        "q": "How long does setup take?",
+        "a": "Most businesses are sending branded email within minutes. Domain verification can take longer depending on your registrar."
+      },
+      {
+        "q": "What are role-based email addresses?",
+        "a": "Shared inboxes like support@, sales@, or info@ that route to your team — up to 10 included free on every plan."
+      },
+      {
+        "q": "Is my email secure?",
+        "a": "All mail is encrypted in transit and at rest. We don't use your conversations for ad targeting or model training."
+      },
+      {
+        "q": "Do I need technical experience?",
+        "a": "No. Setup is guided step by step, and our support team can help verify your domain if you get stuck."
+      }
     ]
   },
   "Cta": {
@@ -1154,9 +1226,18 @@
     "genericDescription": "You've been invited to join a MarrowMail workspace. Set a name and password to finish setting up your account.",
     "nameLabel": "Your name",
     "namePlaceholder": "e.g. Grace Johnson",
+    "firstNameLabel": "First name",
+    "firstNamePlaceholder": "e.g. Grace",
+    "lastNameLabel": "Last name",
+    "lastNamePlaceholder": "e.g. Johnson",
     "passwordLabel": "Create a password",
     "passwordPlaceholder": "At least 8 characters",
+    "confirmPasswordLabel": "Confirm password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
+    "passwordMismatch": "Passwords don't match.",
+    "setupFailed": "This invite link is invalid or has expired.",
     "submit": "Accept invitation",
+    "submitting": "Setting up…",
     "successTitle": "You're all set",
     "successDescription": "Your account is ready. Sign in to {email} whenever you're ready to check your mail.",
     "successCta": "Sign in to your mailbox",
@@ -1172,7 +1253,9 @@
     "passwordLabel": "Password",
     "passwordPlaceholder": "Your password",
     "submit": "Sign in",
+    "submitting": "Signing in…",
     "mailboxNotFound": "We couldn't find a mailbox with that email address.",
+    "invalidCredentials": "Incorrect email or password.",
     "notFoundTitle": "We couldn't find that workspace",
     "notFoundDescription": "There's no MarrowMail workspace connected to {domain} in this browser.",
     "ownerNote": "Are you the workspace owner? <link>Sign in to the admin dashboard</link>."

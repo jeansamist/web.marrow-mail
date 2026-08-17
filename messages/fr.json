@@ -70,7 +70,7 @@
         },
         {
           "heading": "Contact",
-          "body": "Des questions sur ces conditions ? Contactez-nous à support@marrowmail.com."
+          "body": "Des questions sur ces conditions ? Contactez-nous à support@marrowmails.com."
         }
       ]
     },
@@ -124,7 +124,7 @@
         },
         {
           "heading": "Contact",
-          "body": "Des questions sur vos données ? Contactez-nous à privacy@marrowmail.com."
+          "body": "Des questions sur vos données ? Contactez-nous à privacy@marrowmails.com."
         }
       ]
     }
@@ -211,12 +211,42 @@
       "ms": "Microsoft 365"
     },
     "rows": [
-      { "label": "Prix de départ", "marrow": "2 500 XAF/mois", "google": "6 000 XAF/mois", "ms": "7 500 XAF/mois" },
-      { "label": "Mise en place", "marrow": "Simple et guidée", "google": "Complexe et technique", "ms": "Complexe et technique" },
-      { "label": "Outils IA intégrés", "marrow": true, "google": false, "ms": false },
-      { "label": "Emails par rôle", "marrow": "5 gratuites (10 avec Plus)", "google": "Coût supplémentaire par utilisateur", "ms": "Coût supplémentaire par utilisateur" },
-      { "label": "Moyens de paiement", "marrow": "Mobile Money + cartes", "google": "Cartes uniquement", "ms": "Cartes uniquement" },
-      { "label": "Positionnement", "marrow": "Productivité email d'abord", "google": "Suite bureautique complète", "ms": "Suite bureautique complète" }
+      {
+        "label": "Prix de départ",
+        "marrow": "2 500 XAF/mois",
+        "google": "6 000 XAF/mois",
+        "ms": "7 500 XAF/mois"
+      },
+      {
+        "label": "Mise en place",
+        "marrow": "Simple et guidée",
+        "google": "Complexe et technique",
+        "ms": "Complexe et technique"
+      },
+      {
+        "label": "Outils IA intégrés",
+        "marrow": true,
+        "google": false,
+        "ms": false
+      },
+      {
+        "label": "Emails par rôle",
+        "marrow": "5 gratuites (10 avec Plus)",
+        "google": "Coût supplémentaire par utilisateur",
+        "ms": "Coût supplémentaire par utilisateur"
+      },
+      {
+        "label": "Moyens de paiement",
+        "marrow": "Mobile Money + cartes",
+        "google": "Cartes uniquement",
+        "ms": "Cartes uniquement"
+      },
+      {
+        "label": "Positionnement",
+        "marrow": "Productivité email d'abord",
+        "google": "Suite bureautique complète",
+        "ms": "Suite bureautique complète"
+      }
     ],
     "cta": "Obtenir mon email pro",
     "footnote": "Tarifs concurrents convertis en XAF à titre de comparaison. Les tarifs réels varient selon le plan et le taux de change."
@@ -225,12 +255,36 @@
     "eyebrow": "Témoignages",
     "title": "Les entreprises font déjà le changement.",
     "items": [
-      { "quote": "Passer à MarrowMail a pris moins de dix minutes. Les emails de nos clients correspondent enfin à notre domaine, et le support a toujours été rapide quand on en a eu besoin.", "name": "Grace Johnson", "role": "Fondatrice, Johnson Consulting" },
-      { "quote": "Les outils IA intégrés font gagner des heures à mon équipe chaque semaine. On rédige de meilleures réponses plus vite, et payer avec Mobile Money évite les soucis de carte.", "name": "Mark Davis", "role": "Responsable des opérations, Davis Logistics" },
-      { "quote": "Nous avons migré cinq boîtes par rôle depuis Google Workspace et réduit notre facture email de plus de moitié sans perdre les fonctionnalités qu'on utilisait vraiment.", "name": "Sarah Miller", "role": "PDG, Miller Boutique" },
-      { "quote": "Nos clients demandaient si nous étions une vraie entreprise en voyant notre adresse Gmail. Cette question a cessé le jour où nous avons changé.", "name": "James Carter", "role": "Directeur général, Carter & Partners" },
-      { "quote": "La mise en place a été vraiment guidée, pas juste de la documentation. Quelqu'un nous a aidés à vérifier notre domaine et nous envoyions des emails à notre marque le jour même.", "name": "Emily Brooks", "role": "Fondatrice, Brooks Beauty Supplies" },
-      { "quote": "Payer avec Mobile Money au lieu de chercher une carte qui fonctionne à l'international nous évite bien des frictions à chaque renouvellement.", "name": "Laura Bennett", "role": "Propriétaire, Bennett Fashion House" }
+      {
+        "quote": "Passer à MarrowMail a pris moins de dix minutes. Les emails de nos clients correspondent enfin à notre domaine, et le support a toujours été rapide quand on en a eu besoin.",
+        "name": "Grace Johnson",
+        "role": "Fondatrice, Johnson Consulting"
+      },
+      {
+        "quote": "Les outils IA intégrés font gagner des heures à mon équipe chaque semaine. On rédige de meilleures réponses plus vite, et payer avec Mobile Money évite les soucis de carte.",
+        "name": "Mark Davis",
+        "role": "Responsable des opérations, Davis Logistics"
+      },
+      {
+        "quote": "Nous avons migré cinq boîtes par rôle depuis Google Workspace et réduit notre facture email de plus de moitié sans perdre les fonctionnalités qu'on utilisait vraiment.",
+        "name": "Sarah Miller",
+        "role": "PDG, Miller Boutique"
+      },
+      {
+        "quote": "Nos clients demandaient si nous étions une vraie entreprise en voyant notre adresse Gmail. Cette question a cessé le jour où nous avons changé.",
+        "name": "James Carter",
+        "role": "Directeur général, Carter & Partners"
+      },
+      {
+        "quote": "La mise en place a été vraiment guidée, pas juste de la documentation. Quelqu'un nous a aidés à vérifier notre domaine et nous envoyions des emails à notre marque le jour même.",
+        "name": "Emily Brooks",
+        "role": "Fondatrice, Brooks Beauty Supplies"
+      },
+      {
+        "quote": "Payer avec Mobile Money au lieu de chercher une carte qui fonctionne à l'international nous évite bien des frictions à chaque renouvellement.",
+        "name": "Laura Bennett",
+        "role": "Propriétaire, Bennett Fashion House"
+      }
     ]
   },
   "Reliability": {
@@ -300,12 +354,30 @@
     "eyebrow": "FAQ",
     "title": "Questions fréquentes.",
     "items": [
-      { "q": "Puis-je payer avec Mobile Money ?", "a": "Oui — MarrowMail accepte Orange Money et MTN MoMo, en plus des cartes bancaires locales. Aucune carte en dollars requise." },
-      { "q": "Puis-je utiliser mon nom de domaine actuel ?", "a": "Oui. Lors de la configuration, nous vous guidons pour connecter un domaine que vous possédez déjà, ou vous pouvez en enregistrer un nouveau." },
-      { "q": "Combien de temps prend la mise en place ?", "a": "La plupart des entreprises envoient des emails à leur marque en quelques minutes. La vérification du domaine peut prendre plus de temps selon votre bureau d'enregistrement." },
-      { "q": "Que sont les adresses email par rôle ?", "a": "Des boîtes partagées comme support@, sales@ ou info@ qui redirigent vers votre équipe — jusqu'à 10 incluses gratuitement sur chaque plan." },
-      { "q": "Mon email est-il sécurisé ?", "a": "Tous les emails sont chiffrés en transit et au repos. Nous n'utilisons pas vos conversations pour le ciblage publicitaire ni pour entraîner une IA." },
-      { "q": "Ai-je besoin de compétences techniques ?", "a": "Non. La mise en place est guidée étape par étape, et notre équipe support peut vous aider à vérifier votre domaine en cas de besoin." }
+      {
+        "q": "Puis-je payer avec Mobile Money ?",
+        "a": "Oui — MarrowMail accepte Orange Money et MTN MoMo, en plus des cartes bancaires locales. Aucune carte en dollars requise."
+      },
+      {
+        "q": "Puis-je utiliser mon nom de domaine actuel ?",
+        "a": "Oui. Lors de la configuration, nous vous guidons pour connecter un domaine que vous possédez déjà, ou vous pouvez en enregistrer un nouveau."
+      },
+      {
+        "q": "Combien de temps prend la mise en place ?",
+        "a": "La plupart des entreprises envoient des emails à leur marque en quelques minutes. La vérification du domaine peut prendre plus de temps selon votre bureau d'enregistrement."
+      },
+      {
+        "q": "Que sont les adresses email par rôle ?",
+        "a": "Des boîtes partagées comme support@, sales@ ou info@ qui redirigent vers votre équipe — jusqu'à 10 incluses gratuitement sur chaque plan."
+      },
+      {
+        "q": "Mon email est-il sécurisé ?",
+        "a": "Tous les emails sont chiffrés en transit et au repos. Nous n'utilisons pas vos conversations pour le ciblage publicitaire ni pour entraîner une IA."
+      },
+      {
+        "q": "Ai-je besoin de compétences techniques ?",
+        "a": "Non. La mise en place est guidée étape par étape, et notre équipe support peut vous aider à vérifier votre domaine en cas de besoin."
+      }
     ]
   },
   "Cta": {
@@ -1154,9 +1226,18 @@
     "genericDescription": "Vous avez été invité(e) à rejoindre un espace de travail MarrowMail. Définissez un nom et un mot de passe pour finaliser votre compte.",
     "nameLabel": "Votre nom",
     "namePlaceholder": "ex. Grace Johnson",
+    "firstNameLabel": "Prénom",
+    "firstNamePlaceholder": "ex. Grace",
+    "lastNameLabel": "Nom",
+    "lastNamePlaceholder": "ex. Johnson",
     "passwordLabel": "Créer un mot de passe",
     "passwordPlaceholder": "8 caractères minimum",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "confirmPasswordPlaceholder": "Ressaisissez votre mot de passe",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "setupFailed": "Ce lien d'invitation est invalide ou a expiré.",
     "submit": "Accepter l'invitation",
+    "submitting": "Configuration…",
     "successTitle": "Tout est prêt",
     "successDescription": "Votre compte est prêt. Connectez-vous à {email} dès que vous voulez consulter votre messagerie.",
     "successCta": "Se connecter à ma boîte mail",
@@ -1172,7 +1253,9 @@
     "passwordLabel": "Mot de passe",
     "passwordPlaceholder": "Votre mot de passe",
     "submit": "Se connecter",
+    "submitting": "Connexion…",
     "mailboxNotFound": "Nous n'avons trouvé aucune messagerie avec cette adresse e-mail.",
+    "invalidCredentials": "E-mail ou mot de passe incorrect.",
     "notFoundTitle": "Nous n'avons pas trouvé cet espace de travail",
     "notFoundDescription": "Aucun espace de travail MarrowMail n'est connecté à {domain} dans ce navigateur.",
     "ownerNote": "Vous êtes le propriétaire de l'espace de travail ? <link>Connectez-vous au tableau de bord admin</link>."
