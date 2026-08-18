@@ -180,8 +180,8 @@ export const cancelScheduledMail = async (id: number): Promise<Mail | null> => {
 
 export const setupMailAccountProfile = async (
   data: SetupMailAccountProfileSchema
-) => {
-  return POST<SetupMailAccountProfileSchema, unknown>("/setup-profile", data)
+): Promise<MailAccountProfile | Error> => {
+  return POST<SetupMailAccountProfileSchema, MailAccountProfile>("/setup-profile", data)
 }
 
 export const loginMailAccount = async (data: SignInSchema) => {

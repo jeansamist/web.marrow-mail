@@ -35,11 +35,15 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   },
 };
 
-export function getRoleAliasLimit(account: Pick<OnboardingAccount, "plan">): number {
+export function getRoleAliasLimit(
+  account: Pick<OnboardingAccount, "plan">,
+): number {
   return PLANS[account.plan].roleAliasLimit;
 }
 
-export function hasVoiceNotes(account: Pick<OnboardingAccount, "plan">): boolean {
+export function hasVoiceNotes(
+  account: Pick<OnboardingAccount, "plan">,
+): boolean {
   return PLANS[account.plan].voiceNotes;
 }
 
@@ -164,7 +168,8 @@ function sanitizeMailbox(mailbox: Partial<Mailbox>): Mailbox {
     invitationStatus:
       mailbox.invitationStatus ?? (mailbox.assignedTo ? "pending" : "none"),
     status: mailbox.status ?? "active",
-    storagePurchasedGB: mailbox.storagePurchasedGB ?? DEFAULT_MAILBOX_STORAGE_GB,
+    storagePurchasedGB:
+      mailbox.storagePurchasedGB ?? DEFAULT_MAILBOX_STORAGE_GB,
     createdAt,
   };
 }
@@ -193,7 +198,8 @@ export function loadAccount(): OnboardingAccount | null {
       createdAt: parsed.createdAt ?? new Date().toISOString(),
       branding: { ...defaultBranding(), ...parsed.branding },
       ownerName: parsed.ownerName ?? "",
-      subscriptionStatus: parsed.subscriptionStatus === "canceled" ? "canceled" : "active",
+      subscriptionStatus:
+        parsed.subscriptionStatus === "canceled" ? "canceled" : "active",
       subscriptionId: parsed.subscriptionId ?? null,
       mailPreferences: {
         ...defaultMailPreferences(),
@@ -210,11 +216,15 @@ export function loadAccount(): OnboardingAccount | null {
 }
 
 /** Finds the mailbox whose address (username@domain) matches the given email, case-insensitively. */
-export function findMailboxByEmail(account: OnboardingAccount, email: string): Mailbox | null {
+export function findMailboxByEmail(
+  account: OnboardingAccount,
+  email: string,
+): Mailbox | null {
   const normalized = email.trim().toLowerCase();
   return (
     account.mailboxes.find(
-      (mailbox) => `${mailbox.username}@${account.domain}`.toLowerCase() === normalized,
+      (mailbox) =>
+        `${mailbox.username}@${account.domain}`.toLowerCase() === normalized,
     ) ?? null
   );
 }
@@ -245,9 +255,9 @@ export function clearAccount() {
 }
 
 export function formatXaf(amount: number, locale: string) {
-  const formatted = new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US").format(
-    amount,
-  );
+  const formatted = new Intl.NumberFormat(
+    locale === "fr" ? "fr-FR" : "en-US",
+  ).format(amount);
   return `${formatted} XAF`;
 }
 
@@ -308,7 +318,8 @@ export function calcMailboxPricing(
   planId: PlanId = "core",
 ): MailboxPricing {
   const basePrice = PLANS[planId].priceXaf;
-  if (count <= 0) return { perMailboxPerMonth: basePrice, total: 0, totalDiscountPercent: 0 };
+  if (count <= 0)
+    return { perMailboxPerMonth: basePrice, total: 0, totalDiscountPercent: 0 };
   const durationDiscount = getDurationDiscount(months);
   const quantityDiscount = getQuantityDiscount(count);
   const combinedMultiplier = (1 - durationDiscount) * (1 - quantityDiscount);
@@ -382,13 +393,18 @@ export function storageTierBarClass(tier: StorageTier): string {
 }
 
 /** Mailboxes that should surface a storage warning/critical banner, sorted worst-first. */
-export function getMailboxesNeedingStorageAttention(account: OnboardingAccount) {
+export function getMailboxesNeedingStorageAttention(
+  account: OnboardingAccount,
+) {
   const warning: Mailbox[] = [];
   const critical: Mailbox[] = [];
   for (const mailbox of [...account.mailboxes].sort(
-    (a, b) => getMailboxStorageUsedGB(b) / b.storagePurchasedGB - getMailboxStorageUsedGB(a) / a.storagePurchasedGB,
+    (a, b) =>
+      getMailboxStorageUsedGB(b) / b.storagePurchasedGB -
+      getMailboxStorageUsedGB(a) / a.storagePurchasedGB,
   )) {
-    const fraction = getMailboxStorageUsedGB(mailbox) / mailbox.storagePurchasedGB;
+    const fraction =
+      getMailboxStorageUsedGB(mailbox) / mailbox.storagePurchasedGB;
     const tier = getStorageTier(fraction);
     if (tier === "critical") critical.push(mailbox);
     else if (tier === "warning") warning.push(mailbox);
@@ -430,8 +446,8 @@ export interface DnsRecord {
 /** The exact DNS records the user was told to add to their registrar during onboarding. */
 export function buildDnsRecords(domain: string): DnsRecord[] {
   return [
-    { type: "MX", host: "@", value: `mx1.marrowmail.com`, priority: "10" },
-    { type: "TXT", host: "@", value: "v=spf1 include:marrowmail.com ~all" },
+    { type: "MX", host: "@", value: `mx1.marrowmails.com`, priority: "10" },
+    { type: "TXT", host: "@", value: "v=spf1 include:marrowmails.com ~all" },
     {
       type: "TXT",
       host: "marrow._domainkey",
@@ -488,7 +504,9 @@ export interface SubscriptionSummary {
   voiceNotesIncluded: boolean;
 }
 
-export function getSubscriptionSummary(account: OnboardingAccount): SubscriptionSummary {
+export function getSubscriptionSummary(
+  account: OnboardingAccount,
+): SubscriptionSummary {
   const mailboxCount = account.mailboxes.length;
   const pricing = calcMailboxPricing(mailboxCount, 1, account.plan);
   const monthlyCostXaf = pricing.total;
@@ -587,10 +605,13 @@ export function groupActivityByDay(
     now.getDate(),
   ).getTime();
   const oneDay = 24 * 60 * 60 * 1000;
-  const formatter = new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
-    day: "2-digit",
-    month: "short",
-  });
+  const formatter = new Intl.DateTimeFormat(
+    locale === "fr" ? "fr-FR" : "en-US",
+    {
+      day: "2-digit",
+      month: "short",
+    },
+  );
 
   const order: string[] = [];
   const groups = new Map<string, ActivityEntry[]>();
@@ -652,18 +673,23 @@ export interface EmailMessage {
 }
 
 /** Static, illustrative inbox — no real mail is sent or received in this prototype. */
-export function generateMockMessages(domain: string, mailboxEmail: string): EmailMessage[] {
-  const hoursAgo = (h: number) => new Date(Date.now() - h * 60 * 60 * 1000).toISOString();
+export function generateMockMessages(
+  domain: string,
+  mailboxEmail: string,
+): EmailMessage[] {
+  const hoursAgo = (h: number) =>
+    new Date(Date.now() - h * 60 * 60 * 1000).toISOString();
 
   return [
     {
       id: "msg-1",
       folder: "inbox",
       fromName: "MarrowMail Team",
-      fromEmail: `hello@marrowmail.com`,
+      fromEmail: `hello@marrowmails.com`,
       toEmail: mailboxEmail,
       subject: `Welcome to your new inbox on ${domain}`,
-      preview: "Your professional email is ready. Here are a few tips to get started...",
+      preview:
+        "Your professional email is ready. Here are a few tips to get started...",
       body: `Hi there,\n\nYour mailbox on ${domain} is live. Here are a few things you can do next:\n\n- Set up your signature\n- Invite teammates to their own mailboxes\n- Connect a domain alias for role addresses like support@ or sales@\n\nWelcome aboard!\n\n— The MarrowMail Team`,
       date: hoursAgo(2),
       read: false,
@@ -676,7 +702,8 @@ export function generateMockMessages(domain: string, mailboxEmail: string): Emai
       fromEmail: `amara@${domain}`,
       toEmail: mailboxEmail,
       subject: "Notes from this morning's standup",
-      preview: "Quick recap of what we covered — mostly around the Q3 rollout timeline...",
+      preview:
+        "Quick recap of what we covered — mostly around the Q3 rollout timeline...",
       body: `Hey,\n\nQuick recap of what we covered this morning:\n\n1. Q3 rollout is on track for the 15th\n2. Marketing needs final copy by Friday\n3. Support queue is clear\n\nLet me know if I missed anything.\n\nAmara`,
       date: hoursAgo(5),
       read: false,
@@ -686,15 +713,18 @@ export function generateMockMessages(domain: string, mailboxEmail: string): Emai
       id: "msg-3",
       folder: "inbox",
       fromName: "Billing",
-      fromEmail: "billing@marrowmail.com",
+      fromEmail: "billing@marrowmails.com",
       toEmail: mailboxEmail,
       subject: "Your MarrowMail invoice is ready",
-      preview: "Your monthly invoice for the Core Plan is now available to download...",
+      preview:
+        "Your monthly invoice for the Core Plan is now available to download...",
       body: `Hello,\n\nYour monthly invoice for the Core Plan is ready. Total due: as shown on your Subscription page.\n\nThanks for using MarrowMail.`,
       date: hoursAgo(26),
       read: true,
       starred: false,
-      attachments: [{ name: "invoice-july-2026.pdf", sizeKb: 248, type: "pdf" }],
+      attachments: [
+        { name: "invoice-july-2026.pdf", sizeKb: 248, type: "pdf" },
+      ],
     },
     {
       id: "msg-4",
@@ -703,7 +733,8 @@ export function generateMockMessages(domain: string, mailboxEmail: string): Emai
       fromEmail: "sarah@millerboutique.com",
       toEmail: mailboxEmail,
       subject: "Re: Partnership proposal",
-      preview: "Thanks for sending this over — a couple of questions before we move forward...",
+      preview:
+        "Thanks for sending this over — a couple of questions before we move forward...",
       body: `Hi,\n\nThanks for sending this over. A couple of questions before we move forward:\n\n- What's the minimum commitment?\n- Can we start with a pilot?\n\nLooking forward to hearing back.\n\nSarah`,
       date: hoursAgo(30),
       read: true,
@@ -717,7 +748,7 @@ export function generateMockMessages(domain: string, mailboxEmail: string): Emai
       id: "msg-5",
       folder: "inbox",
       fromName: "MarrowMail Security",
-      fromEmail: "security@marrowmail.com",
+      fromEmail: "security@marrowmails.com",
       toEmail: mailboxEmail,
       subject: "Domain verification successful",
       preview: `${domain} passed all DNS checks and is fully verified.`,
@@ -733,7 +764,8 @@ export function generateMockMessages(domain: string, mailboxEmail: string): Emai
       fromEmail: mailboxEmail,
       toEmail: "sarah@millerboutique.com",
       subject: "Partnership proposal",
-      preview: "Hi Sarah, following up on our call — here's the proposal we discussed...",
+      preview:
+        "Hi Sarah, following up on our call — here's the proposal we discussed...",
       body: `Hi Sarah,\n\nFollowing up on our call — here's the proposal we discussed. Let me know your thoughts.\n\nBest,\nYou`,
       date: hoursAgo(48),
       read: true,
@@ -760,7 +792,8 @@ export function generateImportedMessages(
   provider: string,
   mailboxEmail: string,
 ): EmailMessage[] {
-  const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
+  const daysAgo = (d: number) =>
+    new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
   const slug = provider.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
   const items: (Omit<
@@ -773,7 +806,8 @@ export function generateImportedMessages(
       fromName: "Alex Chen",
       fromEmail: "alex.chen@example.com",
       subject: "Re: Project timeline",
-      preview: "Thanks for the update — let's sync early next week to finalize...",
+      preview:
+        "Thanks for the update — let's sync early next week to finalize...",
       body: "Thanks for the update — let's sync early next week to finalize the remaining milestones.",
       date: daysAgo(3),
     },
@@ -781,7 +815,8 @@ export function generateImportedMessages(
       fromName: "Order Confirmation",
       fromEmail: "orders@shop.example.com",
       subject: "Your order has shipped",
-      preview: "Good news! Your recent order is on its way and should arrive by...",
+      preview:
+        "Good news! Your recent order is on its way and should arrive by...",
       body: "Good news! Your recent order is on its way and should arrive within 3-5 business days.",
       date: daysAgo(7),
     },
@@ -797,7 +832,8 @@ export function generateImportedMessages(
       fromName: "Newsletter Digest",
       fromEmail: "digest@news.example.com",
       subject: "This week's top stories",
-      preview: "Catch up on the highlights from this week, curated just for you...",
+      preview:
+        "Catch up on the highlights from this week, curated just for you...",
       body: "Catch up on the highlights from this week, curated just for you.",
       date: daysAgo(15),
     },
@@ -805,7 +841,8 @@ export function generateImportedMessages(
       fromName: "Priya Sharma",
       fromEmail: "priya.sharma@example.com",
       subject: "Lunch next week?",
-      preview: "It's been a while — are you free for lunch sometime next week?...",
+      preview:
+        "It's been a while — are you free for lunch sometime next week?...",
       body: "It's been a while — are you free for lunch sometime next week?",
       date: daysAgo(22),
     },
