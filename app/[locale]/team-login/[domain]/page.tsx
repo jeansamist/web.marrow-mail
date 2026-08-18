@@ -8,9 +8,10 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
-import { findMailboxByEmail, loadAccount, type OnboardingAccount } from "@/lib/onboarding";
+import { loadAccount, type OnboardingAccount } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { cardShadow, premiumButton } from "@/components/onboarding/styles";
+import { loginMailAccount } from "@/services/mail.services";
 
 export default function TeamLoginPage() {
   const t = useTranslations("TeamLogin");
@@ -23,6 +24,7 @@ export default function TeamLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const stored = loadAccount();
@@ -32,15 +34,17 @@ export default function TeamLoginPage() {
     setChecked(true);
   }, [domain]);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!account) return;
-    const mailbox = findMailboxByEmail(account, email);
-    if (mailbox) {
-      router.push("/dashboard/mail");
-    } else {
+    setError(false);
+    setSubmitting(true);
+    const resp = await loginMailAccount({ email, password });
+    setSubmitting(false);
+    if (resp instanceof Error) {
       setError(true);
+      return;
     }
+    router.push("/dashboard/mail");
   }
 
   if (!checked) return null;
@@ -138,10 +142,15 @@ export default function TeamLoginPage() {
                   />
                 </div>
 
-                {error && <p className="text-sm text-destructive">{t("mailboxNotFound")}</p>}
+                {error && <p className="text-sm text-destructive">{t("invalidCredentials")}</p>}
 
-                <Button type="submit" size="lg" className={cn("mt-2 w-full", premiumButton)}>
-                  {t("submit")}
+                <Button
+                  type="submit"
+                  size="lg"
+                  className={cn("mt-2 w-full", premiumButton)}
+                  disabled={submitting}
+                >
+                  {submitting ? t("submitting") : t("submit")}
                 </Button>
               </form>
 
