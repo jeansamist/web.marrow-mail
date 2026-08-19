@@ -6,6 +6,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { AlertCircle, ArrowLeft, Check, ShieldCheck, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
 import { loadAccount } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
@@ -190,10 +191,9 @@ export default function SignInPage() {
                         {t("forgotPassword")}
                       </Link>
                     </div>
-                    <Input
+                    <PasswordInput
                       id="password"
                       name="password"
-                      type="password"
                       required
                       minLength={8}
                       value={password}

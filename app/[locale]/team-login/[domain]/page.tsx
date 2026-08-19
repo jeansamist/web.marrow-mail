@@ -7,6 +7,7 @@ import { AlertCircle, Building2 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
 import { cn } from "@/lib/utils";
 import { cardShadow, premiumButton } from "@/components/onboarding/styles";
@@ -215,10 +216,9 @@ export default function TeamLoginPage() {
                       {t("forgotPassword")}
                     </Link>
                   </div>
-                  <Input
+                  <PasswordInput
                     id="password"
                     name="password"
-                    type="password"
                     required
                     minLength={8}
                     value={password}
