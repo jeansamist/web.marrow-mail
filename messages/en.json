@@ -1276,6 +1276,14 @@
     "invalidTitle": "This invite link looks incomplete",
     "invalidDescription": "Ask whoever invited you to resend the invitation link."
   },
+  "VerifyForwarding": {
+    "verifying": "Confirming your forwarding address…",
+    "successTitle": "Forwarding address confirmed",
+    "successDescription": "Incoming mail will now be forwarded to this address.",
+    "successCta": "Sign in",
+    "errorTitle": "This link is invalid or has expired",
+    "errorDescription": "Go back to your mailbox settings and send a new verification email."
+  },
   "TeamLogin": {
     "title": "Team sign in",
     "welcomeTitle": "Welcome to {name}",

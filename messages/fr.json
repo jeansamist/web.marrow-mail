@@ -1276,6 +1276,14 @@
     "invalidTitle": "Ce lien d'invitation semble incomplet",
     "invalidDescription": "Demandez à la personne qui vous a invité(e) de renvoyer le lien d'invitation."
   },
+  "VerifyForwarding": {
+    "verifying": "Confirmation de votre adresse de transfert…",
+    "successTitle": "Adresse de transfert confirmée",
+    "successDescription": "Les e-mails entrants seront désormais transférés vers cette adresse.",
+    "successCta": "Se connecter",
+    "errorTitle": "Ce lien est invalide ou a expiré",
+    "errorDescription": "Retournez aux paramètres de votre messagerie et envoyez un nouvel e-mail de vérification."
+  },
   "TeamLogin": {
     "title": "Connexion de l'équipe",
     "welcomeTitle": "Bienvenue chez {name}",

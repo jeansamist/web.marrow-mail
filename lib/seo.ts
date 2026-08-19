@@ -1,6 +1,6 @@
 import { routing } from "@/i18n/routing";
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://marrowmail.com";
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://marrowmails.com";
 
 /** Builds an `alternates.languages` map (hreflang) for a given path across every supported locale. */
 export function localeAlternates(path: string) {
