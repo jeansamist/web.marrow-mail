@@ -11,7 +11,7 @@ import { LanguageSwitcher } from "@/components/marketing/language-switcher";
 import { loadAccount, type OnboardingAccount } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { cardShadow, premiumButton } from "@/components/onboarding/styles";
-import { loginMailAccount } from "@/services/mail.services";
+import { loginMailAccount, verifyMailAccountTwoFactor } from "@/services/mail.services";
 
 export default function TeamLoginPage() {
   const t = useTranslations("TeamLogin");
@@ -25,6 +25,10 @@ export default function TeamLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     const stored = loadAccount();
@@ -42,6 +46,24 @@ export default function TeamLoginPage() {
     setSubmitting(false);
     if (resp instanceof Error) {
       setError(true);
+      return;
+    }
+    if (resp.requiresTwoFactor) {
+      setChallengeToken(resp.challengeToken);
+      return;
+    }
+    router.push("/dashboard/mail");
+  }
+
+  async function handleVerifyCode(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!challengeToken) return;
+    setCodeError(false);
+    setVerifying(true);
+    const resp = await verifyMailAccountTwoFactor(challengeToken, code);
+    setVerifying(false);
+    if (resp instanceof Error) {
+      setCodeError(true);
       return;
     }
     router.push("/dashboard/mail");
@@ -84,6 +106,61 @@ export default function TeamLoginPage() {
                 {t("notFoundDescription", { domain })}
               </p>
             </div>
+          ) : challengeToken ? (
+            <>
+              <div className="flex flex-col items-center text-center">
+                <h1 className="mt-2 text-xl font-bold text-foreground">
+                  {t("twoFactorTitle")}
+                </h1>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {t("twoFactorDescription")}
+                </p>
+              </div>
+
+              <form onSubmit={handleVerifyCode} className="mt-7 flex flex-col gap-5">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="code" className="text-sm font-medium text-foreground">
+                    {t("twoFactorCodeLabel")}
+                  </label>
+                  <Input
+                    id="code"
+                    name="code"
+                    autoFocus
+                    required
+                    minLength={6}
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value);
+                      setCodeError(false);
+                    }}
+                    placeholder={t("twoFactorCodePlaceholder")}
+                  />
+                </div>
+
+                {codeError && <p className="text-sm text-destructive">{t("invalidCode")}</p>}
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className={cn("mt-2 w-full", premiumButton)}
+                  disabled={verifying}
+                >
+                  {verifying ? t("verifying") : t("verify")}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChallengeToken(null);
+                    setCode("");
+                    setCodeError(false);
+                  }}
+                  className="text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+                >
+                  {t("backToLogin")}
+                </button>
+              </form>
+            </>
           ) : (
             <>
               <div className="flex flex-col items-center text-center">

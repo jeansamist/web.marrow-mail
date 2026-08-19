@@ -17,6 +17,7 @@ import {
   AlignLeft,
   AlignRight,
   Archive,
+  ArchiveRestore,
   Baseline,
   Bold,
   Briefcase,
@@ -94,7 +95,6 @@ import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import {
   generateImportedMessages,
-  generateMockMessages,
   hasVoiceNotes,
   loadAccount,
   saveAccount,
@@ -107,7 +107,114 @@ import {
 } from "@/lib/onboarding";
 import { getSignature, updateSignature } from "@/services/signature.services";
 import { updateSignatureSchema } from "@/schemas/signature.schemas";
-import type { Signature as SignatureRecord } from "@/types";
+import type {
+  Folder as FolderRecord,
+  Mail as MailRecord,
+  Signature as SignatureRecord,
+  TwoFactorSetup,
+} from "@/types";
+import {
+  cancelScheduledMail,
+  changeMailAccountPassword,
+  disableTwoFactor,
+  enableTwoFactor,
+  forwardMail as forwardMailApi,
+  getDrafts,
+  getMailAccountProfile,
+  getReceivedMails,
+  getScheduledMails,
+  getSentMails,
+  getSpamMails,
+  getTrashMails,
+  markMailImportant,
+  markMailRead,
+  markMailSpam,
+  moveMailToFolder,
+  permanentlyDeleteMail,
+  restoreMail as restoreMailApi,
+  scheduleMail as scheduleMailApi,
+  sendMail as sendMailApi,
+  setForwardingEmail,
+  setupTwoFactorWithQr,
+  trashMail as trashMailApi,
+  updateForwardingPreferences,
+  updateMailAccountProfile,
+  uploadFiles,
+  verifyForwardingEmail,
+} from "@/services/mail.services";
+import {
+  createFolder as createFolderApi,
+  deleteFolder as deleteFolderApi,
+  getFolders,
+} from "@/services/folder.services";
+import { createContact as createContactApi } from "@/services/contact.services";
+
+/** Reads a display name out of a `"Name" <email>` from-header; falls back to the local part of the address. */
+function extractDisplayName(raw: string, fallbackEmail: string): string {
+  const match = raw.match(/^"?([^"<]+)"?\s*</);
+  return match ? match[1].trim() : fallbackEmail.split("@")[0];
+}
+
+function extractEmailAddress(raw: string): string {
+  const match = raw.match(/<([^>]+)>/);
+  return match ? match[1] : raw;
+}
+
+/** System folder is derived from status/direction/flags — the backend has no single "folder" field. */
+function mailFolder(mail: MailRecord): MailFolder {
+  if (mail.deleted) return "trash";
+  if (mail.isSpam) return "spam";
+  if (mail.status === "draft") return "drafts";
+  if (mail.status === "scheduled") return "scheduled";
+  if (mail.direction === "sent") return "sent";
+  return "inbox";
+}
+
+/**
+ * Adapts a real `Mail` record into the `EmailMessage` shape the rest of this
+ * (very large) component already renders, so real data can flow through
+ * existing UI/interaction code unchanged. `id` is stringified here and
+ * converted back to a number only where mutation endpoints need it.
+ */
+function mailToEmailMessage(mail: MailRecord): EmailMessage {
+  const fromEmail = extractEmailAddress(mail.fromEmail);
+  return {
+    id: String(mail.id),
+    folder: mailFolder(mail),
+    fromName: extractDisplayName(mail.fromEmail, fromEmail),
+    fromEmail,
+    toEmail: mail.toAddresses?.[0] ?? "",
+    ccEmail: mail.ccAddresses?.length ? mail.ccAddresses.join(", ") : undefined,
+    bccEmail: mail.bccAddresses?.length ? mail.bccAddresses.join(", ") : undefined,
+    subject: mail.subject || "(no subject)",
+    preview: (mail.bodyText ?? "").slice(0, 80),
+    body: mail.bodyText ?? mail.bodyHtml ?? "",
+    date: mail.createdAt,
+    read: mail.isRead,
+    starred: mail.important,
+    folderId: mail.folderId,
+    scheduledFor: mail.scheduledAt ?? undefined,
+    archived: false,
+    attachments: undefined,
+    confidential: false,
+  };
+}
+
+async function fetchAllMailMessages(): Promise<EmailMessage[]> {
+  const [received, sent, drafts, scheduled, trash, spam] = await Promise.all([
+    getReceivedMails(),
+    getSentMails(),
+    getDrafts(),
+    getScheduledMails(),
+    getTrashMails(),
+    getSpamMails(),
+  ]);
+  const byId = new Map<number, MailRecord>();
+  for (const mail of [...received, ...sent, ...drafts, ...scheduled, ...trash, ...spam]) {
+    byId.set(mail.id, mail);
+  }
+  return Array.from(byId.values()).map(mailToEmailMessage);
+}
 
 function signatureToSettings(signature: SignatureRecord): SignatureSettings {
   return {
@@ -538,7 +645,7 @@ function buildSignatureHtml(s: SignatureSettings, avatarDataUrl: string | null):
   return `<div style="display:flex;align-items:flex-start;gap:12px;">${photoHtml}<div style="display:flex;flex-direction:column;gap:2px;">${lines.join("")}</div></div>`;
 }
 
-type Selection = { type: "folder"; folder: MailFolder } | { type: "custom"; name: string };
+type Selection = { type: "folder"; folder: MailFolder } | { type: "custom"; id: number; name: string };
 
 interface ComposeSendPayload {
   to: string;
@@ -954,7 +1061,11 @@ function ProfileModal({
   account: OnboardingAccount;
   displayName: string;
   onClose: () => void;
-  onSave: (payload: { ownerName: string; jobTitle: string; avatarDataUrl: string | null }) => void;
+  onSave: (payload: {
+    ownerName: string;
+    jobTitle: string;
+    avatarDataUrl: string | null;
+  }) => Promise<boolean>;
 }) {
   const t = useTranslations("Dashboard.mailPage");
   const { show } = useToast();
@@ -962,17 +1073,38 @@ function ProfileModal({
   const [ownerName, setOwnerName] = useState(displayName);
   const [jobTitle, setJobTitle] = useState(account.mailPreferences.jobTitle);
   const [avatarDataUrl, setAvatarDataUrl] = useState(account.mailPreferences.avatarDataUrl);
+  const [avatarUrl, setAvatarUrl] = useState(account.mailPreferences.avatarDataUrl);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => setAvatarDataUrl(reader.result as string);
     reader.readAsDataURL(file);
+
+    setUploadingAvatar(true);
+    const data = new Uint8Array(await file.arrayBuffer());
+    const [uploaded] = await uploadFiles([
+      { name: file.name, type: file.type, size: file.size, data },
+    ]);
+    setUploadingAvatar(false);
+    if (uploaded) {
+      setAvatarUrl(uploaded.publicUrl);
+    } else {
+      show(t("attachmentUploadFailed"), "error");
+    }
   }
 
-  function handleSave() {
-    onSave({ ownerName, jobTitle, avatarDataUrl });
+  async function handleSave() {
+    setSaving(true);
+    const ok = await onSave({ ownerName, jobTitle, avatarDataUrl: avatarUrl });
+    setSaving(false);
+    if (!ok) {
+      show(t("settings.profileSaveError"), "error");
+      return;
+    }
     show(t("settings.profileSaved"), "success");
     onClose();
   }
@@ -986,8 +1118,12 @@ function ProfileModal({
           <Button variant="outline" onClick={onClose}>
             {t("cancel")}
           </Button>
-          <Button className={cn(premiumButton)} onClick={handleSave}>
-            {t("save")}
+          <Button
+            className={cn(premiumButton)}
+            onClick={handleSave}
+            disabled={uploadingAvatar || saving}
+          >
+            {saving ? t("saving") : t("save")}
           </Button>
         </>
       }
@@ -1056,11 +1192,11 @@ function ProfileModal({
 function SecurityModal({
   account,
   onClose,
-  onToggleTwoFactor,
+  onTwoFactorChanged,
 }: {
   account: OnboardingAccount;
   onClose: () => void;
-  onToggleTwoFactor: () => void;
+  onTwoFactorChanged: (enabled: boolean) => void;
 }) {
   const t = useTranslations("Dashboard.mailPage");
   const { show } = useToast();
@@ -1068,17 +1204,78 @@ function SecurityModal({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [twoFactorSetup, setTwoFactorSetup] = useState<
+    (TwoFactorSetup & { qrDataUrl: string }) | null
+  >(null);
+  const [settingUpTwoFactor, setSettingUpTwoFactor] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [confirmingTwoFactor, setConfirmingTwoFactor] = useState(false);
+  const [disablingOpen, setDisablingOpen] = useState(false);
+  const [disableCurrentPassword, setDisableCurrentPassword] = useState("");
+  const [disableCode, setDisableCode] = useState("");
+  const [disablingTwoFactor, setDisablingTwoFactor] = useState(false);
 
-  function handleUpdatePassword() {
+  async function handleStartTwoFactorSetup() {
+    setSettingUpTwoFactor(true);
+    const setup = await setupTwoFactorWithQr();
+    setSettingUpTwoFactor(false);
+    if (!setup) {
+      show(t("settings.twoFactorSetupError"), "error");
+      return;
+    }
+    setTwoFactorSetup(setup);
+  }
+
+  async function handleConfirmTwoFactor() {
+    setConfirmingTwoFactor(true);
+    const ok = await enableTwoFactor({ code: twoFactorCode });
+    setConfirmingTwoFactor(false);
+    if (!ok) {
+      show(t("settings.twoFactorInvalidCode"), "error");
+      return;
+    }
+    setTwoFactorSetup(null);
+    setTwoFactorCode("");
+    onTwoFactorChanged(true);
+    show(t("settings.twoFactorEnabledToast"), "success");
+  }
+
+  async function handleDisableTwoFactor() {
+    setDisablingTwoFactor(true);
+    const ok = await disableTwoFactor({
+      currentPassword: disableCurrentPassword,
+      code: disableCode,
+    });
+    setDisablingTwoFactor(false);
+    if (!ok) {
+      show(t("settings.twoFactorInvalidCode"), "error");
+      return;
+    }
+    setDisablingOpen(false);
+    setDisableCurrentPassword("");
+    setDisableCode("");
+    onTwoFactorChanged(false);
+    show(t("settings.twoFactorDisabledToast"), "success");
+  }
+
+  async function handleUpdatePassword() {
     if (!currentPassword || !newPassword || newPassword !== confirmPassword) {
       show(t("settings.passwordMismatch"), "error");
+      return;
+    }
+    setUpdatingPassword(true);
+    const ok = await changeMailAccountPassword({ currentPassword, newPassword });
+    setUpdatingPassword(false);
+    if (!ok) {
+      show(t("settings.passwordUpdateError"), "error");
       return;
     }
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
     setPasswordOpen(false);
-    show(t("settings.passwordComingSoon"), "info");
+    show(t("settings.passwordUpdated"), "success");
   }
 
   return (
@@ -1128,32 +1325,134 @@ function SecurityModal({
                 size="sm"
                 className={cn("self-start", premiumButton)}
                 onClick={handleUpdatePassword}
+                disabled={updatingPassword}
               >
-                {t("settings.updatePassword")}
+                {updatingPassword ? t("saving") : t("settings.updatePassword")}
               </Button>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 py-4">
-          <span className="flex items-center gap-3">
-            <ShieldCheck className="size-4 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
-            <span className="flex flex-col">
-              <span className="text-sm font-medium text-slate-900 dark:text-slate-50">
-                {t("settings.twoFactorAuth")}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {account.mailPreferences.twoFactorEnabled
-                  ? t("settings.twoFactorEnabled")
-                  : t("settings.twoFactorDisabled")}
+        <div className="py-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-3">
+              <ShieldCheck className="size-4 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+              <span className="flex flex-col">
+                <span className="text-sm font-medium text-slate-900 dark:text-slate-50">
+                  {t("settings.twoFactorAuth")}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {account.mailPreferences.twoFactorEnabled
+                    ? t("settings.twoFactorEnabled")
+                    : t("settings.twoFactorDisabled")}
+                </span>
               </span>
             </span>
-          </span>
-          <ToggleSwitch
-            checked={account.mailPreferences.twoFactorEnabled}
-            onChange={onToggleTwoFactor}
-            label={t("settings.twoFactorAuth")}
-          />
+            {account.mailPreferences.twoFactorEnabled ? (
+              <button
+                type="button"
+                onClick={() => setDisablingOpen((v) => !v)}
+                className="text-sm font-medium text-destructive hover:underline"
+              >
+                {t("settings.disable")}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleStartTwoFactorSetup}
+                disabled={settingUpTwoFactor}
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                {settingUpTwoFactor ? t("settings.twoFactorSettingUp") : t("settings.enable")}
+              </button>
+            )}
+          </div>
+
+          {twoFactorSetup && (
+            <div className="mt-4 flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+              <div className="flex flex-col items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={twoFactorSetup.qrDataUrl}
+                  alt={t("settings.twoFactorQrAlt")}
+                  className="size-40 rounded-lg border border-slate-200 dark:border-slate-800"
+                />
+                <p className="text-center text-xs text-muted-foreground">
+                  {t("settings.twoFactorScanHint")}
+                </p>
+                <code className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-1 text-xs break-all">
+                  {twoFactorSetup.secret}
+                </code>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t("settings.twoFactorBackupCodesLabel")}
+                </p>
+                <div className="mt-1.5 grid grid-cols-2 gap-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 font-mono text-xs">
+                  {twoFactorSetup.backupCodes.map((code) => (
+                    <span key={code}>{code}</span>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {t("settings.twoFactorBackupCodesHint")}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Input
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value)}
+                  placeholder={t("settings.twoFactorCodePlaceholder")}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className={cn("self-start", premiumButton)}
+                    onClick={handleConfirmTwoFactor}
+                    disabled={confirmingTwoFactor || !twoFactorCode}
+                  >
+                    {confirmingTwoFactor ? t("saving") : t("settings.twoFactorConfirm")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setTwoFactorSetup(null);
+                      setTwoFactorCode("");
+                    }}
+                  >
+                    {t("cancel")}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {disablingOpen && (
+            <div className="mt-4 flex flex-col gap-3 pl-7">
+              <Input
+                type="password"
+                value={disableCurrentPassword}
+                onChange={(e) => setDisableCurrentPassword(e.target.value)}
+                placeholder={t("settings.currentPassword")}
+              />
+              <Input
+                value={disableCode}
+                onChange={(e) => setDisableCode(e.target.value)}
+                placeholder={t("settings.twoFactorCodePlaceholder")}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="self-start border-destructive/40 text-destructive hover:bg-destructive/10"
+                onClick={handleDisableTwoFactor}
+                disabled={disablingTwoFactor || !disableCurrentPassword || !disableCode}
+              >
+                {disablingTwoFactor ? t("saving") : t("settings.twoFactorDisableConfirm")}
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-3 py-4">
@@ -1213,33 +1512,44 @@ function ForwardingModal({
     forwardingEmail: string;
     forwardingVerified: boolean;
     keepForwardedCopy: boolean;
-  }) => void;
+  }) => Promise<boolean>;
 }) {
   const t = useTranslations("Dashboard.mailPage");
   const { show } = useToast();
-  const [forwardingEmail, setForwardingEmail] = useState(account.mailPreferences.forwardingEmail);
-  const [verified, setVerified] = useState(
-    Boolean(
-      account.mailPreferences.forwardingVerified &&
-        account.mailPreferences.forwardingEmail.trim(),
-    ),
+  const [forwardingEmailInput, setForwardingEmailInput] = useState(
+    account.mailPreferences.forwardingEmail,
   );
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
   const [keepCopy, setKeepCopy] = useState(account.mailPreferences.keepForwardedCopy);
+  const [savingPreferences, setSavingPreferences] = useState(false);
+  const verified = account.mailPreferences.forwardingVerified;
 
-  function handleEmailChange(value: string) {
-    setForwardingEmail(value);
-    setVerified(false);
+  async function handleSendVerification() {
+    if (!forwardingEmailInput.trim()) return;
+    setSendingVerification(true);
+    const ok = await setForwardingEmail({ forwardingEmail: forwardingEmailInput });
+    setSendingVerification(false);
+    if (!ok) {
+      show(t("settings.forwardingSendError"), "error");
+      return;
+    }
+    setVerificationSent(true);
+    show(t("settings.verifyEmailSent", { email: forwardingEmailInput }), "info");
   }
 
-  function handleVerify() {
-    if (!forwardingEmail.trim()) return;
-    show(t("settings.verifyEmailSent", { email: forwardingEmail }), "info");
-    setVerified(true);
-  }
-
-  function handleSave() {
-    if (!verified) return;
-    onSave({ forwardingEmail, forwardingVerified: true, keepForwardedCopy: keepCopy });
+  async function handleSave() {
+    setSavingPreferences(true);
+    const ok = await onSave({
+      forwardingEmail: forwardingEmailInput,
+      forwardingVerified: verified,
+      keepForwardedCopy: keepCopy,
+    });
+    setSavingPreferences(false);
+    if (!ok) {
+      show(t("settings.forwardingSaveError"), "error");
+      return;
+    }
     show(t("settings.forwardingSaved"), "success");
     onClose();
   }
@@ -1253,8 +1563,8 @@ function ForwardingModal({
           <Button variant="outline" onClick={onClose}>
             {t("cancel")}
           </Button>
-          <Button className={cn(premiumButton)} disabled={!verified} onClick={handleSave}>
-            {t("save")}
+          <Button className={cn(premiumButton)} disabled={savingPreferences} onClick={handleSave}>
+            {savingPreferences ? t("saving") : t("save")}
           </Button>
         </>
       }
@@ -1267,14 +1577,21 @@ function ForwardingModal({
             {t("settings.forwardingEmailLabel")}
           </label>
           <Input
-            value={forwardingEmail}
-            onChange={(e) => handleEmailChange(e.target.value)}
+            value={forwardingEmailInput}
+            onChange={(e) => {
+              setForwardingEmailInput(e.target.value);
+              setVerificationSent(false);
+            }}
             placeholder={t("settings.forwardingEmailPlaceholder")}
             className="mt-1.5"
           />
         </div>
-        <Button variant="outline" onClick={handleVerify}>
-          {t("settings.verifyEmail")}
+        <Button
+          variant="outline"
+          onClick={handleSendVerification}
+          disabled={sendingVerification || !forwardingEmailInput.trim()}
+        >
+          {sendingVerification ? t("saving") : t("settings.verifyEmail")}
         </Button>
       </div>
 
@@ -1283,6 +1600,8 @@ function ForwardingModal({
           <ShieldCheck className="size-3.5" strokeWidth={1.5} />
           {t("settings.forwardingVerified")}
         </p>
+      ) : verificationSent ? (
+        <p className="mt-2 text-xs text-muted-foreground">{t("settings.forwardingCheckInbox")}</p>
       ) : (
         <p className="mt-2 text-xs text-muted-foreground">
           {t("settings.forwardingVerifyRequired")}
@@ -2033,7 +2352,7 @@ function MailSettingsView({
   account,
   displayName,
   onSaveProfile,
-  onToggleTwoFactor,
+  onTwoFactorChanged,
   onSaveForwarding,
   onSaveSignature,
   onImportComplete,
@@ -2045,13 +2364,13 @@ function MailSettingsView({
     ownerName: string;
     jobTitle: string;
     avatarDataUrl: string | null;
-  }) => void;
-  onToggleTwoFactor: () => void;
+  }) => Promise<boolean>;
+  onTwoFactorChanged: (enabled: boolean) => void;
   onSaveForwarding: (payload: {
     forwardingEmail: string;
     forwardingVerified: boolean;
     keepForwardedCopy: boolean;
-  }) => void;
+  }) => Promise<boolean>;
   onSaveSignature: (payload: SignatureSettings) => Promise<boolean>;
   onImportComplete: (provider: string) => void;
   initialModal?: "profile" | "security" | "forwarding" | "signature" | "import" | null;
@@ -2118,7 +2437,7 @@ function MailSettingsView({
         <SecurityModal
           account={account}
           onClose={() => setActiveModal(null)}
-          onToggleTwoFactor={onToggleTwoFactor}
+          onTwoFactorChanged={onTwoFactorChanged}
         />
       )}
       {activeModal === "forwarding" && (
@@ -2314,6 +2633,7 @@ function VoiceRecorderPanel({
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioBlobRef = useRef<Blob | null>(null);
   const recordingSecondsRef = useRef(0);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cancelledRecordingRef = useRef(false);
@@ -2393,6 +2713,7 @@ function VoiceRecorderPanel({
         stopVisualizer();
         if (cancelledRecordingRef.current) return;
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        audioBlobRef.current = blob;
         const reader = new FileReader();
         reader.onload = () => {
           setAudioDataUrl(reader.result as string);
@@ -2437,15 +2758,28 @@ function VoiceRecorderPanel({
     setDurationSec(0);
   }
 
-  function handleAttach() {
-    if (!audioDataUrl) return;
+  async function handleAttach() {
+    const blob = audioBlobRef.current;
+    if (!audioDataUrl || !blob) return;
+    const name = t("voiceMessageName", { duration: formatDuration(durationSec) });
+
+    const data = new Uint8Array(await blob.arrayBuffer());
+    const [uploaded] = await uploadFiles([
+      { name: `${name}.webm`, type: blob.type, size: blob.size, data },
+    ]);
+    if (!uploaded) {
+      show(t("attachmentUploadFailed"), "error");
+      return;
+    }
+
     onAttach({
-      name: t("voiceMessageName", { duration: formatDuration(durationSec) }),
-      sizeKb: Math.max(1, Math.round((audioDataUrl.length * 0.75) / 1024)),
+      name,
+      sizeKb: Math.max(1, Math.round(blob.size / 1024)),
       type: "voice",
       audioDataUrl,
       durationSec,
       cardColor,
+      fileId: uploaded.id,
     });
   }
 
@@ -2717,16 +3051,32 @@ const ComposerBody = forwardRef<
     exec("createLink", url);
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, kind: "doc" | "image") {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, kind: "doc" | "image") {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
+
     const type: EmailAttachment["type"] =
       kind === "image" ? "image" : file.name.toLowerCase().endsWith(".pdf") ? "pdf" : "doc";
-    setAttachments((prev) => [
-      ...prev,
-      { name: file.name, sizeKb: Math.max(1, Math.round(file.size / 1024)), type },
+    const placeholder: EmailAttachment = {
+      name: file.name,
+      sizeKb: Math.max(1, Math.round(file.size / 1024)),
+      type,
+    };
+    setAttachments((prev) => [...prev, placeholder]);
+
+    const data = new Uint8Array(await file.arrayBuffer());
+    const [uploaded] = await uploadFiles([
+      { name: file.name, type: file.type, size: file.size, data },
     ]);
-    e.target.value = "";
+    if (!uploaded) {
+      setAttachments((prev) => prev.filter((a) => a !== placeholder));
+      show(t("attachmentUploadFailed"), "error");
+      return;
+    }
+    setAttachments((prev) =>
+      prev.map((a) => (a === placeholder ? { ...a, fileId: uploaded.id } : a)),
+    );
   }
 
   function removeAttachment(index: number) {
@@ -3442,9 +3792,10 @@ export default function MailPage() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeTo, setComposeTo] = useState<string | undefined>(undefined);
   const [composeAutoSchedule, setComposeAutoSchedule] = useState(false);
+  const [forwardingId, setForwardingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"mail" | "contacts" | "folders" | "settings">("mail");
   const [settingsAutoOpenModal, setSettingsAutoOpenModal] = useState<"signature" | null>(null);
-  const [customFolders, setCustomFolders] = useState<string[]>([]);
+  const [folders, setFolders] = useState<FolderRecord[]>([]);
   const [displayName, setDisplayName] = useState("");
   const signature = account
     ? buildSignatureHtml(account.mailPreferences.signature, account.mailPreferences.avatarDataUrl)
@@ -3460,12 +3811,31 @@ export default function MailPage() {
     }
     setAccount(stored);
     setDisplayName(stored.ownerName);
-    const mailboxEmail = stored.mailboxes[0]
-      ? `${stored.mailboxes[0].username}@${stored.domain}`
-      : `hello@${stored.domain}`;
-    setMessages(generateMockMessages(stored.domain, mailboxEmail));
     setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "1");
     setChecked(true);
+
+    fetchAllMailMessages().then(setMessages);
+    getFolders().then(setFolders);
+
+    getMailAccountProfile().then((profile) => {
+      if (!profile) return;
+      setAccount((prev) =>
+        prev
+          ? {
+              ...prev,
+              mailPreferences: {
+                ...prev.mailPreferences,
+                twoFactorEnabled: profile.twoFactorEnabled ?? prev.mailPreferences.twoFactorEnabled,
+                forwardingEmail: profile.forwardingEmail ?? prev.mailPreferences.forwardingEmail,
+                forwardingVerified:
+                  profile.forwardingVerified ?? prev.mailPreferences.forwardingVerified,
+                keepForwardedCopy:
+                  profile.keepForwardedCopy ?? prev.mailPreferences.keepForwardedCopy,
+              },
+            }
+          : prev,
+      );
+    });
 
     getSignature().then((signature) => {
       if (!signature) return;
@@ -3498,7 +3868,7 @@ export default function MailPage() {
 
   const folderMessages = useMemo(() => {
     if (selection.type === "custom") {
-      return messages.filter((m) => m.customFolder === selection.name && m.folder !== "trash");
+      return messages.filter((m) => m.folderId === selection.id && m.folder !== "trash");
     }
     if (selection.folder === "important") {
       return messages.filter((m) => m.starred && m.folder !== "trash");
@@ -3572,37 +3942,68 @@ export default function MailPage() {
     setViewMode("mail");
   }
 
-  function selectCustomFolder(name: string) {
-    setSelection({ type: "custom", name });
+  function selectCustomFolder(folder: FolderRecord) {
+    setSelection({ type: "custom", id: folder.id, name: folder.name });
     setSelectedId(null);
     setViewMode("mail");
   }
 
-  function handleAddFolder() {
+  async function handleAddFolder() {
     const name = window.prompt(t("newFolderPrompt"))?.trim();
     if (!name) return;
-    setCustomFolders((prev) => (prev.includes(name) ? prev : [...prev, name]));
-    selectCustomFolder(name);
+    const folder = await createFolderApi({ name });
+    if (!folder) {
+      show(t("addFolderFailed"), "error");
+      return;
+    }
+    setFolders((prev) => [...prev, folder]);
+    selectCustomFolder(folder);
   }
 
-  function handleMoveToFolder(id: string, folderName: string) {
+  async function handleDeleteFolder(folder: FolderRecord) {
+    const ok = await deleteFolderApi(folder.id);
+    if (!ok) {
+      show(t("deleteFolderFailed"), "error");
+      return;
+    }
+    setFolders((prev) => prev.filter((f) => f.id !== folder.id));
     setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, customFolder: folderName || undefined } : m)),
+      prev.map((m) => (m.folderId === folder.id ? { ...m, folderId: null } : m)),
     );
+    if (selection.type === "custom" && selection.id === folder.id) {
+      selectFolder("inbox");
+    }
+  }
+
+  function handleMoveToFolder(id: string, folderId: number | null) {
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, folderId } : m)));
+    moveMailToFolder(Number(id), { folderId });
   }
 
   function selectMessage(id: string) {
     setSelectedId(id);
     setReplyOpen(false);
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, read: true } : m)));
+    const message = messages.find((m) => m.id === id);
+    if (message && !message.read) {
+      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, read: true } : m)));
+      markMailRead(Number(id), true);
+    }
   }
 
   function toggleStar(id: string) {
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, starred: !m.starred } : m)));
+    const message = messages.find((m) => m.id === id);
+    if (!message) return;
+    const starred = !message.starred;
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, starred } : m)));
+    markMailImportant(Number(id), { important: starred });
   }
 
   function toggleRead(id: string) {
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, read: !m.read } : m)));
+    const message = messages.find((m) => m.id === id);
+    if (!message) return;
+    const read = !message.read;
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, read } : m)));
+    markMailRead(Number(id), read);
   }
 
   function archiveMessage(id: string) {
@@ -3619,6 +4020,7 @@ export default function MailPage() {
     setMessages((prev) =>
       prev.map((m) => (m.id === id ? { ...m, folder: nowSpam ? "spam" : "inbox" } : m)),
     );
+    markMailSpam(Number(id), { isSpam: nowSpam });
     show(nowSpam ? t("movedToSpam") : t("markedNotSpam"), "info");
     setSelectedId(null);
     setReplyOpen(false);
@@ -3629,67 +4031,118 @@ export default function MailPage() {
     if (!message) return;
     if (message.folder === "trash") {
       setMessages((prev) => prev.filter((m) => m.id !== id));
+      permanentlyDeleteMail(Number(id));
       show(t("messageDeleted"), "info");
     } else {
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, folder: "trash" } : m)));
+      trashMailApi(Number(id));
       show(t("movedToTrash"), "info");
     }
     setSelectedId(null);
     setReplyOpen(false);
   }
 
-  function handleSend(payload: ComposeSendPayload) {
-    if (!account) return;
-    const mailboxEmail = account.mailboxes[0]
-      ? `${account.mailboxes[0].username}@${account.domain}`
-      : `hello@${account.domain}`;
-    const { to, cc, bcc, subject, bodyText, attachments, confidential, scheduledFor } = payload;
-    const newMessage: EmailMessage = {
-      id: `sent-${Date.now()}`,
-      folder: scheduledFor ? "scheduled" : "sent",
-      fromName: "You",
-      fromEmail: mailboxEmail,
-      toEmail: to,
-      ccEmail: cc,
-      bccEmail: bcc,
-      subject: subject || "(no subject)",
-      preview: scheduledFor
-        ? t("sendsAt", { date: formatMessageTime(scheduledFor, locale) })
-        : bodyText.slice(0, 80),
-      body: bodyText,
-      date: new Date().toISOString(),
-      read: true,
-      starred: false,
-      scheduledFor,
-      attachments: attachments.length > 0 ? attachments : undefined,
-      confidential: confidential || undefined,
-    };
-    setMessages((prev) => [newMessage, ...prev]);
+  // Restoring/un-scheduling can land the mail back in any system folder depending on its
+  // underlying status, so these replace the local entry from the authoritative server response
+  // instead of guessing the resulting folder client-side.
+  async function restoreMessage(id: string) {
+    const mail = await restoreMailApi(Number(id));
+    if (!mail) return;
+    setMessages((prev) => prev.map((m) => (m.id === id ? mailToEmailMessage(mail) : m)));
+    show(t("messageRestored"), "info");
+    setSelectedId(null);
+  }
+
+  async function cancelScheduledMessage(id: string) {
+    const mail = await cancelScheduledMail(Number(id));
+    if (!mail) return;
+    setMessages((prev) => prev.map((m) => (m.id === id ? mailToEmailMessage(mail) : m)));
+    show(t("scheduleCancelled"), "info");
+    setSelectedId(null);
+  }
+
+  function splitAddresses(value?: string): string[] | undefined {
+    const list = (value ?? "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+    return list.length > 0 ? list : undefined;
+  }
+
+  function attachmentIdsOf(attachments: EmailAttachment[]): number[] | undefined {
+    const ids = attachments.map((a) => a.fileId).filter((id): id is number => id != null);
+    return ids.length > 0 ? ids : undefined;
+  }
+
+  async function handleSend(payload: ComposeSendPayload) {
+    const { to, cc, bcc, subject, bodyText, attachments, scheduledFor } = payload;
+    const toAddresses = splitAddresses(to);
+    if (!toAddresses) return;
+    const attachmentIds = attachmentIdsOf(attachments);
+
+    if (forwardingId) {
+      const mail = await forwardMailApi(Number(forwardingId), {
+        to: toAddresses,
+        cc: splitAddresses(cc),
+        bcc: splitAddresses(bcc),
+        bodyText,
+      });
+      setForwardingId(null);
+      if (!mail) {
+        show(t("sendFailed"), "error");
+        return;
+      }
+      setMessages((prev) => [mailToEmailMessage(mail), ...prev]);
+      setComposeOpen(false);
+      show(t("messageSent"), "success");
+      return;
+    }
+
+    const mail = scheduledFor
+      ? await scheduleMailApi({
+          to: toAddresses,
+          cc: splitAddresses(cc),
+          bcc: splitAddresses(bcc),
+          subject: subject || "(no subject)",
+          bodyText,
+          attachmentIds,
+          scheduledAt: new Date(scheduledFor),
+        })
+      : await sendMailApi({
+          to: toAddresses,
+          cc: splitAddresses(cc),
+          bcc: splitAddresses(bcc),
+          subject: subject || "(no subject)",
+          bodyText,
+          attachmentIds,
+        });
+
+    if (!mail) {
+      show(t("sendFailed"), "error");
+      return;
+    }
+
+    setMessages((prev) => [mailToEmailMessage(mail), ...prev]);
     setComposeOpen(false);
     show(scheduledFor ? t("messageScheduled") : t("messageSent"), "success");
   }
 
-  function handleSendReply(payload: { bodyText: string; attachments: EmailAttachment[]; confidential: boolean }) {
-    if (!account || !selected) return;
-    const mailboxEmail = account.mailboxes[0]
-      ? `${account.mailboxes[0].username}@${account.domain}`
-      : `hello@${account.domain}`;
-    const newMessage: EmailMessage = {
-      id: `sent-${Date.now()}`,
-      folder: "sent",
-      fromName: "You",
-      fromEmail: mailboxEmail,
-      toEmail: selected.fromEmail,
-      subject: selected.subject.startsWith("Re: ") ? selected.subject : `Re: ${selected.subject}`,
-      preview: payload.bodyText.slice(0, 80),
-      body: payload.bodyText,
-      date: new Date().toISOString(),
-      read: true,
-      starred: false,
-      attachments: payload.attachments.length > 0 ? payload.attachments : undefined,
-      confidential: payload.confidential || undefined,
-    };
-    setMessages((prev) => [newMessage, ...prev]);
+  async function handleSendReply(payload: { bodyText: string; attachments: EmailAttachment[]; confidential: boolean }) {
+    if (!selected) return;
+    const subject = selected.subject.startsWith("Re: ") ? selected.subject : `Re: ${selected.subject}`;
+    const mail = await sendMailApi({
+      to: [selected.fromEmail],
+      subject,
+      bodyText: payload.bodyText,
+      attachmentIds: attachmentIdsOf(payload.attachments),
+    });
+
+    if (!mail) {
+      show(t("sendFailed"), "error");
+      return;
+    }
+
+    setMessages((prev) => [mailToEmailMessage(mail), ...prev]);
     setReplyOpen(false);
     show(t("replySent"), "success");
   }
@@ -3712,28 +4165,45 @@ export default function MailPage() {
     setComposeOpen(true);
   }
 
-  function handleAddContactComingSoon() {
-    show(t("addContactComingSoon"), "info");
+  async function handleAddContact(email: string) {
+    const related = messages.find((m) => m.fromEmail === email);
+    const displayName = related?.fromName || email.split("@")[0];
+    const [firstName, ...rest] = displayName.split(" ");
+    const contact = await createContactApi({
+      firstName: firstName || email.split("@")[0],
+      lastName: rest.length > 0 ? rest.join(" ") : undefined,
+      email,
+    });
+    show(contact ? t("contactAdded") : t("addContactFailed"), contact ? "success" : "error");
   }
 
   function handleOpenMessageFromPanel(message: EmailMessage) {
     setDetailContact(null);
     setViewMode("mail");
-    if (message.customFolder) {
-      setSelection({ type: "custom", name: message.customFolder });
+    const folder = message.folderId ? folders.find((f) => f.id === message.folderId) : undefined;
+    if (folder) {
+      setSelection({ type: "custom", id: folder.id, name: folder.name });
     } else {
       setSelection({ type: "folder", folder: message.folder });
     }
     selectMessage(message.id);
   }
 
-  function handleSaveProfile(payload: {
+  async function handleSaveProfile(payload: {
     ownerName: string;
     jobTitle: string;
     avatarDataUrl: string | null;
-  }) {
+  }): Promise<boolean> {
+    if (!account) return false;
+    const [firstName, ...rest] = payload.ownerName.trim().split(/\s+/);
+    const updated = await updateMailAccountProfile({
+      firstName: firstName || undefined,
+      lastName: rest.length > 0 ? rest.join(" ") : undefined,
+      avatar: payload.avatarDataUrl,
+    });
+    if (!updated) return false;
+
     setDisplayName(payload.ownerName);
-    if (!account) return;
     const next: OnboardingAccount = {
       ...account,
       ownerName: payload.ownerName,
@@ -3745,6 +4215,7 @@ export default function MailPage() {
     };
     saveAccount(next);
     setAccount(next);
+    return true;
   }
 
   function handleSelectTheme(theme: MailPreferences["theme"]) {
@@ -3757,31 +4228,39 @@ export default function MailPage() {
     setAccount(next);
   }
 
-  function handleToggleTwoFactor() {
+  function handleTwoFactorChanged(enabled: boolean) {
     if (!account) return;
     const next: OnboardingAccount = {
       ...account,
       mailPreferences: {
         ...account.mailPreferences,
-        twoFactorEnabled: !account.mailPreferences.twoFactorEnabled,
+        twoFactorEnabled: enabled,
       },
     };
     saveAccount(next);
     setAccount(next);
   }
 
-  function handleSaveForwarding(payload: {
+  async function handleSaveForwarding(payload: {
     forwardingEmail: string;
     forwardingVerified: boolean;
     keepForwardedCopy: boolean;
-  }) {
-    if (!account) return;
+  }): Promise<boolean> {
+    if (!account) return false;
+    const ok = await updateForwardingPreferences({ keepForwardedCopy: payload.keepForwardedCopy });
+    if (!ok) return false;
+
     const next: OnboardingAccount = {
       ...account,
-      mailPreferences: { ...account.mailPreferences, ...payload },
+      mailPreferences: {
+        ...account.mailPreferences,
+        forwardingEmail: payload.forwardingEmail,
+        keepForwardedCopy: payload.keepForwardedCopy,
+      },
     };
     saveAccount(next);
     setAccount(next);
+    return true;
   }
 
   async function handleSaveSignature(payload: SignatureSettings): Promise<boolean> {
@@ -3880,7 +4359,7 @@ export default function MailPage() {
                 account={account}
                 displayName={displayName}
                 onSaveProfile={handleSaveProfile}
-                onToggleTwoFactor={handleToggleTwoFactor}
+                onTwoFactorChanged={handleTwoFactorChanged}
                 onSaveForwarding={handleSaveForwarding}
                 onSaveSignature={handleSaveSignature}
                 onImportComplete={handleImportComplete}
@@ -3894,18 +4373,30 @@ export default function MailPage() {
               {t("foldersSection")}
             </h2>
             <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-              {customFolders.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => selectCustomFolder(name)}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 text-left transition-colors hover:border-primary/30 hover:bg-muted/40"
+              {folders.map((folder) => (
+                <div
+                  key={folder.id}
+                  className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 text-left transition-colors hover:border-primary/30 hover:bg-muted/40"
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Folder className="size-5" strokeWidth={1.5} />
-                  </span>
-                  <span className="truncate text-sm font-medium text-foreground">{name}</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => selectCustomFolder(folder)}
+                    className="flex min-w-0 flex-1 items-center gap-3"
+                  >
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Folder className="size-5" strokeWidth={1.5} />
+                    </span>
+                    <span className="truncate text-sm font-medium text-foreground">{folder.name}</span>
+                  </button>
+                  <button
+                    type="button"
+                    title={t("deleteFolder")}
+                    onClick={() => handleDeleteFolder(folder)}
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-colors group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <X className="size-3.5" strokeWidth={1.5} />
+                  </button>
+                </div>
               ))}
               <button
                 type="button"
@@ -3979,7 +4470,7 @@ export default function MailPage() {
                             email={contact.email}
                             onSendMail={handleComposeToContact}
                             onScheduleMail={handleScheduleToContact}
-                            onAddToContacts={handleAddContactComingSoon}
+                            onAddToContacts={handleAddContact}
                             onViewDetails={(c) => setDetailContact(c)}
                           >
                             <ContactAvatar
@@ -4085,6 +4576,26 @@ export default function MailPage() {
                   >
                     <Trash2 className="size-4" strokeWidth={1.5} />
                   </button>
+                  {selected.folder === "trash" && (
+                    <button
+                      type="button"
+                      title={t("restore")}
+                      onClick={() => restoreMessage(selected.id)}
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
+                    >
+                      <ArchiveRestore className="size-4" strokeWidth={1.5} />
+                    </button>
+                  )}
+                  {selected.folder === "scheduled" && (
+                    <button
+                      type="button"
+                      title={t("cancelSchedule")}
+                      onClick={() => cancelScheduledMessage(selected.id)}
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-destructive/10 hover:text-destructive hover:shadow-xs"
+                    >
+                      <X className="size-4" strokeWidth={1.5} />
+                    </button>
+                  )}
                   <button
                     type="button"
                     title={selected.read ? t("markUnread") : t("markRead")}
@@ -4103,15 +4614,17 @@ export default function MailPage() {
                   >
                     <FolderInput className="pointer-events-none size-4" strokeWidth={1.5} />
                     <select
-                      value={selected.customFolder ?? ""}
-                      onChange={(e) => handleMoveToFolder(selected.id, e.target.value)}
+                      value={selected.folderId ?? ""}
+                      onChange={(e) =>
+                        handleMoveToFolder(selected.id, e.target.value ? Number(e.target.value) : null)
+                      }
                       aria-label={t("moveToFolder")}
                       className="absolute inset-0 size-full cursor-pointer opacity-0"
                     >
                       <option value="">{t("noFolder")}</option>
-                      {customFolders.map((name) => (
-                        <option key={name} value={name}>
-                          {name}
+                      {folders.map((folder) => (
+                        <option key={folder.id} value={folder.id}>
+                          {folder.name}
                         </option>
                       ))}
                     </select>
@@ -4138,7 +4651,7 @@ export default function MailPage() {
                     email={selected.fromEmail}
                     onSendMail={handleComposeToContact}
                     onScheduleMail={handleScheduleToContact}
-                    onAddToContacts={handleAddContactComingSoon}
+                    onAddToContacts={handleAddContact}
                     onViewDetails={(c) => setDetailContact(c)}
                   >
                     <ContactAvatar
@@ -4251,7 +4764,10 @@ export default function MailPage() {
                       variant="ghost"
                       size="sm"
                       className="rounded-full border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50 hover:shadow-xs"
-                      onClick={() => show(t("forwardComingSoon"), "info")}
+                      onClick={() => {
+                        setForwardingId(selected.id);
+                        setComposeOpen(true);
+                      }}
                     >
                       <Forward className="size-4" strokeWidth={1.5} />
                       {t("forward")}
@@ -4311,7 +4827,7 @@ export default function MailPage() {
                       email={m.fromEmail}
                       onSendMail={handleComposeToContact}
                       onScheduleMail={handleScheduleToContact}
-                      onAddToContacts={handleAddContactComingSoon}
+                      onAddToContacts={handleAddContact}
                       onViewDetails={(c) => setDetailContact(c)}
                     >
                       <ContactAvatar
@@ -4372,7 +4888,10 @@ export default function MailPage() {
 
       {composeOpen && (
         <ComposeDialog
-          onClose={() => setComposeOpen(false)}
+          onClose={() => {
+            setComposeOpen(false);
+            setForwardingId(null);
+          }}
           onSend={handleSend}
           signature={signature}
           autoInsertSignature={account?.mailPreferences.signature.includeInNewEmails}

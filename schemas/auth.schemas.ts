@@ -49,3 +49,49 @@ export const setupMailAccountProfileSchema = z
 export type SetupMailAccountProfileSchema = z.infer<
   typeof setupMailAccountProfileSchema
 >
+
+export const updateMailAccountProfileSchema = z.object({
+  firstName: z.string().min(1).max(255).optional(),
+  lastName: z.string().min(1).max(255).optional(),
+  avatar: z.string().nullable().optional(),
+})
+export type UpdateMailAccountProfileSchema = z.infer<
+  typeof updateMailAccountProfileSchema
+>
+
+export const changeMailAccountPasswordSchema = z.object({
+  currentPassword: z.string().min(8),
+  newPassword: z.string().min(8),
+})
+export type ChangeMailAccountPasswordSchema = z.infer<
+  typeof changeMailAccountPasswordSchema
+>
+
+export const verifyTwoFactorSchema = z.object({
+  challengeToken: z.string().min(1),
+  code: z.string().min(6),
+})
+export type VerifyTwoFactorSchema = z.infer<typeof verifyTwoFactorSchema>
+
+export const twoFactorCodeSchema = z.object({
+  code: z.string().min(6),
+})
+export type TwoFactorCodeSchema = z.infer<typeof twoFactorCodeSchema>
+
+export const disableTwoFactorSchema = z.object({
+  currentPassword: z.string().min(8),
+  code: z.string().min(6),
+})
+export type DisableTwoFactorSchema = z.infer<typeof disableTwoFactorSchema>
+
+export const setForwardingEmailSchema = z.object({
+  forwardingEmail: z.string().email().trim(),
+})
+export type SetForwardingEmailSchema = z.infer<typeof setForwardingEmailSchema>
+
+export const updateForwardingPreferencesSchema = z.object({
+  keepForwardedCopy: z.boolean(),
+})
+export type UpdateForwardingPreferencesSchema = z.infer<
+  typeof updateForwardingPreferencesSchema
+>

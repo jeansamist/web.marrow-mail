@@ -1,8 +1,14 @@
 "use server"
 import { DELETE, GET, POST, PUT } from "@/lib/api-mail"
 import {
+  ChangeMailAccountPasswordSchema,
+  DisableTwoFactorSchema,
+  SetForwardingEmailSchema,
   SetupMailAccountProfileSchema,
   SignInSchema,
+  TwoFactorCodeSchema,
+  UpdateForwardingPreferencesSchema,
+  UpdateMailAccountProfileSchema,
 } from "@/schemas/auth.schemas"
 import type {
   DraftMailSchema,
@@ -13,7 +19,13 @@ import type {
   RescheduleMailSchema,
   ScheduleMailSchema,
 } from "@/schemas/mail.schemas"
-import type { Mail, MailAccountProfile, UploadedFile, UploadLink } from "@/types"
+import type {
+  Mail,
+  MailAccountProfile,
+  TwoFactorSetup,
+  UploadedFile,
+  UploadLink,
+} from "@/types"
 import { cookies } from "next/headers"
 
 export const getMailAccountProfile =
@@ -22,6 +34,64 @@ export const getMailAccountProfile =
     if (resp instanceof Error) return null
     return resp
   }
+
+export const updateMailAccountProfile = async (
+  data: UpdateMailAccountProfileSchema
+): Promise<MailAccountProfile | null> => {
+  const resp = await PUT<UpdateMailAccountProfileSchema, MailAccountProfile>("/profile", data)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const changeMailAccountPassword = async (
+  data: ChangeMailAccountPasswordSchema
+): Promise<boolean> => {
+  const resp = await PUT<ChangeMailAccountPasswordSchema, null>("/auth/change-password", data)
+  return !(resp instanceof Error)
+}
+
+export const setupTwoFactor = async (): Promise<TwoFactorSetup | null> => {
+  const resp = await POST<undefined, TwoFactorSetup>("/auth/2fa/setup", undefined)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const setupTwoFactorWithQr = async (): Promise<
+  (TwoFactorSetup & { qrDataUrl: string }) | null
+> => {
+  const setup = await setupTwoFactor()
+  if (!setup) return null
+  const QRCode = (await import("qrcode")).default
+  const qrDataUrl = await QRCode.toDataURL(setup.otpauthUrl)
+  return { ...setup, qrDataUrl }
+}
+
+export const enableTwoFactor = async (data: TwoFactorCodeSchema): Promise<boolean> => {
+  const resp = await POST<TwoFactorCodeSchema, null>("/auth/2fa/enable", data)
+  return !(resp instanceof Error)
+}
+
+export const disableTwoFactor = async (data: DisableTwoFactorSchema): Promise<boolean> => {
+  const resp = await POST<DisableTwoFactorSchema, null>("/auth/2fa/disable", data)
+  return !(resp instanceof Error)
+}
+
+export const setForwardingEmail = async (data: SetForwardingEmailSchema): Promise<boolean> => {
+  const resp = await PUT<SetForwardingEmailSchema, null>("/forwarding", data)
+  return !(resp instanceof Error)
+}
+
+export const verifyForwardingEmail = async (token: string): Promise<boolean> => {
+  const resp = await POST<{ token: string }, null>("/forwarding/verify", { token })
+  return !(resp instanceof Error)
+}
+
+export const updateForwardingPreferences = async (
+  data: UpdateForwardingPreferencesSchema
+): Promise<boolean> => {
+  const resp = await PUT<UpdateForwardingPreferencesSchema, null>("/forwarding/preferences", data)
+  return !(resp instanceof Error)
+}
 
 export const getReceivedMails = async (): Promise<Mail[]> => {
   const resp = await GET<Mail[]>("/mails/received")
@@ -77,6 +147,7 @@ export const sendMail = async (payload: {
   subject: string
   bodyHtml?: string
   bodyText?: string
+  attachmentIds?: number[]
 }): Promise<Mail | null> => {
   const resp = await POST<typeof payload, Mail>("/mails", payload)
   if (resp instanceof Error) return null
@@ -142,6 +213,41 @@ export const markMailImportant = async (
   return resp
 }
 
+export const markMailRead = async (id: number, isRead: boolean): Promise<Mail | null> => {
+  const resp = await PUT<{ isRead: boolean }, Mail>(`/mails/${id}/read`, { isRead })
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const getTrashMails = async (): Promise<Mail[]> => {
+  const resp = await GET<Mail[]>("/mails/trash")
+  if (resp instanceof Error) return []
+  return resp
+}
+
+export const getSpamMails = async (): Promise<Mail[]> => {
+  const resp = await GET<Mail[]>("/mails/spam")
+  if (resp instanceof Error) return []
+  return resp
+}
+
+export const trashMail = async (id: number): Promise<Mail | null> => {
+  const resp = await PUT<undefined, Mail>(`/mails/${id}/trash`, undefined)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const restoreMail = async (id: number): Promise<Mail | null> => {
+  const resp = await PUT<undefined, Mail>(`/mails/${id}/restore`, undefined)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const permanentlyDeleteMail = async (id: number): Promise<boolean> => {
+  const resp = await DELETE(`/mails/${id}`)
+  return !(resp instanceof Error)
+}
+
 export const forwardMail = async (
   id: number,
   payload: ForwardMailSchema
@@ -184,22 +290,39 @@ export const setupMailAccountProfile = async (
   return POST<SetupMailAccountProfileSchema, MailAccountProfile>("/setup-profile", data)
 }
 
+type MailLoginResponse =
+  | { requiresTwoFactor: false; token: string; expiresAt: string }
+  | { requiresTwoFactor: true; challengeToken: string; expiresAt: string }
+
 export const loginMailAccount = async (data: SignInSchema) => {
-  const resp = await POST<SignInSchema, { token: string; expiresAt: string }>(
-    "/auth/login",
-    data
-  )
+  const resp = await POST<SignInSchema, MailLoginResponse>("/auth/login", data)
   if (resp instanceof Error) {
     return resp
   }
-  if (resp.token) {
-    const _cookies = await cookies()
-    _cookies.set("MAIL_AUTH_TOKEN", resp.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      expires: new Date(resp.expiresAt),
-    })
+  if (!resp.requiresTwoFactor) {
+    await setMailAuthCookie(resp.token, resp.expiresAt)
   }
   return resp
+}
+
+export const verifyMailAccountTwoFactor = async (challengeToken: string, code: string) => {
+  const resp = await POST<
+    { challengeToken: string; code: string },
+    { token: string; expiresAt: string }
+  >("/auth/verify-2fa", { challengeToken, code })
+  if (resp instanceof Error) {
+    return resp
+  }
+  await setMailAuthCookie(resp.token, resp.expiresAt)
+  return resp
+}
+
+async function setMailAuthCookie(token: string, expiresAt: string) {
+  const _cookies = await cookies()
+  _cookies.set("MAIL_AUTH_TOKEN", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    expires: new Date(expiresAt),
+  })
 }

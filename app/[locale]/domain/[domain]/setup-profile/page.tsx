@@ -62,7 +62,7 @@ function SetupMailAccountProfilePageInner() {
       return;
     }
 
-    setMailboxEmail(resp.email);
+    setMailboxEmail(resp.email ?? "");
     setDone(true);
   }
 
