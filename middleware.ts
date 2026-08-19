@@ -10,23 +10,108 @@ const intlMiddleware = createMiddleware(routing);
 const PROTECTED_PREFIXES = ["/onboarding", "/dashboard"];
 const EXCLUDED_PREFIXES = ["/dashboard/mail"];
 
-export default function middleware(request: NextRequest) {
+// Owner sign-in/sign-up views (AUTH_TOKEN tier). Masked for an already signed-in
+// owner — they're redirected to their workspace instead of seeing these forms again.
+// Mail-account auth (/team-login/[domain], /mail-auth) is a separate tier and stays untouched.
+const AUTH_PREFIXES = [
+  "/sign-in",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+];
+
+// Mail-account sign-in view (MAIL_AUTH_TOKEN tier). Masked for an already
+// signed-in mailbox user — they're redirected straight to their inbox
+// instead of seeing the login form again.
+const MAIL_AUTH_PREFIXES = ["/team-login"];
+
+const SITE_HOST = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://marrowmails.com").hostname;
+  } catch {
+    return "marrowmails.com";
+  }
+})();
+
+function isOwnHost(hostname: string): boolean {
+  return (
+    hostname === SITE_HOST ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname.endsWith(".vercel.app")
+  );
+}
+
+// Resolves a customer's verified custom login hostname (e.g. mail.<their-domain>)
+// back to the MarrowMail domain it belongs to, via the backend's public,
+// unauthenticated lookup. Returns null on any miss — unknown host, unverified,
+// or a request the backend couldn't be reached for.
+async function resolveCustomLoginDomain(hostname: string): Promise<string | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(
+      `${apiUrl}/api/domains/by-hostname/${encodeURIComponent(hostname)}`,
+    );
+    if (!response.ok) return null;
+    const body = await response.json();
+    return typeof body?.data?.domainName === "string" ? body.data.domainName : null;
+  } catch {
+    return null;
+  }
+}
+
+export default async function middleware(request: NextRequest) {
+  const hostname = request.nextUrl.hostname;
+
+  if (hostname && !isOwnHost(hostname)) {
+    const domainName = await resolveCustomLoginDomain(hostname);
+    if (domainName) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${routing.defaultLocale}/team-login/${encodeURIComponent(domainName)}`;
+      return NextResponse.rewrite(url);
+    }
+    // No verified custom hostname matches — fall through to normal routing
+    // unchanged, so an unrecognized host still gets the regular site.
+  }
+
   const { pathname } = request.nextUrl;
   const localeMatch = pathname.match(/^\/(en|fr)(\/.*)?$/);
   const pathWithoutLocale = localeMatch ? (localeMatch[2] ?? "/") : pathname;
+  const locale = localeMatch?.[1] ?? routing.defaultLocale;
+  const isSignedIn = Boolean(request.cookies.get("AUTH_TOKEN"));
+  const isMailSignedIn = Boolean(request.cookies.get("MAIL_AUTH_TOKEN"));
 
   const isProtected =
     PROTECTED_PREFIXES.some((prefix) => pathWithoutLocale.startsWith(prefix)) &&
     !EXCLUDED_PREFIXES.some((prefix) => pathWithoutLocale.startsWith(prefix));
 
-  if (isProtected && !request.cookies.get("AUTH_TOKEN")) {
-    const locale = localeMatch?.[1] ?? routing.defaultLocale;
+  if (isProtected && !isSignedIn) {
     return NextResponse.redirect(new URL(`/${locale}/sign-in`, request.url));
+  }
+
+  const isAuthView = AUTH_PREFIXES.some((prefix) => pathWithoutLocale.startsWith(prefix));
+
+  if (isAuthView && isSignedIn) {
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
+  }
+
+  const isMailAuthView = MAIL_AUTH_PREFIXES.some((prefix) => pathWithoutLocale.startsWith(prefix));
+
+  if (isMailAuthView && isMailSignedIn) {
+    return NextResponse.redirect(new URL(`/${locale}/dashboard/mail`, request.url));
   }
 
   return intlMiddleware(request);
 }
 
+// Excludes real static-asset extensions only — not "any path containing a
+// dot" (that would also exclude domain-name path segments, like
+// /team-login/geek-wear.shop, from ever reaching this middleware at all).
+// next/config's matcher is statically analyzed, so this must stay a literal.
 export const config = {
-  matcher: ["/((?!api|trpc|_next|_vercel|.*\\..*).*)"],
+  matcher: [
+    "/((?!api|trpc|_next|_vercel|.*\\.(?:ico|png|jpe?g|svg|gif|webp|avif|css|js|mjs|map|woff2?|ttf|eot|txt|xml|json|pdf)$).*)",
+  ],
 };

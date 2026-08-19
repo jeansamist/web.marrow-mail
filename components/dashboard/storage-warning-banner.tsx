@@ -3,22 +3,21 @@ import { TriangleAlert } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getMailboxStorageUsedGB, type Mailbox } from "@/lib/onboarding";
 
 export function StorageWarningBanner({
-  mailbox,
-  domain,
+  email,
+  usedGB,
+  quotaGB,
   tier,
 }: {
-  mailbox: Mailbox;
-  domain: string;
+  email: string;
+  usedGB: number;
+  quotaGB: number;
   tier: "warning" | "critical";
 }) {
   const t = useTranslations("Dashboard.storageWarning");
   const tStorage = useTranslations("Dashboard.storagePage");
-  const usedGB = getMailboxStorageUsedGB(mailbox);
-  const percent = Math.round((usedGB / mailbox.storagePurchasedGB) * 100);
-  const email = `${mailbox.username}@${domain}`;
+  const percent = quotaGB > 0 ? Math.round((usedGB / quotaGB) * 100) : 0;
   const critical = tier === "critical";
 
   return (
@@ -44,8 +43,8 @@ export function StorageWarningBanner({
         )}
       >
         {critical
-          ? t("criticalMessage", { email, percent, total: mailbox.storagePurchasedGB })
-          : t("warningMessage", { email, percent, total: mailbox.storagePurchasedGB })}
+          ? t("criticalMessage", { email, percent, total: quotaGB })
+          : t("warningMessage", { email, percent, total: quotaGB })}
       </p>
       <Button size="sm" variant={critical ? "default" : "outline"} className="shrink-0" asChild>
         <Link href="/dashboard/mailboxes">{tStorage("buyMore")}</Link>

@@ -12,111 +12,154 @@ import { MailboxCard } from "@/components/dashboard/mailbox-card";
 import { MailboxDrawer } from "@/components/dashboard/mailbox-drawer";
 import { premiumButton } from "@/components/onboarding/styles";
 import { cn } from "@/lib/utils";
+import { PLANS } from "@/lib/onboarding";
+import { listDomains } from "@/services/domain.services";
 import {
+  listMailAccounts,
+  deleteMailAccountApi,
+  toggleMailAccountActive,
+  updateMailAccountStorageQuota,
+  resendMailAccountInvite,
+} from "@/services/mail-account.services";
+import { getStorageUsage } from "@/services/storage.services";
+import { getCurrentSubscription } from "@/services/subscription.services";
+import { getProfile } from "@/services/auth.services";
+import { forgotMailAccountPassword } from "@/services/mail.services";
+import {
+  listRoleAliases,
   createRoleAlias,
-  getRoleAliasLimit,
-  loadAccount,
-  saveAccount,
-  PLANS,
-  type Mailbox,
-  type OnboardingAccount,
-} from "@/lib/onboarding";
-import { listMailAccounts, deleteMailAccountApi } from "@/services/mail-account.services";
-import type { MailAccount } from "@/types";
-
-function toMailbox(account: MailAccount, storageGB: number): Mailbox {
-  return {
-    id: String(account.id),
-    username: account.username,
-    fullName: null,
-    assignedTo: account.ownerEmail,
-    invitationStatus: "none",
-    status: "active",
-    storagePurchasedGB: storageGB,
-    createdAt: account.createdAt,
-  };
-}
+  deleteRoleAlias,
+} from "@/services/role-alias.services";
+import type { Domain, MailAccount, MailboxStorageUsage, RoleAlias, Subscription } from "@/types";
 
 export default function MailboxesPage() {
   const t = useTranslations("Dashboard.mailboxesPage");
   const router = useRouter();
   const { show } = useToast();
-  const [account, setAccount] = useState<OnboardingAccount | null>(null);
+
   const [checked, setChecked] = useState(false);
+  const [domain, setDomain] = useState<Domain | null>(null);
+  const [ownerName, setOwnerName] = useState("");
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [mailAccounts, setMailAccounts] = useState<MailAccount[]>([]);
-  const [openMailboxId, setOpenMailboxId] = useState<string | null>(null);
+  const [usageByAccount, setUsageByAccount] = useState<Record<number, MailboxStorageUsage>>({});
+  const [roleAliases, setRoleAliases] = useState<RoleAlias[]>([]);
+  const [openMailboxId, setOpenMailboxId] = useState<number | null>(null);
   const [creatingRole, setCreatingRole] = useState(false);
   const [alias, setAlias] = useState("");
-  const [forwardsTo, setForwardsTo] = useState("");
+  const [forwardsToId, setForwardsToId] = useState<number | null>(null);
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (!stored) {
-      router.replace("/onboarding");
-      return;
-    }
-    setAccount(stored);
-    setChecked(true);
+    (async () => {
+      const [domains, accounts, storage, currentSubscription, profile] = await Promise.all([
+        listDomains(),
+        listMailAccounts(),
+        getStorageUsage(),
+        getCurrentSubscription(),
+        getProfile(),
+      ]);
+      if (domains.length === 0) {
+        router.replace("/onboarding");
+        return;
+      }
+      const primaryDomain = domains[0];
+      setDomain(primaryDomain);
+      setOwnerName(profile ? `${profile.firstName} ${profile.lastName}`.trim() : "");
+      setSubscription(currentSubscription);
+      setMailAccounts(accounts);
+      setForwardsToId((current) => current ?? accounts[0]?.id ?? null);
+      setUsageByAccount(
+        Object.fromEntries((storage?.mailboxes ?? []).map((m) => [m.mailAccountId, m])),
+      );
+
+      const aliases = await listRoleAliases(primaryDomain.id);
+      setRoleAliases(aliases);
+      setChecked(true);
+    })();
   }, [router]);
 
-  useEffect(() => {
-    listMailAccounts().then((accounts) => {
-      setMailAccounts(accounts);
-      setForwardsTo((current) => current || accounts[0]?.username || "");
-    });
-  }, []);
+  if (!checked || !domain) return null;
 
-  if (!checked || !account) return null;
+  const openMailbox = mailAccounts.find((a) => a.id === openMailboxId) ?? null;
+  const openMailboxUsage = openMailbox ? usageByAccount[openMailbox.id] : undefined;
+  const roleAliasLimit = PLANS[subscription?.planId ?? "core"].roleAliasLimit;
+  const atRoleLimit = roleAliases.length >= roleAliasLimit;
+  const aliasValid = /^[a-z0-9-]+$/i.test(alias.trim());
 
-  const mailboxes = mailAccounts.map((a) => toMailbox(a, PLANS[account.plan].storageGB));
-  const openMailbox = mailboxes.find((m) => m.id === openMailboxId) ?? null;
-
-  function persist(next: OnboardingAccount) {
-    saveAccount(next);
-    setAccount(next);
-  }
-
-  async function deleteMailbox(id: string) {
-    const ok = await deleteMailAccountApi(Number(id));
+  async function deleteMailbox(id: number) {
+    const ok = await deleteMailAccountApi(id);
     if (!ok) {
       show(t("drawer.deleteError"), "error");
       return;
     }
-    setMailAccounts((current) => current.filter((a) => String(a.id) !== id));
+    setMailAccounts((current) => current.filter((a) => a.id !== id));
     setOpenMailboxId(null);
     show(t("drawer.mailboxDeleted"), "info");
   }
 
-  function handleCreateRole(e: React.FormEvent) {
-    e.preventDefault();
-    if (!account) return;
-    const aliasValid = /^[a-z0-9-]+$/i.test(alias.trim());
-    if (!aliasValid || !forwardsTo || account.roleAliases.length >= getRoleAliasLimit(account))
+  async function toggleActive(id: number) {
+    const updated = await toggleMailAccountActive(id);
+    if (!updated) {
+      show(t("drawer.toggleError"), "error");
       return;
-    persist({
-      ...account,
-      roleAliases: [
-        ...account.roleAliases,
-        createRoleAlias(alias.trim().toLowerCase(), forwardsTo),
-      ],
+    }
+    setMailAccounts((current) => current.map((a) => (a.id === id ? updated : a)));
+  }
+
+  async function addStorage(id: number, extraGB: number) {
+    const currentQuotaBytes = usageByAccount[id]?.quotaBytes ?? 0;
+    const nextQuotaBytes = currentQuotaBytes + extraGB * 1024 ** 3;
+    const ok = await updateMailAccountStorageQuota(id, nextQuotaBytes);
+    if (!ok) {
+      show(t("drawer.storageError"), "error");
+      return;
+    }
+    setUsageByAccount((current) => ({
+      ...current,
+      [id]: { ...current[id], quotaBytes: nextQuotaBytes },
+    }));
+  }
+
+  async function resendInvite(id: number) {
+    const ok = await resendMailAccountInvite(id);
+    if (!ok) show(t("drawer.inviteError"), "error");
+  }
+
+  async function resetPassword(mailAccount: MailAccount) {
+    const email = `${mailAccount.username}@${domain!.name}`;
+    const resp = await forgotMailAccountPassword({ email });
+    if (resp instanceof Error) show(t("drawer.passwordResetError"), "error");
+  }
+
+  async function handleCreateRole(e: React.FormEvent) {
+    e.preventDefault();
+    if (!domain || !aliasValid || !forwardsToId || atRoleLimit) return;
+    const created = await createRoleAlias(domain.id, {
+      alias: alias.trim().toLowerCase(),
+      mailAccountId: forwardsToId,
     });
-    show(t("roles.created", { alias: `${alias.trim().toLowerCase()}@${account.domain}` }), "success");
+    if (created instanceof Error) {
+      show(created.message || t("roles.createError"), "error");
+      return;
+    }
+    setRoleAliases((current) => [created, ...current]);
+    show(t("roles.created", { alias: `${created.alias}@${domain.name}` }), "success");
     setAlias("");
     setCreatingRole(false);
   }
 
-  function removeRole(id: string) {
-    if (!account) return;
-    persist({ ...account, roleAliases: account.roleAliases.filter((r) => r.id !== id) });
+  async function removeRole(id: number) {
+    const ok = await deleteRoleAlias(id);
+    if (!ok) {
+      show(t("roles.deleteError"), "error");
+      return;
+    }
+    setRoleAliases((current) => current.filter((r) => r.id !== id));
     show(t("roles.deleted"), "info");
   }
 
-  const aliasValid = /^[a-z0-9-]+$/i.test(alias.trim());
-  const roleAliasLimit = getRoleAliasLimit(account);
-  const atRoleLimit = account.roleAliases.length >= roleAliasLimit;
-
   return (
-    <DashboardShell domain={account.domain} ownerName={account.ownerName}>
+    <DashboardShell domain={domain.name} ownerName={ownerName}>
       <div className="space-y-8">
         <div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -139,18 +182,20 @@ export default function MailboxesPage() {
             {t("individualTitle")}
           </h2>
 
-          {mailboxes.length === 0 ? (
+          {mailAccounts.length === 0 ? (
             <div className="mt-3 rounded-2xl border border-dashed border-border p-8 text-center">
               <p className="text-sm text-muted-foreground">{t("emptyIndividual")}</p>
             </div>
           ) : (
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {mailboxes.map((mailbox) => (
+              {mailAccounts.map((mailAccount) => (
                 <MailboxCard
-                  key={mailbox.id}
-                  mailbox={mailbox}
-                  domain={account.domain}
-                  onClick={() => setOpenMailboxId(mailbox.id)}
+                  key={mailAccount.id}
+                  mailAccount={mailAccount}
+                  domain={domain.name}
+                  usedBytes={usageByAccount[mailAccount.id]?.usedBytes ?? 0}
+                  quotaBytes={usageByAccount[mailAccount.id]?.quotaBytes ?? 0}
+                  onClick={() => setOpenMailboxId(mailAccount.id)}
                 />
               ))}
             </div>
@@ -164,40 +209,45 @@ export default function MailboxesPage() {
           </h2>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {t("roles.description", {
-              used: account.roleAliases.length,
+              used: roleAliases.length,
               limit: roleAliasLimit,
             })}
           </p>
 
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {account.roleAliases.map((role) => (
-              <div
-                key={role.id}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <AtSign className="size-4" strokeWidth={1.5} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {role.alias}@{account.domain}
-                    </p>
-                    <p className="mt-0.5 truncate text-sm font-medium text-foreground/70">
-                      {t("roles.forwardsTo", { email: `${role.forwardsTo}@${account.domain}` })}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeRole(role.id)}
-                  aria-label={t("roles.remove")}
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
+            {roleAliases.map((role) => {
+              const target = mailAccounts.find((a) => a.id === role.mailAccountId);
+              return (
+                <div
+                  key={role.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4"
                 >
-                  <Trash2 className="size-4" strokeWidth={1.5} />
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <AtSign className="size-4" strokeWidth={1.5} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {role.alias}@{domain.name}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm font-medium text-foreground/70">
+                        {t("roles.forwardsTo", {
+                          email: target ? `${target.username}@${domain.name}` : "—",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeRole(role.id)}
+                    aria-label={t("roles.remove")}
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" strokeWidth={1.5} />
+                  </button>
+                </div>
+              );
+            })}
 
             {!creatingRole ? (
               <button
@@ -232,17 +282,17 @@ export default function MailboxesPage() {
                     className="h-9 rounded-none border-0 text-sm"
                   />
                   <span className="shrink-0 pr-3 font-mono text-xs text-muted-foreground">
-                    @{account.domain}
+                    @{domain.name}
                   </span>
                 </div>
                 <select
-                  value={forwardsTo}
-                  onChange={(e) => setForwardsTo(e.target.value)}
+                  value={forwardsToId ?? ""}
+                  onChange={(e) => setForwardsToId(Number(e.target.value))}
                   className="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-sm text-foreground outline-none focus-visible:border-primary"
                 >
                   {mailAccounts.map((m) => (
-                    <option key={m.id} value={m.username}>
-                      {m.username}@{account.domain}
+                    <option key={m.id} value={m.id}>
+                      {m.username}@{domain.name}
                     </option>
                   ))}
                 </select>
@@ -251,7 +301,7 @@ export default function MailboxesPage() {
                     type="submit"
                     size="sm"
                     className="flex-1"
-                    disabled={!aliasValid || !forwardsTo}
+                    disabled={!aliasValid || !forwardsToId}
                   >
                     {t("roles.create")}
                   </Button>
@@ -272,11 +322,16 @@ export default function MailboxesPage() {
 
       {openMailbox && (
         <MailboxDrawer
-          mailbox={openMailbox}
-          domain={account.domain}
-          disableUnavailableActions
+          mailAccount={openMailbox}
+          domain={domain.name}
+          usedBytes={openMailboxUsage?.usedBytes ?? 0}
+          quotaBytes={openMailboxUsage?.quotaBytes ?? 0}
           onClose={() => setOpenMailboxId(null)}
           onDelete={() => deleteMailbox(openMailbox.id)}
+          onToggleActive={() => toggleActive(openMailbox.id)}
+          onAddStorage={(extraGB) => addStorage(openMailbox.id, extraGB)}
+          onResendInvite={() => resendInvite(openMailbox.id)}
+          onResetPassword={() => resetPassword(openMailbox)}
         />
       )}
     </DashboardShell>

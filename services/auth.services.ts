@@ -1,11 +1,12 @@
 "use server"
 
-import { GET, POST } from "@/lib/api"
+import { GET, POST, PUT } from "@/lib/api"
 import {
   ForgotPasswordSchema,
   ResetPasswordSchema,
   SignInSchema,
   SignUpSchema,
+  UpdateProfileSchema,
   VerifyEmailSchema,
 } from "@/schemas/auth.schemas"
 import type { AuthToken, User } from "@/types"
@@ -75,6 +76,24 @@ export const getProfile = async (): Promise<User | null> => {
     return null
   }
   return resp
+}
+
+export const updateProfile = async (
+  payload: UpdateProfileSchema
+): Promise<User | null> => {
+  const resp = await PUT<UpdateProfileSchema, User>("/auth/update-profile", payload)
+  if (resp instanceof Error) {
+    return null
+  }
+  return resp
+}
+
+export const deleteAccount = async (): Promise<boolean> => {
+  const resp = await POST("/auth/delete-account", null)
+  if (resp instanceof Error) return false
+  const _cookies = await cookies()
+  _cookies.delete("AUTH_TOKEN")
+  return true
 }
 
 export const logout = async () => {

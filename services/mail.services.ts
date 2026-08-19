@@ -3,6 +3,8 @@ import { DELETE, GET, POST, PUT } from "@/lib/api-mail"
 import {
   ChangeMailAccountPasswordSchema,
   DisableTwoFactorSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
   SetForwardingEmailSchema,
   SetupMailAccountProfileSchema,
   SignInSchema,
@@ -293,6 +295,16 @@ export const setupMailAccountProfile = async (
 type MailLoginResponse =
   | { requiresTwoFactor: false; token: string; expiresAt: string }
   | { requiresTwoFactor: true; challengeToken: string; expiresAt: string }
+
+export const forgotMailAccountPassword = async (payload: ForgotPasswordSchema) => {
+  const resp = await POST<ForgotPasswordSchema, null>("/auth/forgot-password", payload)
+  return resp
+}
+
+export const resetMailAccountPassword = async (payload: ResetPasswordSchema) => {
+  const resp = await POST<ResetPasswordSchema, null>("/auth/reset-password", payload)
+  return resp
+}
 
 export const loginMailAccount = async (data: SignInSchema) => {
   const resp = await POST<SignInSchema, MailLoginResponse>("/auth/login", data)

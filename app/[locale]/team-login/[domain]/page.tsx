@@ -8,10 +8,11 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
-import { loadAccount, type OnboardingAccount } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { cardShadow, premiumButton } from "@/components/onboarding/styles";
 import { loginMailAccount, verifyMailAccountTwoFactor } from "@/services/mail.services";
+import { getPublicDomainBranding } from "@/services/domain.services";
+import type { PublicDomainBranding } from "@/types";
 
 export default function TeamLoginPage() {
   const t = useTranslations("TeamLogin");
@@ -20,7 +21,7 @@ export default function TeamLoginPage() {
   const domain = decodeURIComponent(params.domain ?? "");
 
   const [checked, setChecked] = useState(false);
-  const [account, setAccount] = useState<OnboardingAccount | null>(null);
+  const [branding, setBranding] = useState<PublicDomainBranding | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
@@ -31,11 +32,10 @@ export default function TeamLoginPage() {
   const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (stored && stored.domain.toLowerCase() === domain.toLowerCase()) {
-      setAccount(stored);
-    }
-    setChecked(true);
+    getPublicDomainBranding(domain).then((data) => {
+      setBranding(data);
+      setChecked(true);
+    });
   }, [domain]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -71,11 +71,11 @@ export default function TeamLoginPage() {
 
   if (!checked) return null;
 
-  const accentStyle = account?.branding.accentColor
+  const accentStyle = branding?.accentColor
     ? ({
-        "--primary": account.branding.accentColor,
-        "--primary-dark": `color-mix(in oklab, ${account.branding.accentColor} 85%, black)`,
-        "--ring": account.branding.accentColor,
+        "--primary": branding.accentColor,
+        "--primary-dark": `color-mix(in oklab, ${branding.accentColor} 85%, black)`,
+        "--ring": branding.accentColor,
       } as CSSProperties)
     : undefined;
 
@@ -94,7 +94,7 @@ export default function TeamLoginPage() {
             cardShadow,
           )}
         >
-          {!account ? (
+          {!branding ? (
             <div className="flex flex-col items-center py-4 text-center">
               <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
                 <AlertCircle className="size-6" strokeWidth={2} />
@@ -165,11 +165,11 @@ export default function TeamLoginPage() {
             <>
               <div className="flex flex-col items-center text-center">
                 <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted/40">
-                  {account.branding.logoDataUrl ? (
+                  {branding.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={account.branding.logoDataUrl}
-                      alt={account.branding.companyName || account.domain}
+                      src={branding.logoUrl}
+                      alt={branding.companyName || domain}
                       className="size-full object-contain"
                     />
                   ) : (
@@ -177,10 +177,10 @@ export default function TeamLoginPage() {
                   )}
                 </span>
                 <h1 className="mt-4 text-xl font-bold text-foreground">
-                  {t("welcomeTitle", { name: account.branding.companyName || account.domain })}
+                  {t("welcomeTitle", { name: branding.companyName || domain })}
                 </h1>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  {account.branding.welcomeMessage || t("description")}
+                  {branding.welcomeMessage || t("description")}
                 </p>
               </div>
 
@@ -199,14 +199,22 @@ export default function TeamLoginPage() {
                       setEmail(e.target.value);
                       setError(false);
                     }}
-                    placeholder={t("emailPlaceholder", { domain: account.domain })}
+                    placeholder={t("emailPlaceholder", { domain })}
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="password" className="text-sm font-medium text-foreground">
-                    {t("passwordLabel")}
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="password" className="text-sm font-medium text-foreground">
+                      {t("passwordLabel")}
+                    </label>
+                    <Link
+                      href={`/mail-auth/${encodeURIComponent(domain)}/forgot-password`}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      {t("forgotPassword")}
+                    </Link>
+                  </div>
                   <Input
                     id="password"
                     name="password"

@@ -7,8 +7,6 @@ import {
   Copy,
   HardDrive,
   KeyRound,
-  Link2,
-  Mail,
   Send,
   Trash2,
   X,
@@ -17,47 +15,53 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/dashboard/toast";
 import { SITE_URL } from "@/lib/seo";
-import {
-  STORAGE_PRICE_PER_GB_XAF,
-  formatXaf,
-  getMailboxLastLogin,
-  getMailboxStorageUsedGB,
-  getStorageTier,
-  storageTierBarClass,
-  type Mailbox,
-} from "@/lib/onboarding";
+import { getStorageTier, storageTierBarClass } from "@/lib/onboarding";
+import type { MailAccount } from "@/types";
 
-const STORAGE_ADD_OPTIONS = [5, 10, 20];
+const BYTES_PER_GB = 1024 ** 3;
+const STORAGE_ADD_OPTIONS_GB = [5, 10, 20];
+
+function initials(value: string) {
+  return value
+    .split(/[.\s_-]+/)
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 export function MailboxDrawer({
-  mailbox,
+  mailAccount,
   domain,
+  usedBytes,
+  quotaBytes,
   onClose,
-  onToggleStatus,
+  onToggleActive,
   onDelete,
-  onBuyStorage,
-  disableUnavailableActions = false,
+  onResendInvite,
+  onResetPassword,
+  onAddStorage,
 }: {
-  mailbox: Mailbox;
+  mailAccount: MailAccount;
   domain: string;
+  usedBytes: number;
+  quotaBytes: number;
   onClose: () => void;
-  onToggleStatus?: () => void;
+  onToggleActive: () => void;
   onDelete: () => void;
-  onBuyStorage?: (extraGB: number) => void;
-  disableUnavailableActions?: boolean;
+  onResendInvite: () => void;
+  onResetPassword: () => void;
+  onAddStorage: (extraGB: number) => void;
 }) {
   const t = useTranslations("Dashboard.mailboxesPage");
   const locale = useLocale();
   const { show } = useToast();
-  const usedGB = getMailboxStorageUsedGB(mailbox);
-  const usageFraction = Math.min(usedGB / mailbox.storagePurchasedGB, 1);
-  const lastLogin = getMailboxLastLogin(mailbox);
-  const dateFormatter = new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-  const email = `${mailbox.username}@${domain}`;
+  const usedGB = usedBytes / BYTES_PER_GB;
+  const quotaGB = quotaBytes / BYTES_PER_GB;
+  const usageFraction = quotaBytes > 0 ? Math.min(usedBytes / quotaBytes, 1) : 0;
+  const email = `${mailAccount.username}@${domain}`;
+  const loginUrl = `${SITE_URL}/${locale}/team-login/${domain}`;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -73,11 +77,14 @@ export function MailboxDrawer({
         className="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-border bg-card p-6 shadow-2xl"
       >
         <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-foreground">
-              {mailbox.fullName || mailbox.username}
-            </h2>
-            <p className="font-mono text-sm text-primary">{email}</p>
+          <div className="flex items-center gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+              {initials(mailAccount.username)}
+            </span>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">{mailAccount.username}</h2>
+              <p className="font-mono text-sm text-primary">{email}</p>
+            </div>
           </div>
           <button
             type="button"
@@ -95,34 +102,18 @@ export function MailboxDrawer({
             <dd
               className={cn(
                 "rounded-full px-2 py-0.5 text-xs font-semibold",
-                mailbox.status === "active"
+                mailAccount.active
                   ? "bg-emerald-500/10 text-emerald-700"
                   : "bg-muted text-muted-foreground",
               )}
             >
-              {mailbox.status === "active" ? t("status.active") : t("status.disabled")}
-            </dd>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <dt className="text-muted-foreground">{t("drawer.invitation")}</dt>
-            <dd className="font-medium text-foreground">
-              {mailbox.invitationStatus === "pending"
-                ? t("status.invitationPending")
-                : mailbox.invitationStatus === "accepted"
-                  ? t("status.accepted")
-                  : t("status.notApplicable")}
+              {mailAccount.active ? t("status.active") : t("status.disabled")}
             </dd>
           </div>
           <div className="flex items-center justify-between text-sm">
             <dt className="text-muted-foreground">{t("drawer.assignedTo")}</dt>
             <dd className="font-medium text-foreground">
-              {mailbox.assignedTo ?? t("drawer.unassigned")}
-            </dd>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <dt className="text-muted-foreground">{t("drawer.lastLogin")}</dt>
-            <dd className="font-medium text-foreground">
-              {lastLogin ? dateFormatter.format(new Date(lastLogin)) : t("drawer.never")}
+              {mailAccount.ownerEmail ?? t("drawer.unassigned")}
             </dd>
           </div>
         </dl>
@@ -134,7 +125,7 @@ export function MailboxDrawer({
               {t("drawer.storage")}
             </span>
             <span className="font-medium tabular-nums text-foreground">
-              {t("storageUsage", { used: usedGB, total: mailbox.storagePurchasedGB })}
+              {t("storageUsage", { used: usedGB.toFixed(1), total: quotaGB.toFixed(0) })}
             </span>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -143,28 +134,18 @@ export function MailboxDrawer({
               style={{ width: `${usageFraction * 100}%` }}
             />
           </div>
-          <div
-            className={cn(
-              "mt-3 grid grid-cols-3 gap-2",
-              disableUnavailableActions && "opacity-50",
-            )}
-            title={disableUnavailableActions ? t("drawer.unavailableSoon") : undefined}
-          >
-            {STORAGE_ADD_OPTIONS.map((gb) => (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {STORAGE_ADD_OPTIONS_GB.map((gb) => (
               <button
                 key={gb}
                 type="button"
-                disabled={disableUnavailableActions}
                 onClick={() => {
-                  onBuyStorage?.(gb);
+                  onAddStorage(gb);
                   show(t("drawer.storageAdded", { gb }), "success");
                 }}
-                className="flex flex-col items-center gap-0.5 rounded-lg border border-border py-2 text-xs transition-colors hover:border-primary/40 hover:bg-muted/40 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:bg-transparent"
+                className="flex flex-col items-center gap-0.5 rounded-lg border border-border py-2 text-xs transition-colors hover:border-primary/40 hover:bg-muted/40"
               >
                 <span className="font-semibold text-foreground">+{gb} GB</span>
-                <span className="text-muted-foreground">
-                  {formatXaf(gb * STORAGE_PRICE_PER_GB_XAF, locale)}
-                </span>
               </button>
             ))}
           </div>
@@ -174,7 +155,10 @@ export function MailboxDrawer({
           <Button
             variant="outline"
             className="justify-start gap-2.5"
-            onClick={() => show(t("drawer.passwordResetSent", { email }), "success")}
+            onClick={() => {
+              onResetPassword();
+              show(t("drawer.passwordResetSent", { email }), "success");
+            }}
           >
             <KeyRound className="size-4" strokeWidth={1.5} />
             {t("actions.resetPassword")}
@@ -183,63 +167,39 @@ export function MailboxDrawer({
             variant="outline"
             className="justify-start gap-2.5"
             onClick={() => {
-              navigator.clipboard?.writeText(`mail.${domain}`);
+              navigator.clipboard?.writeText(loginUrl);
               show(t("drawer.loginLinkCopied"), "success");
             }}
           >
             <Copy className="size-4" strokeWidth={1.5} />
             {t("actions.copyLoginLink")}
           </Button>
-          {mailbox.invitationStatus === "pending" && (
-            <>
-              <Button
-                variant="outline"
-                className="justify-start gap-2.5"
-                onClick={() => {
-                  const params = new URLSearchParams({
-                    domain,
-                    email: mailbox.assignedTo ?? "",
-                  });
-                  navigator.clipboard?.writeText(
-                    `${SITE_URL}/${locale}/accept-invite?${params.toString()}`,
-                  );
-                  show(t("drawer.inviteLinkCopied"), "success");
-                }}
-              >
-                <Link2 className="size-4" strokeWidth={1.5} />
-                {t("actions.copyInviteLink")}
-              </Button>
-              <Button
-                variant="outline"
-                className="justify-start gap-2.5"
-                onClick={() =>
-                  show(t("drawer.invitationResent", { email: mailbox.assignedTo }), "success")
-                }
-              >
-                <Send className="size-4" strokeWidth={1.5} />
-                {t("actions.resendInvitation")}
-              </Button>
-            </>
+          {mailAccount.ownerEmail && (
+            <Button
+              variant="outline"
+              className="justify-start gap-2.5"
+              onClick={() => {
+                onResendInvite();
+                show(t("drawer.invitationResent", { email: mailAccount.ownerEmail }), "success");
+              }}
+            >
+              <Send className="size-4" strokeWidth={1.5} />
+              {t("actions.resendInvitation")}
+            </Button>
           )}
           <Button
             variant="outline"
             className="justify-start gap-2.5"
-            disabled={disableUnavailableActions}
-            title={disableUnavailableActions ? t("drawer.unavailableSoon") : undefined}
             onClick={() => {
-              onToggleStatus?.();
+              onToggleActive();
               show(
-                mailbox.status === "active"
-                  ? t("drawer.mailboxDisabled")
-                  : t("drawer.mailboxEnabled"),
+                mailAccount.active ? t("drawer.mailboxDisabled") : t("drawer.mailboxEnabled"),
                 "info",
               );
             }}
           >
             <Ban className="size-4" strokeWidth={1.5} />
-            {mailbox.status === "active"
-              ? t("actions.disableMailbox")
-              : t("actions.enableMailbox")}
+            {mailAccount.active ? t("actions.disableMailbox") : t("actions.enableMailbox")}
           </Button>
           <Button
             variant="outline"
@@ -254,11 +214,6 @@ export function MailboxDrawer({
             {t("actions.deleteMailbox")}
           </Button>
         </div>
-
-        <p className="mt-5 flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Mail className="size-3.5" strokeWidth={1.5} />
-          {t("drawer.storagePolicy", { amount: mailbox.storagePurchasedGB })}
-        </p>
       </motion.div>
     </div>
   );

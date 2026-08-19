@@ -9,15 +9,17 @@ import { DashboardShell } from "@/components/dashboard/shell";
 import { useToast } from "@/components/dashboard/toast";
 import { premiumButton, softShadow } from "@/components/onboarding/styles";
 import { cn } from "@/lib/utils";
+import { PLANS, formatXaf, type PlanId } from "@/lib/onboarding";
+import { listDomains } from "@/services/domain.services";
+import { listRoleAliases } from "@/services/role-alias.services";
+import { getProfile } from "@/services/auth.services";
 import {
-  PLANS,
-  formatXaf,
-  getSubscriptionSummary,
-  loadAccount,
-  saveAccount,
-  type OnboardingAccount,
-  type PlanId,
-} from "@/lib/onboarding";
+  cancelSubscription,
+  changeSubscriptionPlan,
+  getCurrentSubscription,
+  reactivateSubscription,
+} from "@/services/subscription.services";
+import type { Domain, Subscription } from "@/types";
 
 const PLAN_ORDER: PlanId[] = ["core", "plus"];
 
@@ -27,37 +29,60 @@ export default function SubscriptionPage() {
   const locale = useLocale();
   const router = useRouter();
   const { show } = useToast();
-  const [account, setAccount] = useState<OnboardingAccount | null>(null);
-  const [checked, setChecked] = useState(false);
 
+  const [checked, setChecked] = useState(false);
+  const [domain, setDomain] = useState<Domain | null>(null);
+  const [ownerName, setOwnerName] = useState("");
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [roleAliasCount, setRoleAliasCount] = useState(0);
+
+  const [switchingPlan, setSwitchingPlan] = useState(false);
   const [downgradeTarget, setDowngradeTarget] = useState<PlanId | null>(null);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [canceling, setCanceling] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (!stored) {
-      router.replace("/onboarding");
-      return;
-    }
-    setAccount(stored);
-    setChecked(true);
+    (async () => {
+      const [domains, currentSubscription, profile] = await Promise.all([
+        listDomains(),
+        getCurrentSubscription(),
+        getProfile(),
+      ]);
+      if (domains.length === 0) {
+        router.replace("/onboarding");
+        return;
+      }
+      const primaryDomain = domains[0];
+      setDomain(primaryDomain);
+      setSubscription(currentSubscription);
+      setOwnerName(profile ? `${profile.firstName} ${profile.lastName}`.trim() : "");
+      setRoleAliasCount((await listRoleAliases(primaryDomain.id)).length);
+      setChecked(true);
+    })();
   }, [router]);
 
-  if (!checked || !account) return null;
+  if (!checked || !domain) return null;
 
-  function applyPlanSwitch(planId: PlanId) {
-    if (!account) return;
-    const next: OnboardingAccount = { ...account, plan: planId };
-    saveAccount(next);
-    setAccount(next);
+  async function applyPlanSwitch(planId: PlanId) {
+    if (!subscription) return;
+    setSwitchingPlan(true);
+    const updated = await changeSubscriptionPlan(subscription.id, planId);
+    setSwitchingPlan(false);
+    if (!updated) {
+      show(t("planChangeFailed"), "error");
+      return;
+    }
+    setSubscription(updated);
     show(t("planChanged", { plan: PLANS[planId].name }), "success");
   }
 
   function handleSwitchPlan(planId: PlanId) {
-    if (!account || planId === account.plan) return;
+    if (!subscription || planId === subscription.planId) return;
+    const currentPlan = PLANS[subscription.planId as PlanId];
     const target = PLANS[planId];
-    const losesRoleAliases = account.roleAliases.length > target.roleAliasLimit;
-    const losesVoiceNotes = PLANS[account.plan].voiceNotes && !target.voiceNotes;
+    const losesRoleAliases = roleAliasCount > target.roleAliasLimit;
+    const losesVoiceNotes = currentPlan.voiceNotes && !target.voiceNotes;
     if (losesRoleAliases || losesVoiceNotes) {
       setDowngradeTarget(planId);
       return;
@@ -65,50 +90,76 @@ export default function SubscriptionPage() {
     applyPlanSwitch(planId);
   }
 
-  function handleCancelSubscription() {
-    if (!account) return;
-    const next: OnboardingAccount = { ...account, subscriptionStatus: "canceled" };
-    saveAccount(next);
-    setAccount(next);
+  async function handleCancelSubscription() {
+    if (!subscription) return;
+    setCanceling(true);
+    const updated = await cancelSubscription(subscription.id);
+    setCanceling(false);
     setCancelModalOpen(false);
+    if (!updated) {
+      show(t("cancelFailed"), "error");
+      return;
+    }
+    setSubscription(updated);
     show(t("subscriptionCanceled"), "info");
   }
 
-  function handleReactivate() {
-    if (!account) return;
-    const next: OnboardingAccount = { ...account, subscriptionStatus: "active" };
-    saveAccount(next);
-    setAccount(next);
+  async function handleReactivate() {
+    if (!subscription) return;
+    setReactivating(true);
+    const updated = await reactivateSubscription(subscription.id);
+    setReactivating(false);
+    if (!updated) {
+      show(t("reactivateFailed"), "error");
+      return;
+    }
+    setSubscription(updated);
     show(t("reactivated"), "success");
   }
 
-  const summary = getSubscriptionSummary(account);
   const dateFormatter = new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
 
-  const rows = [
-    { label: t("currentPlan"), value: summary.planName },
-    {
-      label: t("monthlyCost"),
-      value: formatXaf(summary.monthlyCostXaf, locale),
-      helper: t("costBreakdown", {
-        count: summary.mailboxCount,
-        price: formatXaf(summary.perMailboxXaf, locale),
-      }),
-    },
-    { label: t("renewalDate"), value: dateFormatter.format(new Date(summary.renewalDate)) },
-    { label: t("mailboxesLabel"), value: t("mailboxCount", { count: summary.mailboxCount }) },
-    { label: t("workspaceStorage"), value: `${summary.workspaceStorageGB} GB` },
-    { label: t("includedAiCredits"), value: summary.includedAiCredits.toLocaleString() },
-  ];
-  const renewalDateFormatted = dateFormatter.format(new Date(summary.renewalDate));
+  const perMonthTotal = subscription ? subscription.amountTotal / subscription.billingMonths : 0;
+  const perMailboxPerMonth =
+    subscription && subscription.mailboxQuantity > 0
+      ? perMonthTotal / subscription.mailboxQuantity
+      : 0;
+  const renewalDateFormatted = subscription?.currentPeriodEnd
+    ? dateFormatter.format(new Date(subscription.currentPeriodEnd))
+    : null;
+
+  const rows = subscription
+    ? [
+        { label: t("currentPlan"), value: PLANS[subscription.planId as PlanId].name },
+        {
+          label: t("monthlyCost"),
+          value: formatXaf(perMonthTotal, locale),
+          helper: t("costBreakdown", {
+            count: subscription.mailboxQuantity,
+            price: formatXaf(perMailboxPerMonth, locale),
+          }),
+        },
+        ...(renewalDateFormatted
+          ? [{ label: t("renewalDate"), value: renewalDateFormatted }]
+          : []),
+        {
+          label: t("mailboxesLabel"),
+          value: t("mailboxCount", { count: subscription.mailboxQuantity }),
+        },
+        {
+          label: t("workspaceStorage"),
+          value: `${PLANS[subscription.planId as PlanId].storageGB * subscription.mailboxQuantity} GB`,
+        },
+      ]
+    : [];
   const downgradePlan = downgradeTarget ? PLANS[downgradeTarget] : null;
 
   return (
-    <DashboardShell domain={account.domain} ownerName={account.ownerName}>
+    <DashboardShell domain={domain.name} ownerName={ownerName}>
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           {t("title")}
@@ -116,42 +167,54 @@ export default function SubscriptionPage() {
         <p className="mt-1.5 text-base text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {account.subscriptionStatus === "canceled" && (
+      {subscription?.status === "canceled" && renewalDateFormatted && (
         <div className="mt-6 flex flex-col gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex items-start gap-2.5 text-sm text-amber-800">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
             {t("canceledBanner", { date: renewalDateFormatted })}
           </p>
-          <Button size="sm" variant="outline" className="shrink-0" onClick={handleReactivate}>
-            {t("reactivate")}
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            disabled={reactivating}
+            onClick={handleReactivate}
+          >
+            {reactivating ? t("reactivating") : t("reactivate")}
           </Button>
         </div>
       )}
 
-      <div className="mt-8 rounded-2xl border border-border bg-card p-6 sm:p-8">
-        <dl className="divide-y divide-border/70">
-          {rows.map((row) => (
-            <div key={row.label} className="flex items-center justify-between gap-4 py-4 text-sm">
-              <dt className="text-muted-foreground">{row.label}</dt>
-              <dd className="text-right">
-                <span className="font-semibold text-foreground">{row.value}</span>
-                {"helper" in row && row.helper && (
-                  <p className="mt-0.5 text-xs font-normal text-muted-foreground">
-                    {row.helper}
-                  </p>
-                )}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </div>
+      {!subscription ? (
+        <div className="mt-8 rounded-2xl border border-dashed border-border p-8 text-center">
+          <p className="text-sm text-muted-foreground">{t("noSubscription")}</p>
+        </div>
+      ) : (
+        <div className="mt-8 rounded-2xl border border-border bg-card p-6 sm:p-8">
+          <dl className="divide-y divide-border/70">
+            {rows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between gap-4 py-4 text-sm">
+                <dt className="text-muted-foreground">{row.label}</dt>
+                <dd className="text-right">
+                  <span className="font-semibold text-foreground">{row.value}</span>
+                  {"helper" in row && row.helper && (
+                    <p className="mt-0.5 text-xs font-normal text-muted-foreground">
+                      {row.helper}
+                    </p>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
 
       <div className="mt-8">
         <h2 className="text-sm font-semibold text-foreground">{t("yourPlan")}</h2>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {PLAN_ORDER.map((planId) => {
             const plan = PLANS[planId];
-            const isCurrent = account.plan === planId;
+            const isCurrent = subscription?.planId === planId;
             return (
               <div
                 key={planId}
@@ -188,14 +251,15 @@ export default function SubscriptionPage() {
                     </li>
                   )}
                 </ul>
-                {!isCurrent && (
+                {subscription && !isCurrent && (
                   <Button
                     size="sm"
                     variant="outline"
                     className="mt-4 w-full"
+                    disabled={switchingPlan}
                     onClick={() => handleSwitchPlan(planId)}
                   >
-                    {t("switchTo", { plan: plan.name })}
+                    {switchingPlan ? t("switching") : t("switchTo", { plan: plan.name })}
                   </Button>
                 )}
               </div>
@@ -225,7 +289,7 @@ export default function SubscriptionPage() {
         </Button>
       </div>
 
-      {account.subscriptionStatus === "active" && (
+      {subscription?.status === "active" && (
         <div className="mt-10 rounded-2xl border border-destructive/20 bg-destructive/5 p-6 sm:p-8">
           <h2 className="text-sm font-semibold text-destructive">{t("dangerZoneTitle")}</h2>
           <p className="mt-1.5 text-sm text-muted-foreground">{t("dangerZoneDescription")}</p>
@@ -239,7 +303,7 @@ export default function SubscriptionPage() {
         </div>
       )}
 
-      {downgradePlan && (
+      {downgradePlan && subscription && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             aria-hidden
@@ -256,16 +320,16 @@ export default function SubscriptionPage() {
                   {t("downgradeModalTitle", { plan: downgradePlan.name })}
                 </h2>
                 <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted-foreground">
-                  {account.roleAliases.length > downgradePlan.roleAliasLimit && (
+                  {roleAliasCount > downgradePlan.roleAliasLimit && (
                     <li>
                       {t("downgradeModalRoleAliasWarning", {
                         plan: downgradePlan.name,
                         limit: downgradePlan.roleAliasLimit,
-                        count: account.roleAliases.length,
+                        count: roleAliasCount,
                       })}
                     </li>
                   )}
-                  {PLANS[account.plan].voiceNotes && !downgradePlan.voiceNotes && (
+                  {PLANS[subscription.planId as PlanId].voiceNotes && !downgradePlan.voiceNotes && (
                     <li>{t("downgradeModalVoiceNotesWarning")}</li>
                   )}
                 </ul>
@@ -305,7 +369,7 @@ export default function SubscriptionPage() {
               <div>
                 <h2 className="text-base font-bold text-foreground">{t("cancelModalTitle")}</h2>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  {t("cancelModalDescription", { date: renewalDateFormatted })}
+                  {t("cancelModalDescription", { date: renewalDateFormatted ?? "—" })}
                 </p>
               </div>
             </div>
@@ -316,9 +380,10 @@ export default function SubscriptionPage() {
               <Button
                 className="border-destructive/30 text-destructive hover:bg-destructive/10"
                 variant="outline"
+                disabled={canceling}
                 onClick={handleCancelSubscription}
               >
-                {t("cancelModalConfirm")}
+                {canceling ? t("canceling") : t("cancelModalConfirm")}
               </Button>
             </div>
           </div>
