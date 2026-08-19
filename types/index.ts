@@ -153,8 +153,10 @@ export type CheckoutResult =
 
 export type MailAccount = {
   id: number
+  cuid: string
   username: string
   ownerEmail: string | null
+  active: boolean
   createdAt: string
 }
 
@@ -163,8 +165,50 @@ export type Domain = {
   name: string
   description: string | null
   verified: boolean
+  customLoginHostname: string | null
+  customLoginHostnameVerified: boolean
   createdAt: string
   updatedAt: string | null
+}
+
+export type DomainBranding = {
+  id: number
+  domainId: number
+  companyName: string | null
+  welcomeMessage: string | null
+  accentColor: string | null
+  logoFileId: number | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export type PublicDomainBranding = {
+  companyName: string | null
+  welcomeMessage: string | null
+  accentColor: string | null
+  logoUrl: string | null
+}
+
+export type RoleAlias = {
+  id: number
+  domainId: number
+  alias: string
+  mailAccountId: number
+  createdAt: string
+  updatedAt: string | null
+}
+
+export type MailboxStorageUsage = {
+  mailAccountId: number
+  username: string
+  usedBytes: number
+  quotaBytes: number
+}
+
+export type StorageUsage = {
+  mailboxes: MailboxStorageUsage[]
+  totalUsedBytes: number
+  totalQuotaBytes: number
 }
 
 export type Record = {

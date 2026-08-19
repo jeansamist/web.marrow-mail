@@ -10,22 +10,20 @@ import { MailboxSetupStep } from "@/components/onboarding/mailbox-setup-step";
 import { PaymentStep } from "@/components/onboarding/payment-step";
 import { cardShadow, premiumButton } from "@/components/onboarding/styles";
 import { cn } from "@/lib/utils";
-import {
-  calcMailboxPricing,
-  loadAccount,
-  type BillingMonths,
-  type Mailbox,
-  type OnboardingAccount,
-} from "@/lib/onboarding";
+import type { BillingMonths, Mailbox } from "@/lib/onboarding";
+import { calcMailboxPricing } from "@/lib/onboarding";
 import { getProfile } from "@/services/auth.services";
+import { listDomains } from "@/services/domain.services";
 import { setupMailAccount } from "@/services/onboarding.services";
-import type { MailAccount } from "@/types";
+import { getCurrentSubscription } from "@/services/subscription.services";
+import type { Domain, MailAccount, Subscription } from "@/types";
 
 export default function AddMailboxPage() {
   const t = useTranslations("Dashboard.addMailboxPage");
   const tMailboxes = useTranslations("Onboarding.mailboxes");
   const router = useRouter();
-  const [account, setAccount] = useState<OnboardingAccount | null>(null);
+  const [domain, setDomain] = useState<Domain | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [checked, setChecked] = useState(false);
   const [ownerEmail, setOwnerEmail] = useState<string | null>(null);
   const [step, setStep] = useState<"mailboxes" | "payment" | "success">("mailboxes");
@@ -35,23 +33,29 @@ export default function AddMailboxPage() {
   const [creationError, setCreationError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (!stored) {
-      router.replace("/onboarding");
-      return;
-    }
-    setAccount(stored);
-    setChecked(true);
+    (async () => {
+      const [domains, currentSubscription, profile] = await Promise.all([
+        listDomains(),
+        getCurrentSubscription(),
+        getProfile(),
+      ]);
+      if (domains.length === 0) {
+        router.replace("/onboarding");
+        return;
+      }
+      setDomain(domains[0]);
+      setSubscription(currentSubscription);
+      setOwnerEmail(profile?.email ?? null);
+      setChecked(true);
+    })();
   }, [router]);
 
-  useEffect(() => {
-    getProfile().then((profile) => setOwnerEmail(profile?.email ?? null));
-  }, []);
+  if (!checked || !domain) return null;
 
-  if (!checked || !account) return null;
+  const plan = subscription?.planId ?? "core";
 
   async function handlePaid(): Promise<boolean> {
-    if (!account) return false;
+    if (!domain) return false;
     setCreationError(null);
 
     const created = await setupMailAccount(
@@ -61,7 +65,7 @@ export default function AddMailboxPage() {
           owner: mailbox.assignedTo || ownerEmail || "",
         })),
       },
-      account.domain,
+      domain.name,
     );
 
     if (created instanceof Error) {
@@ -97,8 +101,8 @@ export default function AddMailboxPage() {
         >
           {step === "mailboxes" && (
             <MailboxSetupStep
-              domain={account.domain}
-              plan={account.plan}
+              domain={domain.name}
+              plan={plan}
               initialMailboxes={[]}
               initialBillingMonths={months}
               onContinue={(list, selectedMonths) => {
@@ -113,7 +117,7 @@ export default function AddMailboxPage() {
             <>
               <PaymentStep
                 variant="mailbox"
-                plan={account.plan}
+                plan={plan}
                 mailboxQuantity={newMailboxes.length}
                 billingMonths={months}
                 lineItems={[
@@ -122,7 +126,7 @@ export default function AddMailboxPage() {
                       count: newMailboxes.length,
                       months,
                     }),
-                    amount: calcMailboxPricing(newMailboxes.length, months, account.plan).total,
+                    amount: calcMailboxPricing(newMailboxes.length, months, plan).total,
                   },
                 ]}
                 onPaid={async () => {
@@ -149,7 +153,7 @@ export default function AddMailboxPage() {
                   {createdAccounts.map((m) => (
                     <li key={m.id} className="text-sm">
                       <span className="font-medium text-foreground">
-                        {m.username}@{account.domain}
+                        {m.username}@{domain.name}
                       </span>
                       {m.ownerEmail && (
                         <p className="mt-0.5 text-xs text-muted-foreground">

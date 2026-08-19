@@ -3,12 +3,10 @@
 import { useTranslations } from "next-intl";
 import { HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  getMailboxStorageUsedGB,
-  getStorageTier,
-  storageTierBarClass,
-  type Mailbox,
-} from "@/lib/onboarding";
+import { getStorageTier, storageTierBarClass } from "@/lib/onboarding";
+import type { MailAccount } from "@/types";
+
+const BYTES_PER_GB = 1024 ** 3;
 
 function initials(value: string) {
   return value
@@ -21,17 +19,20 @@ function initials(value: string) {
 }
 
 export function MailboxCard({
-  mailbox,
+  mailAccount,
   domain,
+  usedBytes,
+  quotaBytes,
   onClick,
 }: {
-  mailbox: Mailbox;
+  mailAccount: MailAccount;
   domain: string;
+  usedBytes: number;
+  quotaBytes: number;
   onClick: () => void;
 }) {
   const t = useTranslations("Dashboard.mailboxesPage");
-  const usedGB = getMailboxStorageUsedGB(mailbox);
-  const usageFraction = Math.min(usedGB / mailbox.storagePurchasedGB, 1);
+  const usageFraction = quotaBytes > 0 ? Math.min(usedBytes / quotaBytes, 1) : 0;
   const tier = getStorageTier(usageFraction);
 
   return (
@@ -43,42 +44,36 @@ export function MailboxCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3.5">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-            {initials(mailbox.fullName || mailbox.username)}
+            {initials(mailAccount.username)}
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground">
-              {mailbox.fullName || mailbox.username}
+              {mailAccount.username}
             </p>
             <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-              {mailbox.username}@{domain}
+              {mailAccount.username}@{domain}
             </p>
           </div>
         </div>
         <span
           className={cn(
             "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-            mailbox.status === "active"
+            mailAccount.active
               ? "bg-emerald-500/10 text-emerald-700"
               : "bg-muted text-muted-foreground",
           )}
         >
-          {mailbox.status === "active" ? t("status.active") : t("status.disabled")}
+          {mailAccount.active ? t("status.active") : t("status.disabled")}
         </span>
       </div>
-
-      {mailbox.invitationStatus === "pending" && (
-        <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-          {t("status.invitationPending")}
-        </span>
-      )}
 
       <div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5 tabular-nums">
             <HardDrive className="size-3" strokeWidth={1.5} />
             {t("storageUsage", {
-              used: usedGB,
-              total: mailbox.storagePurchasedGB,
+              used: (usedBytes / BYTES_PER_GB).toFixed(1),
+              total: (quotaBytes / BYTES_PER_GB).toFixed(0),
             })}
           </span>
         </div>

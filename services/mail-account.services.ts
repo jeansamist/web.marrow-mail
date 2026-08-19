@@ -1,5 +1,5 @@
 "use server"
-import { GET, DELETE } from "@/lib/api"
+import { GET, DELETE, POST, PUT } from "@/lib/api"
 import type { MailAccount } from "@/types"
 
 export const listMailAccounts = async (): Promise<MailAccount[]> => {
@@ -10,5 +10,26 @@ export const listMailAccounts = async (): Promise<MailAccount[]> => {
 
 export const deleteMailAccountApi = async (id: number): Promise<boolean> => {
   const resp = await DELETE(`/mail-accounts/${id}`)
+  return !(resp instanceof Error)
+}
+
+export const toggleMailAccountActive = async (id: number): Promise<MailAccount | null> => {
+  const resp = await PUT<undefined, MailAccount>(`/mail-accounts/${id}/toggle-active`, undefined)
+  if (resp instanceof Error) return null
+  return resp
+}
+
+export const updateMailAccountStorageQuota = async (
+  id: number,
+  quotaBytes: number
+): Promise<boolean> => {
+  const resp = await PUT<{ quotaBytes: number }, null>(`/mail-accounts/${id}/storage-quota`, {
+    quotaBytes,
+  })
+  return !(resp instanceof Error)
+}
+
+export const resendMailAccountInvite = async (id: number): Promise<boolean> => {
+  const resp = await POST<undefined, null>(`/mail-accounts/${id}/resend-invite`, undefined)
   return !(resp instanceof Error)
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   AtSign,
   CheckCircle2,
@@ -10,7 +10,6 @@ import {
   PackageOpen,
   Rocket,
   TriangleAlert,
-  UserCheck,
   UserPlus,
 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -22,24 +21,15 @@ import { ActivityTimeline } from "@/components/dashboard/activity-timeline";
 import { StatList } from "@/components/dashboard/stat-list";
 import { TeamLoginLinkCompact } from "@/components/dashboard/team-login-link";
 import { StorageWarningBanner } from "@/components/dashboard/storage-warning-banner";
-import {
-  getMailboxStorageUsedGB,
-  getMailboxesNeedingStorageAttention,
-  getRecentActivity,
-  getSubscriptionSummary,
-  groupActivityByDay,
-  loadAccount,
-  type ActivityType,
-  type OnboardingAccount,
-} from "@/lib/onboarding";
+import { PLANS, getStorageTier } from "@/lib/onboarding";
+import { listDomains } from "@/services/domain.services";
+import { listMailAccounts } from "@/services/mail-account.services";
+import { getStorageUsage } from "@/services/storage.services";
+import { getCurrentSubscription } from "@/services/subscription.services";
+import { getProfile } from "@/services/auth.services";
+import type { Domain, MailAccount, StorageUsage, Subscription, User } from "@/types";
 
-const ACTIVITY_ICONS: Record<ActivityType, typeof Mail> = {
-  mailboxCreated: Mail,
-  invitationAccepted: UserCheck,
-  roleCreated: AtSign,
-  domainConnected: Globe,
-  storagePurchased: PackageOpen,
-};
+const BYTES_PER_GB = 1024 ** 3;
 
 function getGreetingKey(): "morning" | "afternoon" | "evening" {
   const hour = new Date().getHours();
@@ -51,101 +41,105 @@ function getGreetingKey(): "morning" | "afternoon" | "evening" {
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
   const tLink = useTranslations("Dashboard.loginLink");
-  const locale = useLocale();
   const router = useRouter();
-  const [account, setAccount] = useState<OnboardingAccount | null>(null);
+
   const [checked, setChecked] = useState(false);
+  const [domain, setDomain] = useState<Domain | null>(null);
+  const [domainCount, setDomainCount] = useState(0);
+  const [mailAccounts, setMailAccounts] = useState<MailAccount[]>([]);
+  const [storage, setStorage] = useState<StorageUsage | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (!stored) {
-      router.replace("/onboarding");
-      return;
-    }
-    setAccount(stored);
-    setChecked(true);
+    (async () => {
+      const [domains, accounts, storageUsage, currentSubscription, user] = await Promise.all([
+        listDomains(),
+        listMailAccounts(),
+        getStorageUsage(),
+        getCurrentSubscription(),
+        getProfile(),
+      ]);
+      if (domains.length === 0) {
+        router.replace("/onboarding");
+        return;
+      }
+      setDomain(domains[0]);
+      setDomainCount(domains.length);
+      setMailAccounts(accounts);
+      setStorage(storageUsage);
+      setSubscription(currentSubscription);
+      setProfile(user);
+      setChecked(true);
+    })();
   }, [router]);
 
-  if (!checked || !account) return null;
+  if (!checked || !domain) return null;
 
-  const pendingInvitations = account.mailboxes.filter(
-    (m) => m.invitationStatus === "pending",
-  ).length;
-  const storageUsedGB = account.mailboxes.reduce(
-    (sum, m) => sum + getMailboxStorageUsedGB(m),
-    0,
-  );
-  const storagePurchasedGB = account.mailboxes.reduce(
-    (sum, m) => sum + m.storagePurchasedGB,
-    0,
-  );
-  const nearLimitCount = account.mailboxes.filter(
-    (m) => getMailboxStorageUsedGB(m) / m.storagePurchasedGB > 0.8,
-  ).length;
-  const storageAttention = getMailboxesNeedingStorageAttention(account);
-  const subscription = getSubscriptionSummary(account);
-  const activity = getRecentActivity(account);
-  const dayGroups = groupActivityByDay(activity, locale);
-  const isHealthy = account.dnsVerified && pendingInvitations === 0 && nearLimitCount === 0;
+  const ownerName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : "";
+  const planName = PLANS[subscription?.planId ?? "core"].name;
+
+  const totalUsedGB = storage ? storage.totalUsedBytes / BYTES_PER_GB : 0;
+  const totalQuotaGB = storage ? storage.totalQuotaBytes / BYTES_PER_GB : 0;
+
+  const mailboxUsage = (storage?.mailboxes ?? [])
+    .map((m) => ({
+      ...m,
+      fraction: m.quotaBytes > 0 ? m.usedBytes / m.quotaBytes : 0,
+    }))
+    .sort((a, b) => b.fraction - a.fraction);
+  const criticalMailboxes = mailboxUsage.filter((m) => getStorageTier(m.fraction) === "critical");
+  const warningMailboxes = mailboxUsage.filter((m) => getStorageTier(m.fraction) === "warning");
+  const nearLimitCount = criticalMailboxes.length + warningMailboxes.length;
+  const disabledCount = mailAccounts.filter((a) => !a.active).length;
+
+  const isHealthy = domain.verified && nearLimitCount === 0 && disabledCount === 0;
 
   const issues: string[] = [];
-  if (!account.dnsVerified) issues.push(t("health.domainsPending"));
-  if (pendingInvitations > 0)
-    issues.push(t("health.pendingInvites", { count: pendingInvitations }));
+  if (!domain.verified) issues.push(t("health.domainsPending"));
+  if (disabledCount > 0) issues.push(t("health.disabledMailboxes", { count: disabledCount }));
   if (nearLimitCount > 0)
     issues.push(t("health.storageNearLimit", { count: nearLimitCount }));
 
   const adaptiveMessage =
-    account.mailboxes.length === 0
+    mailAccounts.length === 0
       ? t("adaptive.firstLogin")
-      : !account.dnsVerified
+      : !domain.verified
         ? t("adaptive.domainNotVerified")
-        : pendingInvitations > 0
-          ? t("adaptive.pendingInvites", { count: pendingInvitations })
+        : disabledCount > 0
+          ? t("adaptive.disabledMailboxes", { count: disabledCount })
           : nearLimitCount > 0
             ? t("adaptive.lowStorage", { count: nearLimitCount })
             : t("adaptive.healthy");
   const AdaptiveIcon =
-    account.mailboxes.length === 0
+    mailAccounts.length === 0
       ? Rocket
-      : !account.dnsVerified
+      : !domain.verified
         ? TriangleAlert
-        : pendingInvitations > 0
+        : disabledCount > 0
           ? UserPlus
           : nearLimitCount > 0
             ? TriangleAlert
             : null;
   const adaptiveIconTone =
-    !account.dnsVerified || nearLimitCount > 0 ? "text-amber-600" : "text-primary";
+    !domain.verified || disabledCount > 0 || nearLimitCount > 0
+      ? "text-amber-600"
+      : "text-primary";
 
   const checklist = [
-    { ok: account.dnsVerified, label: t("health.domainVerified") },
-    { ok: pendingInvitations === 0, label: t("health.mailboxesHealthy") },
+    { ok: domain.verified, label: t("health.domainVerified") },
+    { ok: disabledCount === 0, label: t("health.mailboxesHealthy") },
     { ok: nearLimitCount === 0, label: t("health.storageAvailable") },
     { ok: true, label: t("health.aiCreditsAvailable") },
   ];
 
-  const timelineGroups = dayGroups.map((group) => ({
-    label:
-      group.key === "today"
-        ? t("activity.today")
-        : group.key === "yesterday"
-          ? t("activity.yesterday")
-          : group.key,
-    items: group.entries.map((entry) => ({
-      id: entry.id,
-      icon: ACTIVITY_ICONS[entry.type],
-      text: t(`activity.${entry.type}`, { address: entry.address }),
-      time: new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(entry.date)),
-    })),
-  }));
+  const recentMailboxes = [...mailAccounts]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
 
   return (
-    <DashboardShell domain={account.domain} ownerName={account.ownerName}>
-      {!account.dnsVerified && (
+    <DashboardShell domain={domain.name} ownerName={ownerName}>
+      {!domain.verified && (
         <div className="mb-8 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
           <TriangleAlert className="mt-0.5 size-5 shrink-0 text-amber-700" strokeWidth={1.5} />
           <div className="flex-1">
@@ -153,7 +147,7 @@ export default function DashboardPage() {
               {t("dnsIncompleteTitle")}
             </p>
             <p className="mt-1 text-sm text-amber-800/80">
-              {t("dnsIncompleteDescription", { domain: account.domain })}
+              {t("dnsIncompleteDescription", { domain: domain.name })}
             </p>
           </div>
           <Button size="sm" asChild>
@@ -162,21 +156,23 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {(storageAttention.critical.length > 0 || storageAttention.warning.length > 0) && (
+      {(criticalMailboxes.length > 0 || warningMailboxes.length > 0) && (
         <div className="mb-8 flex flex-col gap-3">
-          {storageAttention.critical.map((mailbox) => (
+          {criticalMailboxes.map((m) => (
             <StorageWarningBanner
-              key={mailbox.id}
-              mailbox={mailbox}
-              domain={account.domain}
+              key={m.mailAccountId}
+              email={`${m.username}@${domain.name}`}
+              usedGB={m.usedBytes / BYTES_PER_GB}
+              quotaGB={m.quotaBytes / BYTES_PER_GB}
               tier="critical"
             />
           ))}
-          {storageAttention.warning.map((mailbox) => (
+          {warningMailboxes.map((m) => (
             <StorageWarningBanner
-              key={mailbox.id}
-              mailbox={mailbox}
-              domain={account.domain}
+              key={m.mailAccountId}
+              email={`${m.username}@${domain.name}`}
+              usedGB={m.usedBytes / BYTES_PER_GB}
+              quotaGB={m.quotaBytes / BYTES_PER_GB}
               tier="warning"
             />
           ))}
@@ -186,9 +182,9 @@ export default function DashboardPage() {
       {/* Greeting */}
       <div>
         <h1 className="text-[42px] font-bold tracking-tight text-foreground sm:text-[48px]">
-          {account.ownerName
+          {ownerName
             ? t(`greeting.${getGreetingKey()}Named`, {
-                name: account.ownerName.split(" ")[0],
+                name: ownerName.split(" ")[0],
               })
             : t(`greeting.${getGreetingKey()}`)}
         </h1>
@@ -211,25 +207,25 @@ export default function DashboardPage() {
               {t("hero.label")}
             </span>
             <h2 className="mt-1.5 text-[34px] font-semibold tracking-tight text-foreground sm:text-4xl">
-              {account.domain}
+              {domain.name}
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-[15px] font-medium text-muted-foreground">
-              <span>{subscription.planName}</span>
+              <span>{planName}</span>
               <span aria-hidden>·</span>
               <span className="inline-flex items-center gap-1.5">
                 <span
                   className={
-                    account.dnsVerified
+                    domain.verified
                       ? "size-1.5 rounded-full bg-emerald-500"
                       : "size-1.5 rounded-full bg-amber-500"
                   }
                 />
-                {account.dnsVerified ? t("hero.verified") : t("hero.verificationPending")}
+                {domain.verified ? t("hero.verified") : t("hero.verificationPending")}
               </span>
             </div>
 
             <TeamLoginLinkCompact
-              domain={account.domain}
+              domain={domain.name}
               copyLabel={tLink("copy")}
               copiedLabel={tLink("copied")}
             />
@@ -246,12 +242,12 @@ export default function DashboardPage() {
           <div className="border-t border-border/70 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
             <StatList
               items={[
-                { icon: Globe, label: t("hero.domains"), value: 1 },
-                { icon: Mail, label: t("hero.mailboxes"), value: account.mailboxes.length },
+                { icon: Globe, label: t("hero.domains"), value: domainCount },
+                { icon: Mail, label: t("hero.mailboxes"), value: mailAccounts.length },
                 {
                   icon: PackageOpen,
                   label: t("hero.storageUsed"),
-                  value: `${storageUsedGB.toFixed(0)} GB / ${storagePurchasedGB} GB`,
+                  value: `${totalUsedGB.toFixed(0)} GB / ${totalQuotaGB.toFixed(0)} GB`,
                 },
               ]}
             />
@@ -327,16 +323,28 @@ export default function DashboardPage() {
           </ul>
         </div>
 
-        {/* Activity */}
+        {/* Recently added mailboxes */}
         <div className="rounded-2xl border border-border bg-card p-7 sm:p-9">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/75">
             {t("activity.title")}
           </h2>
           <div className="mt-5">
-            {timelineGroups.length === 0 ? (
+            {recentMailboxes.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("activity.empty")}</p>
             ) : (
-              <ActivityTimeline groups={timelineGroups} />
+              <ActivityTimeline
+                groups={[
+                  {
+                    label: t("activity.recentMailboxes"),
+                    items: recentMailboxes.map((account) => ({
+                      id: String(account.id),
+                      icon: Mail,
+                      text: `${account.username}@${domain.name}`,
+                      time: new Date(account.createdAt).toLocaleDateString(),
+                    })),
+                  },
+                ]}
+              />
             )}
           </div>
         </div>

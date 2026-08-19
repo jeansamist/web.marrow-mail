@@ -584,6 +584,7 @@
       "firstLogin": "Let's set up your first mailbox to get started.",
       "domainNotVerified": "Your domain still needs verification — complete setup to start sending professional email.",
       "pendingInvites": "{count, plural, one {A teammate is} other {# teammates are}} waiting to join. Resend invitations or monitor their progress.",
+      "disabledMailboxes": "{count, plural, one {A mailbox is} other {# mailboxes are}} disabled. Re-enable them from the mailboxes page.",
       "lowStorage": "Storage is running low on {count, plural, one {a mailbox} other {# mailboxes}}. Purchase additional storage to avoid interruptions.",
       "healthy": "Everything is running smoothly today. Your business email is ready to go."
     },
@@ -628,10 +629,12 @@
       "aiCreditsAvailable": "AI credits available",
       "domainsPending": "Domain verification pending",
       "pendingInvites": "{count, plural, one {# pending invitation} other {# pending invitations}}",
+      "disabledMailboxes": "{count, plural, one {# disabled mailbox} other {# disabled mailboxes}}",
       "storageNearLimit": "{count, plural, one {# mailbox} other {# mailboxes}} approaching storage limit"
     },
     "activity": {
       "title": "Activity",
+      "recentMailboxes": "Recently added mailboxes",
       "today": "Today",
       "yesterday": "Yesterday",
       "empty": "Nothing here yet. Activity will show up as you set things up.",
@@ -675,6 +678,10 @@
         "deleteConfirm": "Delete {email}? This can't be undone.",
         "mailboxDeleted": "Mailbox deleted",
         "deleteError": "Couldn't delete this mailbox. Please try again.",
+        "toggleError": "Couldn't update this mailbox's status. Please try again.",
+        "storageError": "Couldn't update storage. Please try again.",
+        "inviteError": "Couldn't resend the invitation. Please try again.",
+        "passwordResetError": "Couldn't send a password reset link. Please try again.",
         "unavailableSoon": "Coming soon",
         "storagePolicy": "This mailbox includes {amount} GB of storage. Buy more anytime."
       },
@@ -696,7 +703,9 @@
         "cancel": "Cancel",
         "limitReached": "Free limit reached",
         "created": "{alias} created",
-        "deleted": "Role email removed"
+        "createError": "Couldn't create this role email. Please try again.",
+        "deleted": "Role email removed",
+        "deleteError": "Couldn't remove this role email. Please try again."
       }
     },
     "addMailboxPage": {
@@ -774,7 +783,6 @@
       "mailboxesLabel": "Mailboxes",
       "mailboxCount": "{count, plural, one {# mailbox} other {# mailboxes}}",
       "workspaceStorage": "Workspace storage",
-      "includedAiCredits": "Included AI credits",
       "costBreakdown": "{count, plural, one {# mailbox at {price}/mo} other {# mailboxes at {price}/mo each}}",
       "addMailbox": "Add Mailbox",
       "buyStorage": "Buy Storage",
@@ -782,10 +790,17 @@
       "yourPlan": "Your plan",
       "currentPlanBadge": "Current plan",
       "switchTo": "Switch to {plan}",
+      "switching": "Switching…",
       "planChanged": "Switched to {plan}",
+      "planChangeFailed": "Couldn't switch plans. Try again.",
+      "noSubscription": "You don't have an active subscription yet.",
       "canceledBanner": "Your subscription is canceled. Access continues until {date}.",
       "reactivate": "Reactivate subscription",
+      "reactivating": "Reactivating…",
       "reactivated": "Subscription reactivated",
+      "reactivateFailed": "Couldn't reactivate your subscription. Try again.",
+      "canceling": "Canceling…",
+      "cancelFailed": "Couldn't cancel your subscription. Try again.",
       "downgradeModalTitle": "Switch to {plan}?",
       "downgradeModalRoleAliasWarning": "{plan} only includes {limit} free role-based addresses, but you're using {count}. Remove the extra ones after switching or they'll stop working.",
       "downgradeModalVoiceNotesWarning": "Voice notes won't be available in compose and replies anymore.",
@@ -801,10 +816,25 @@
       "subscriptionCanceled": "Subscription canceled"
     },
     "settingsPage": {
-      "title": "Team Login",
-      "subtitle": "Shared workspace settings — the domain, language, and login page your whole team uses. Not personal account settings.",
+      "title": "Settings",
+      "subtitle": "Your account, plus the shared workspace settings your whole team uses.",
       "domainLabel": "Connected domain",
       "languageLabel": "Language",
+      "account": {
+        "title": "Account",
+        "description": "Your personal profile and sign-in.",
+        "firstNameLabel": "First name",
+        "lastNameLabel": "Last name",
+        "businessNameLabel": "Business name",
+        "businessNamePlaceholder": "Optional",
+        "emailLabel": "Email",
+        "save": "Save account",
+        "saving": "Saving…",
+        "saved": "Account updated",
+        "saveFailed": "Couldn't update your account. Try again.",
+        "logoutDescription": "Sign out of your account on this device.",
+        "logout": "Log out"
+      },
       "branding": {
         "title": "Login page branding",
         "description": "Customize how the shared login link above looks for your team.",
@@ -821,17 +851,52 @@
         "comingSoon": "Coming soon",
         "save": "Save changes",
         "saved": "Login branding saved",
+        "saveFailed": "Couldn't save your branding. Try again.",
+        "logoUploadError": "Couldn't upload that logo. Try again.",
         "previewTitle": "Example login page",
         "previewWelcome": "Welcome to {name}",
         "previewEmail": "Email address",
         "previewPassword": "Password",
         "previewSignIn": "Sign In"
       },
+      "customDomain": {
+        "title": "Custom login domain",
+        "description": "Point mail.{domain} at us so your team can sign in from your own domain instead of ours.",
+        "hostnameLabel": "Hostname",
+        "hostnamePlaceholder": "mail.{domain}",
+        "save": "Save hostname",
+        "saveFailed": "Couldn't save that hostname. Try again.",
+        "saved": "Hostname saved — add the DNS record below, then verify.",
+        "instructions": "Add this DNS record with your domain registrar, then click Verify:",
+        "recordType": "Type",
+        "recordName": "Name",
+        "recordValue": "Value",
+        "verify": "Verify",
+        "verifying": "Verifying…",
+        "verified": "Verified — contact support to finish activation.",
+        "notVerified": "Not verified yet. DNS changes can take a few hours to propagate.",
+        "verifyFailed": "Couldn't check verification. Try again."
+      },
+      "billing": {
+        "title": "Billing",
+        "description": "Your current plan and subscription status.",
+        "noSubscription": "No active subscription yet.",
+        "plan": "Plan",
+        "status": "Status",
+        "mailboxes": "Mailboxes included",
+        "renewsOn": "Renews on {date}",
+        "statusValues": {
+          "pending": "Pending",
+          "active": "Active",
+          "past_due": "Past due",
+          "canceled": "Canceled",
+          "expired": "Expired",
+          "failed": "Failed"
+        }
+      },
       "dataSection": {
         "title": "Your data",
-        "description": "Download a copy of your workspace data, or permanently delete your account.",
-        "exportData": "Export workspace data",
-        "exported": "Workspace data downloaded",
+        "description": "Permanently delete your account.",
         "dangerZoneTitle": "Danger zone",
         "deleteAccount": "Delete account",
         "deleteModalTitle": "Delete your account?",
@@ -1234,6 +1299,44 @@
     "tokenError": "This reset link is invalid or has expired. Please request a new one.",
     "submitError": "Something went wrong. Please try again."
   },
+  "MailAuth": {
+    "forgotPassword": {
+      "backLabel": "Back to sign in",
+      "eyebrow": "Reset your password",
+      "title": "Forgot your password?",
+      "description": "Enter your mailbox email and we'll send a link to reset your password.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@{domain}",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "sentTitle": "Check your email",
+      "sentDescription": "If a mailbox exists for {email}, we've sent a link to reset your password.",
+      "sentBackCta": "Back to sign in",
+      "resendPrompt": "Didn't get it?",
+      "resendCta": "Send again",
+      "submitError": "Something went wrong. Please try again."
+    },
+    "resetPassword": {
+      "backLabel": "Back to sign in",
+      "eyebrow": "Reset your password",
+      "title": "Choose a new password",
+      "description": "Enter a new password for your mailbox.",
+      "passwordLabel": "New password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmLabel": "Confirm new password",
+      "confirmPlaceholder": "Re-enter your new password",
+      "mismatchError": "Passwords don't match.",
+      "submit": "Reset password",
+      "submitting": "Resetting…",
+      "successTitle": "Password updated",
+      "successDescription": "Your password has been reset. You can now sign in with your new password.",
+      "successCta": "Go to sign in",
+      "invalidLinkTitle": "This link is no longer valid",
+      "invalidLinkDescription": "Reset links expire after an hour, or this one is missing its token. Request a new one to continue.",
+      "tokenError": "This reset link is invalid or has expired. Please request a new one.",
+      "submitError": "Something went wrong. Please try again."
+    }
+  },
   "Logout": {
     "signingOut": "Signing you out…"
   },
@@ -1304,8 +1407,9 @@
     "verifying": "Verifying…",
     "invalidCode": "That code didn't work. Try again.",
     "backToLogin": "Back to sign in",
+    "forgotPassword": "Forgot password?",
     "notFoundTitle": "We couldn't find that workspace",
-    "notFoundDescription": "There's no MarrowMail workspace connected to {domain} in this browser.",
+    "notFoundDescription": "There's no MarrowMail workspace connected to {domain}.",
     "ownerNote": "Are you the workspace owner? <link>Sign in to the admin dashboard</link>."
   },
   "Assistance": {

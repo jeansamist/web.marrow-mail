@@ -9,15 +9,13 @@ import { DashboardShell } from "@/components/dashboard/shell";
 import { StorageWarningBanner } from "@/components/dashboard/storage-warning-banner";
 import { premiumButton } from "@/components/onboarding/styles";
 import { cn } from "@/lib/utils";
-import {
-  PLANS,
-  getMailboxStorageUsedGB,
-  getMailboxesNeedingStorageAttention,
-  getStorageTier,
-  loadAccount,
-  storageTierBarClass,
-  type OnboardingAccount,
-} from "@/lib/onboarding";
+import { getStorageTier, storageTierBarClass } from "@/lib/onboarding";
+import { listDomains } from "@/services/domain.services";
+import { getStorageUsage } from "@/services/storage.services";
+import { getProfile } from "@/services/auth.services";
+import type { Domain, MailboxStorageUsage, User } from "@/types";
+
+const BYTES_PER_GB = 1024 ** 3;
 
 function initials(value: string) {
   return value
@@ -33,40 +31,53 @@ export default function StoragePage() {
   const t = useTranslations("Dashboard.storagePage");
   const tMailboxes = useTranslations("Dashboard.mailboxesPage");
   const router = useRouter();
-  const [account, setAccount] = useState<OnboardingAccount | null>(null);
   const [checked, setChecked] = useState(false);
+  const [domain, setDomain] = useState<Domain | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
+  const [mailboxes, setMailboxes] = useState<MailboxStorageUsage[]>([]);
+  const [totalUsedBytes, setTotalUsedBytes] = useState(0);
+  const [totalQuotaBytes, setTotalQuotaBytes] = useState(0);
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (!stored) {
-      router.replace("/onboarding");
-      return;
-    }
-    setAccount(stored);
-    setChecked(true);
+    (async () => {
+      const [domains, storage, user] = await Promise.all([
+        listDomains(),
+        getStorageUsage(),
+        getProfile(),
+      ]);
+      if (domains.length === 0) {
+        router.replace("/onboarding");
+        return;
+      }
+      setDomain(domains[0]);
+      setProfile(user);
+      setMailboxes(storage?.mailboxes ?? []);
+      setTotalUsedBytes(storage?.totalUsedBytes ?? 0);
+      setTotalQuotaBytes(storage?.totalQuotaBytes ?? 0);
+      setChecked(true);
+    })();
   }, [router]);
 
-  if (!checked || !account) return null;
+  if (!checked || !domain) return null;
 
-  const purchasedGB = account.mailboxes.reduce((sum, m) => sum + m.storagePurchasedGB, 0);
-  const usedGB = account.mailboxes.reduce(
-    (sum, m) => sum + getMailboxStorageUsedGB(m),
-    0,
-  );
+  const purchasedGB = totalQuotaBytes / BYTES_PER_GB;
+  const usedGB = totalUsedBytes / BYTES_PER_GB;
   const availableGB = Math.max(purchasedGB - usedGB, 0);
   const usageFraction = purchasedGB > 0 ? Math.min(usedGB / purchasedGB, 1) : 0;
+  const ownerName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : "";
 
-  const baseGB = account.mailboxes.length * PLANS[account.plan].storageGB;
-  const extraGB = Math.max(purchasedGB - baseGB, 0);
-  const attention = getMailboxesNeedingStorageAttention(account);
-
-  const topUsage = [...account.mailboxes]
-    .map((m) => ({ m, used: getMailboxStorageUsedGB(m) }))
-    .sort((a, b) => b.used - a.used)
-    .slice(0, 5);
+  const mailboxUsage = mailboxes.map((m) => ({
+    ...m,
+    usedGB: m.usedBytes / BYTES_PER_GB,
+    quotaGB: m.quotaBytes / BYTES_PER_GB,
+    fraction: m.quotaBytes > 0 ? Math.min(m.usedBytes / m.quotaBytes, 1) : 0,
+  }));
+  const critical = mailboxUsage.filter((m) => getStorageTier(m.fraction) === "critical");
+  const warning = mailboxUsage.filter((m) => getStorageTier(m.fraction) === "warning");
+  const topUsage = [...mailboxUsage].sort((a, b) => b.usedGB - a.usedGB).slice(0, 5);
 
   return (
-    <DashboardShell domain={account.domain} ownerName={account.ownerName}>
+    <DashboardShell domain={domain.name} ownerName={ownerName}>
       <div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -82,21 +93,23 @@ export default function StoragePage() {
         <p className="mt-1.5 text-base text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {(attention.critical.length > 0 || attention.warning.length > 0) && (
+      {(critical.length > 0 || warning.length > 0) && (
         <div className="mt-6 flex flex-col gap-3">
-          {attention.critical.map((mailbox) => (
+          {critical.map((m) => (
             <StorageWarningBanner
-              key={mailbox.id}
-              mailbox={mailbox}
-              domain={account.domain}
+              key={m.mailAccountId}
+              email={`${m.username}@${domain.name}`}
+              usedGB={m.usedGB}
+              quotaGB={m.quotaGB}
               tier="critical"
             />
           ))}
-          {attention.warning.map((mailbox) => (
+          {warning.map((m) => (
             <StorageWarningBanner
-              key={mailbox.id}
-              mailbox={mailbox}
-              domain={account.domain}
+              key={m.mailAccountId}
+              email={`${m.username}@${domain.name}`}
+              usedGB={m.usedGB}
+              quotaGB={m.quotaGB}
               tier="warning"
             />
           ))}
@@ -114,16 +127,10 @@ export default function StoragePage() {
               <span className="text-lg font-semibold"> GB</span>
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {extraGB > 0
-                ? t("purchasedBreakdownExtra", {
-                    base: baseGB,
-                    extra: extraGB.toFixed(1),
-                    count: account.mailboxes.length,
-                  })
-                : t("purchasedBreakdown", {
-                    base: baseGB,
-                    count: account.mailboxes.length,
-                  })}
+              {t("purchasedBreakdown", {
+                base: purchasedGB.toFixed(0),
+                count: mailboxes.length,
+              })}
             </p>
           </div>
           <div className="px-4">
@@ -162,33 +169,32 @@ export default function StoragePage() {
           {t("topUsageTitle")}
         </h2>
         <div className="mt-4 flex flex-col gap-3">
-          {topUsage.map(({ m, used }) => {
-            const fraction = Math.min(used / m.storagePurchasedGB, 1);
-            const tier = getStorageTier(fraction);
+          {topUsage.map((m) => {
+            const tier = getStorageTier(m.fraction);
             return (
               <div
-                key={m.id}
+                key={m.mailAccountId}
                 className="flex items-center gap-3.5 rounded-2xl border border-border bg-card p-4"
               >
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                  {initials(m.fullName || m.username)}
+                  {initials(m.username)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-3">
                     <p className="truncate text-sm font-medium text-foreground">
-                      {m.username}@{account.domain}
+                      {m.username}@{domain.name}
                     </p>
                     <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                       {tMailboxes("storageUsage", {
-                        used: used.toFixed(1),
-                        total: m.storagePurchasedGB,
+                        used: m.usedGB.toFixed(1),
+                        total: m.quotaGB.toFixed(0),
                       })}
                     </span>
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-border/50">
                     <div
                       className={cn("h-full rounded-full", storageTierBarClass(tier))}
-                      style={{ width: `${fraction * 100}%` }}
+                      style={{ width: `${m.fraction * 100}%` }}
                     />
                   </div>
                 </div>
