@@ -7,6 +7,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { ArrowLeft, Check, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
 import {
   OrangeMoneyLogoWhite,
@@ -45,12 +46,18 @@ function SignupPageInner() {
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError(t("form.passwordMismatch"));
+      return;
+    }
 
     const parsed = signUpSchema.safeParse({
       firstName,
@@ -257,15 +264,32 @@ function SignupPageInner() {
                     >
                       {t("form.passwordLabel")}
                     </label>
-                    <Input
+                    <PasswordInput
                       id="password"
                       name="password"
-                      type="password"
                       required
                       minLength={8}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={t("form.passwordPlaceholder")}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="confirmPassword"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      {t("form.confirmPasswordLabel")}
+                    </label>
+                    <PasswordInput
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      required
+                      minLength={8}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder={t("form.confirmPasswordPlaceholder")}
                     />
                   </div>
 
