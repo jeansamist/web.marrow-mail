@@ -70,7 +70,7 @@ export function Pricing() {
                     {t(`${planId}.name`)}
                   </span>
                   <div className="mt-3 flex items-end justify-center gap-1">
-                    <span className="font-mono text-5xl font-semibold tracking-tight text-foreground">
+                    <span className="font-mono text-xl lg:text-5xl font-semibold tracking-tight text-foreground">
                       {t(`${planId}.price`)}
                     </span>
                     <span className="mb-1 text-lg text-muted-foreground">
