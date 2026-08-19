@@ -14,12 +14,12 @@ import { premiumButton, softShadow } from "@/components/onboarding/styles";
 import { cn } from "@/lib/utils";
 import { deleteAccount, getProfile, updateProfile } from "@/services/auth.services";
 import {
-  createDomainLogoUploadLink,
   getDomainBranding,
   getPublicDomainBranding,
   listDomains,
   setDomainCustomLoginHostname,
   updateDomainBranding,
+  uploadDomainLogo,
   verifyDomainCustomLoginHostname,
 } from "@/services/domain.services";
 import { getCurrentSubscription } from "@/services/subscription.services";
@@ -123,27 +123,19 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file || !domain) return;
     setUploadingLogo(true);
-    const link = await createDomainLogoUploadLink(domain.id, {
-      originalName: file.name,
-      mimeType: file.type,
+    const data = new Uint8Array(await file.arrayBuffer());
+    const uploaded = await uploadDomainLogo(domain.id, {
+      name: file.name,
+      type: file.type,
       size: file.size,
-    });
-    if (!link) {
-      setUploadingLogo(false);
-      show(t("branding.logoUploadError"), "error");
-      return;
-    }
-    const putResponse = await fetch(link.uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: file,
+      data,
     });
     setUploadingLogo(false);
-    if (!putResponse.ok) {
+    if (!uploaded) {
       show(t("branding.logoUploadError"), "error");
       return;
     }
-    setLogoFileId(link.file.id);
+    setLogoFileId(uploaded.id);
     setLogoPreviewUrl(URL.createObjectURL(file));
   }
 

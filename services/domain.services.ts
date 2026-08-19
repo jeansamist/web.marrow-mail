@@ -67,6 +67,36 @@ export const createDomainLogoUploadLink = async (
   return resp
 }
 
+// Does the S3 PUT server-side (like services/mail.services.ts's uploadFiles) —
+// the bucket has no CORS policy for direct browser uploads, so the presigned
+// URL must be consumed from the server, not the client. The returned file is
+// the raw backend record (id only matters here) — unlike mail-account
+// attachments, domain-branding logos have no publicUrl of their own; the
+// team-login page resolves a display URL separately via public-branding.
+export const uploadDomainLogo = async (
+  domainId: number,
+  file: { name: string; type: string; size: number; data: Uint8Array }
+): Promise<{ id: number } | null> => {
+  const link = await createDomainLogoUploadLink(domainId, {
+    originalName: file.name,
+    mimeType: file.type || undefined,
+    size: file.size,
+  })
+  if (!link) return null
+
+  const headers: HeadersInit = {}
+  if (file.type) headers["Content-Type"] = file.type
+
+  const res = await fetch(link.uploadUrl, {
+    method: "PUT",
+    body: Buffer.from(file.data),
+    headers,
+  })
+  if (!res.ok) return null
+
+  return link.file
+}
+
 export const setDomainCustomLoginHostname = async (
   domainId: number,
   hostname: string

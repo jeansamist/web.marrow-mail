@@ -21,6 +21,11 @@ const AUTH_PREFIXES = [
   "/verify-email",
 ];
 
+// Mail-account sign-in view (MAIL_AUTH_TOKEN tier). Masked for an already
+// signed-in mailbox user — they're redirected straight to their inbox
+// instead of seeing the login form again.
+const MAIL_AUTH_PREFIXES = ["/team-login"];
+
 const SITE_HOST = (() => {
   try {
     return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://marrowmails.com").hostname;
@@ -76,6 +81,7 @@ export default async function middleware(request: NextRequest) {
   const pathWithoutLocale = localeMatch ? (localeMatch[2] ?? "/") : pathname;
   const locale = localeMatch?.[1] ?? routing.defaultLocale;
   const isSignedIn = Boolean(request.cookies.get("AUTH_TOKEN"));
+  const isMailSignedIn = Boolean(request.cookies.get("MAIL_AUTH_TOKEN"));
 
   const isProtected =
     PROTECTED_PREFIXES.some((prefix) => pathWithoutLocale.startsWith(prefix)) &&
@@ -91,9 +97,21 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
   }
 
+  const isMailAuthView = MAIL_AUTH_PREFIXES.some((prefix) => pathWithoutLocale.startsWith(prefix));
+
+  if (isMailAuthView && isMailSignedIn) {
+    return NextResponse.redirect(new URL(`/${locale}/dashboard/mail`, request.url));
+  }
+
   return intlMiddleware(request);
 }
 
+// Excludes real static-asset extensions only — not "any path containing a
+// dot" (that would also exclude domain-name path segments, like
+// /team-login/geek-wear.shop, from ever reaching this middleware at all).
+// next/config's matcher is statically analyzed, so this must stay a literal.
 export const config = {
-  matcher: ["/((?!api|trpc|_next|_vercel|.*\\..*).*)"],
+  matcher: [
+    "/((?!api|trpc|_next|_vercel|.*\\.(?:ico|png|jpe?g|svg|gif|webp|avif|css|js|mjs|map|woff2?|ttf|eot|txt|xml|json|pdf)$).*)",
+  ],
 };
