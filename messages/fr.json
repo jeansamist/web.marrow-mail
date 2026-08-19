@@ -584,6 +584,7 @@
       "firstLogin": "Configurons votre première boîte mail pour commencer.",
       "domainNotVerified": "Votre domaine doit encore être vérifié — terminez la configuration pour envoyer des emails professionnels.",
       "pendingInvites": "{count, plural, one {Un collègue attend} other {# collègues attendent}} de rejoindre l'espace. Renvoyez les invitations ou suivez leur progression.",
+      "disabledMailboxes": "{count, plural, one {Une boîte mail est} other {# boîtes mail sont}} désactivée. Réactivez-les depuis la page des boîtes mail.",
       "lowStorage": "Le stockage est faible sur {count, plural, one {une boîte mail} other {# boîtes mail}}. Achetez du stockage supplémentaire pour éviter les interruptions.",
       "healthy": "Tout fonctionne parfaitement aujourd'hui. Votre email professionnel est prêt."
     },
@@ -628,10 +629,12 @@
       "aiCreditsAvailable": "Crédits IA disponibles",
       "domainsPending": "Vérification du domaine en attente",
       "pendingInvites": "{count, plural, one {# invitation en attente} other {# invitations en attente}}",
+      "disabledMailboxes": "{count, plural, one {# boîte mail désactivée} other {# boîtes mail désactivées}}",
       "storageNearLimit": "{count, plural, one {# boîte mail} other {# boîtes mail}} proche de la limite de stockage"
     },
     "activity": {
       "title": "Activité",
+      "recentMailboxes": "Boîtes mail récemment ajoutées",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
       "empty": "Rien pour le moment. L'activité apparaîtra au fur et à mesure de votre configuration.",
@@ -801,10 +804,25 @@
       "subscriptionCanceled": "Abonnement annulé"
     },
     "settingsPage": {
-      "title": "Connexion équipe",
-      "subtitle": "Paramètres partagés de l'espace de travail — le domaine, la langue et la page de connexion utilisés par toute votre équipe. Pas vos paramètres de compte personnel.",
+      "title": "Paramètres",
+      "subtitle": "Votre compte, ainsi que les paramètres partagés de l'espace de travail utilisés par toute votre équipe.",
       "domainLabel": "Domaine connecté",
       "languageLabel": "Langue",
+      "account": {
+        "title": "Compte",
+        "description": "Votre profil personnel et votre connexion.",
+        "firstNameLabel": "Prénom",
+        "lastNameLabel": "Nom",
+        "businessNameLabel": "Nom de l'entreprise",
+        "businessNamePlaceholder": "Facultatif",
+        "emailLabel": "Email",
+        "save": "Enregistrer le compte",
+        "saving": "Enregistrement…",
+        "saved": "Compte mis à jour",
+        "saveFailed": "Impossible de mettre à jour votre compte. Réessayez.",
+        "logoutDescription": "Déconnectez-vous de votre compte sur cet appareil.",
+        "logout": "Se déconnecter"
+      },
       "branding": {
         "title": "Image de la page de connexion",
         "description": "Personnalisez l'apparence du lien de connexion partagé ci-dessus.",

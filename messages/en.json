@@ -584,6 +584,7 @@
       "firstLogin": "Let's set up your first mailbox to get started.",
       "domainNotVerified": "Your domain still needs verification — complete setup to start sending professional email.",
       "pendingInvites": "{count, plural, one {A teammate is} other {# teammates are}} waiting to join. Resend invitations or monitor their progress.",
+      "disabledMailboxes": "{count, plural, one {A mailbox is} other {# mailboxes are}} disabled. Re-enable them from the mailboxes page.",
       "lowStorage": "Storage is running low on {count, plural, one {a mailbox} other {# mailboxes}}. Purchase additional storage to avoid interruptions.",
       "healthy": "Everything is running smoothly today. Your business email is ready to go."
     },
@@ -628,10 +629,12 @@
       "aiCreditsAvailable": "AI credits available",
       "domainsPending": "Domain verification pending",
       "pendingInvites": "{count, plural, one {# pending invitation} other {# pending invitations}}",
+      "disabledMailboxes": "{count, plural, one {# disabled mailbox} other {# disabled mailboxes}}",
       "storageNearLimit": "{count, plural, one {# mailbox} other {# mailboxes}} approaching storage limit"
     },
     "activity": {
       "title": "Activity",
+      "recentMailboxes": "Recently added mailboxes",
       "today": "Today",
       "yesterday": "Yesterday",
       "empty": "Nothing here yet. Activity will show up as you set things up.",
@@ -801,10 +804,25 @@
       "subscriptionCanceled": "Subscription canceled"
     },
     "settingsPage": {
-      "title": "Team Login",
-      "subtitle": "Shared workspace settings — the domain, language, and login page your whole team uses. Not personal account settings.",
+      "title": "Settings",
+      "subtitle": "Your account, plus the shared workspace settings your whole team uses.",
       "domainLabel": "Connected domain",
       "languageLabel": "Language",
+      "account": {
+        "title": "Account",
+        "description": "Your personal profile and sign-in.",
+        "firstNameLabel": "First name",
+        "lastNameLabel": "Last name",
+        "businessNameLabel": "Business name",
+        "businessNamePlaceholder": "Optional",
+        "emailLabel": "Email",
+        "save": "Save account",
+        "saving": "Saving…",
+        "saved": "Account updated",
+        "saveFailed": "Couldn't update your account. Try again.",
+        "logoutDescription": "Sign out of your account on this device.",
+        "logout": "Log out"
+      },
       "branding": {
         "title": "Login page branding",
         "description": "Customize how the shared login link above looks for your team.",

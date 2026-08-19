@@ -15,6 +15,13 @@ export const signInSchema = z.object({
 })
 export type SignInSchema = z.infer<typeof signInSchema>
 
+export const updateProfileSchema = z.object({
+  firstName: z.string().min(1).trim().optional(),
+  lastName: z.string().min(1).trim().optional(),
+  businessName: z.string().trim().optional(),
+})
+export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>
+
 export const verifyEmailSchema = z.object({
   email: z.string().email().trim(),
   emailVerificationCode: z.string().min(6).max(6),

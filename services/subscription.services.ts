@@ -19,3 +19,9 @@ export const getSubscriptionStatus = async (id: number): Promise<Subscription | 
   if (resp instanceof Error) return null
   return resp
 }
+
+export const getCurrentSubscription = async (): Promise<Subscription | null> => {
+  const resp = await GET<Subscription | null>("/subscriptions/current")
+  if (resp instanceof Error) return null
+  return resp
+}

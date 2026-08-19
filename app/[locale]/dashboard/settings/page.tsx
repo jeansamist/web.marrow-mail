@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Copy, Download, Image as ImageIcon, TriangleAlert, Upload, X } from "lucide-react";
-import { useRouter } from "@/i18n/navigation";
+import { Check, Copy, Download, Image as ImageIcon, LogOut, TriangleAlert, Upload, X } from "lucide-react";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DashboardShell } from "@/components/dashboard/shell";
@@ -13,6 +13,8 @@ import { useToast } from "@/components/dashboard/toast";
 import { clearAccount, loadAccount, saveAccount, type OnboardingAccount } from "@/lib/onboarding";
 import { premiumButton, softShadow } from "@/components/onboarding/styles";
 import { cn } from "@/lib/utils";
+import { getProfile, updateProfile } from "@/services/auth.services";
+import type { User } from "@/types";
 
 const DEFAULT_ACCENT_COLOR = "#FB6107";
 
@@ -32,6 +34,12 @@ export default function SettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const { loginUrl, copied, handleCopy } = useLoginLinkCopy(account?.domain ?? "");
 
+  const [profile, setProfile] = useState<User | null>(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [savingAccount, setSavingAccount] = useState(false);
+
   useEffect(() => {
     const stored = loadAccount();
     if (!stored) {
@@ -45,6 +53,32 @@ export default function SettingsPage() {
     setAccentColor(stored.branding.accentColor);
     setChecked(true);
   }, [router]);
+
+  useEffect(() => {
+    getProfile().then((data) => {
+      if (!data) return;
+      setProfile(data);
+      setFirstName(data.firstName);
+      setLastName(data.lastName);
+      setBusinessName(data.businessName ?? "");
+    });
+  }, []);
+
+  async function handleSaveAccount() {
+    setSavingAccount(true);
+    const updated = await updateProfile({
+      firstName,
+      lastName,
+      businessName: businessName || undefined,
+    });
+    setSavingAccount(false);
+    if (!updated) {
+      show(t("account.saveFailed"), "error");
+      return;
+    }
+    setProfile(updated);
+    show(t("account.saved"), "success");
+  }
 
   if (!checked || !account) return null;
 
@@ -92,6 +126,69 @@ export default function SettingsPage() {
       <p className="mt-1.5 max-w-2xl text-base text-muted-foreground">
         {t("subtitle")}
       </p>
+
+      <div className="mt-8 max-w-2xl rounded-2xl border border-border bg-card p-6 sm:p-8">
+        <h2 className="text-base font-semibold text-foreground">{t("account.title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("account.description")}</p>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("account.firstNameLabel")}
+            </label>
+            <Input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="mt-1.5"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("account.lastNameLabel")}
+            </label>
+            <Input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="mt-1.5"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("account.businessNameLabel")}
+            </label>
+            <Input
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder={t("account.businessNamePlaceholder")}
+              className="mt-1.5"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("account.emailLabel")}
+            </label>
+            <Input value={profile?.email ?? ""} disabled className="mt-1.5" />
+          </div>
+        </div>
+
+        <Button
+          className={cn("mt-5", premiumButton)}
+          onClick={handleSaveAccount}
+          disabled={savingAccount || !profile}
+        >
+          {savingAccount ? t("account.saving") : t("account.save")}
+        </Button>
+
+        <div className="mt-6 flex items-center justify-between gap-3 border-t border-border/70 pt-6">
+          <p className="text-sm text-muted-foreground">{t("account.logoutDescription")}</p>
+          <Button variant="outline" asChild>
+            <Link href="/logout">
+              <LogOut className="size-3.5" strokeWidth={1.5} />
+              {t("account.logout")}
+            </Link>
+          </Button>
+        </div>
+      </div>
 
       <dl className="mt-8 max-w-md divide-y divide-border/70">
         <div className="flex items-center justify-between py-3.5">
