@@ -338,3 +338,11 @@ async function setMailAuthCookie(token: string, expiresAt: string) {
     expires: new Date(expiresAt),
   })
 }
+
+// Mail-account auth is a stateless JWT (no server-side session to revoke) —
+// logging out just clears the cookie, there's no backend call to make.
+export const logoutMailAccount = async () => {
+  const _cookies = await cookies()
+  _cookies.delete("MAIL_AUTH_TOKEN")
+  return true
+}

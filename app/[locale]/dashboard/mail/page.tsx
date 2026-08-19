@@ -126,6 +126,7 @@ import {
   getSentMails,
   getSpamMails,
   getTrashMails,
+  logoutMailAccount,
   markMailImportant,
   markMailRead,
   markMailSpam,
@@ -4280,7 +4281,8 @@ export default function MailPage() {
     return true;
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    await logoutMailAccount();
     if (account) {
       router.push(`/team-login/${account.domain}`);
     } else {
