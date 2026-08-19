@@ -21,7 +21,56 @@ const AUTH_PREFIXES = [
   "/verify-email",
 ];
 
-export default function middleware(request: NextRequest) {
+const SITE_HOST = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://marrowmails.com").hostname;
+  } catch {
+    return "marrowmails.com";
+  }
+})();
+
+function isOwnHost(hostname: string): boolean {
+  return (
+    hostname === SITE_HOST ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname.endsWith(".vercel.app")
+  );
+}
+
+// Resolves a customer's verified custom login hostname (e.g. mail.<their-domain>)
+// back to the MarrowMail domain it belongs to, via the backend's public,
+// unauthenticated lookup. Returns null on any miss — unknown host, unverified,
+// or a request the backend couldn't be reached for.
+async function resolveCustomLoginDomain(hostname: string): Promise<string | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(
+      `${apiUrl}/api/domains/by-hostname/${encodeURIComponent(hostname)}`,
+    );
+    if (!response.ok) return null;
+    const body = await response.json();
+    return typeof body?.data?.domainName === "string" ? body.data.domainName : null;
+  } catch {
+    return null;
+  }
+}
+
+export default async function middleware(request: NextRequest) {
+  const hostname = request.nextUrl.hostname;
+
+  if (hostname && !isOwnHost(hostname)) {
+    const domainName = await resolveCustomLoginDomain(hostname);
+    if (domainName) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${routing.defaultLocale}/team-login/${encodeURIComponent(domainName)}`;
+      return NextResponse.rewrite(url);
+    }
+    // No verified custom hostname matches — fall through to normal routing
+    // unchanged, so an unrecognized host still gets the regular site.
+  }
+
   const { pathname } = request.nextUrl;
   const localeMatch = pathname.match(/^\/(en|fr)(\/.*)?$/);
   const pathWithoutLocale = localeMatch ? (localeMatch[2] ?? "/") : pathname;
