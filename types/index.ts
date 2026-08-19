@@ -32,11 +32,12 @@ export type Mail = {
   bodyHtml: string | null
   bodyText: string | null
   status: string
-  direction: "inbound" | "outbound"
+  direction: "sent" | "received"
   sesMessageId: string | null
-  attachmentIds: string[] | null
+  attachmentIds: number[] | null
   important: boolean
   isSpam: boolean
+  isRead: boolean
   deleted: boolean
   folderId: number | null
   scheduledAt: string | null
@@ -83,13 +84,25 @@ export type UploadLink = {
 
 export type MailAccountProfile = {
   id: number
-  email: string
   firstName: string
   lastName: string
   avatar: string | null
-  initials: string
+  mailAccountId: number
   createdAt: string
   updatedAt: string | null
+  // Only present in the /mail/auth/profile response, not the setup/update-profile ones.
+  twoFactorEnabled?: boolean
+  forwardingEmail?: string | null
+  forwardingVerified?: boolean
+  keepForwardedCopy?: boolean
+  // Only present in the /mail/setup-profile response.
+  email?: string
+}
+
+export type TwoFactorSetup = {
+  secret: string
+  otpauthUrl: string
+  backupCodes: string[]
 }
 
 export type Signature = {

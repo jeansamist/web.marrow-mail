@@ -648,6 +648,8 @@ export interface EmailAttachment {
   audioDataUrl?: string;
   durationSec?: number;
   cardColor?: string;
+  /** The uploaded file's real backend id, once storage upload completes. */
+  fileId?: number;
 }
 
 export interface EmailMessage {
@@ -664,7 +666,7 @@ export interface EmailMessage {
   date: string;
   read: boolean;
   starred: boolean;
-  customFolder?: string;
+  folderId?: number | null;
   scheduledFor?: string;
   archived?: boolean;
   attachments?: EmailAttachment[];

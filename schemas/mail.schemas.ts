@@ -18,6 +18,7 @@ export const draftMailSchema = z.object({
   subject: z.string().trim().optional(),
   bodyHtml: z.string().optional(),
   bodyText: z.string().optional(),
+  attachmentIds: z.array(z.number()).optional(),
 })
 export type DraftMailSchema = z.infer<typeof draftMailSchema>
 
@@ -54,6 +55,7 @@ export const scheduleMailSchema = z.object({
   subject: z.string().trim(),
   bodyHtml: z.string().optional(),
   bodyText: z.string().optional(),
+  attachmentIds: z.array(z.number()).optional(),
   scheduledAt: z.coerce.date(),
 })
 export type ScheduleMailSchema = z.infer<typeof scheduleMailSchema>
