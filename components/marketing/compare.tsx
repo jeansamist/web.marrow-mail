@@ -86,7 +86,7 @@ export function Compare() {
 
               <h3
                 className={cn(
-                  "text-base lg:text-lg font-semibold",
+                  "text-lg font-semibold",
                   plan.winner ? "text-foreground" : "text-muted-foreground",
                 )}
               >
