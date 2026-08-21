@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
+import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { cardShadow, premiumButton } from "@/components/onboarding/styles";
 import { loginMailAccount, verifyMailAccountTwoFactor } from "@/services/mail.services";
@@ -83,7 +84,10 @@ export default function TeamLoginPage() {
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
       <header className="border-b border-border/70">
-        <div className="container flex h-16 items-center justify-end">
+        <div className="container flex h-16 items-center justify-between">
+          <Link href="/">
+            <Logo className="h-6 w-auto text-foreground" />
+          </Link>
           <LanguageSwitcher />
         </div>
       </header>
