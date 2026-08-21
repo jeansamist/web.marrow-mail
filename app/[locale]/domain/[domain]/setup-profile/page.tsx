@@ -7,6 +7,7 @@ import { AlertCircle, Check } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
 import { cn } from "@/lib/utils";
 import { cardShadow, premiumButton } from "@/components/onboarding/styles";
@@ -161,10 +162,9 @@ function SetupMailAccountProfilePageInner() {
                   <label htmlFor="password" className="text-sm font-medium text-foreground">
                     {t("passwordLabel")}
                   </label>
-                  <Input
+                  <PasswordInput
                     id="password"
                     name="password"
-                    type="password"
                     required
                     minLength={8}
                     value={password}
@@ -177,10 +177,9 @@ function SetupMailAccountProfilePageInner() {
                   <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                     {t("confirmPasswordLabel")}
                   </label>
-                  <Input
+                  <PasswordInput
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
                     required
                     minLength={8}
                     value={confirmPassword}
