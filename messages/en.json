@@ -1157,6 +1157,7 @@
       "subject": "Subject",
       "subjectPlaceholder": "Subject",
       "bodyPlaceholder": "Write your message…",
+      "domainNotVerifiedWarning": "Your domain isn't verified yet. You can't send email until DNS verification is complete.",
       "send": "Send",
       "cancel": "Cancel",
       "scheduleSend": "Schedule send",

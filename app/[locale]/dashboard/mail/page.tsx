@@ -670,6 +670,7 @@ function ComposeDialog({
   voiceNotesEnabled,
   initialTo,
   initialScheduleEnabled,
+  domainVerified,
 }: {
   onClose: () => void;
   onSend: (payload: ComposeSendPayload) => void;
@@ -681,6 +682,7 @@ function ComposeDialog({
   voiceNotesEnabled: boolean;
   initialTo?: string;
   initialScheduleEnabled?: boolean;
+  domainVerified: boolean;
 }) {
   const t = useTranslations("Dashboard.mailPage");
   const [to, setTo] = useState(initialTo ?? "");
@@ -756,6 +758,12 @@ function ComposeDialog({
             expanded && "min-h-0 flex-1 overflow-y-auto",
           )}
         >
+          {!domainVerified && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm text-amber-700">
+              <ShieldAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
+              <p>{t("domainNotVerifiedWarning")}</p>
+            </div>
+          )}
           <div className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
             <span className="shrink-0 text-sm text-slate-500 dark:text-slate-400">{t("sendingTo")}</span>
             {!toEditing && to.trim() ? (
@@ -890,7 +898,7 @@ function ComposeDialog({
                 <Button
                   size="sm"
                   className={cn(premiumButton)}
-                  disabled={!to.trim() || (scheduleEnabled && !scheduleDate)}
+                  disabled={!to.trim() || (scheduleEnabled && !scheduleDate) || !domainVerified}
                   onClick={handleSubmit}
                 >
                   <Send className="size-3.5" strokeWidth={1.5} />
@@ -4903,6 +4911,7 @@ export default function MailPage() {
           voiceNotesEnabled={account ? hasVoiceNotes(account) : false}
           initialTo={composeTo}
           initialScheduleEnabled={composeAutoSchedule}
+          domainVerified={account?.dnsVerified ?? false}
         />
       )}
       {detailContact && (

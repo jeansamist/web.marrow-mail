@@ -1157,6 +1157,7 @@
       "subject": "Objet",
       "subjectPlaceholder": "Objet",
       "bodyPlaceholder": "Écrivez votre message…",
+      "domainNotVerifiedWarning": "Votre domaine n'est pas encore vérifié. Vous ne pouvez pas envoyer d'e-mails tant que la vérification DNS n'est pas terminée.",
       "send": "Envoyer",
       "cancel": "Annuler",
       "scheduleSend": "Envoi programmé",
