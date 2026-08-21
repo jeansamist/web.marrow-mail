@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Check, Loader2, RotateCcw, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatXaf, type BillingMonths, type PlanId } from "@/lib/onboarding";
+import { formatUsd, formatXaf, type BillingMonths, type PlanId } from "@/lib/onboarding";
 import {
   OrangeMoneyLogo,
   MtnMoneyLogo,
@@ -14,6 +14,11 @@ import {
 import { premiumButton, softShadow } from "@/components/onboarding/styles";
 import { useToast } from "@/components/dashboard/toast";
 import { checkoutSubscription, getSubscriptionStatus } from "@/services/subscription.services";
+import {
+  createDomainPurchaseCheckout,
+  getDomainPurchaseStatus,
+} from "@/services/domain-purchase.services";
+import type { RegistrantContactSchema } from "@/schemas/onboarding.schemas";
 import { StripeCardForm } from "@/components/onboarding/stripe-card-form";
 
 type PaymentMethod = "orange" | "mtn" | "visa";
@@ -35,6 +40,8 @@ export function PaymentStep({
   mailboxQuantity,
   billingMonths,
   onCheckoutSuccess,
+  domain,
+  registrantContact,
 }: {
   variant: "domain" | "mailbox";
   lineItems: { label: string; amount: number }[];
@@ -43,6 +50,8 @@ export function PaymentStep({
   mailboxQuantity?: number;
   billingMonths?: BillingMonths;
   onCheckoutSuccess?: (subscriptionId: number) => void;
+  domain?: string;
+  registrantContact?: RegistrantContactSchema;
 }) {
   const t = useTranslations("Onboarding.payment");
   const locale = useLocale();
@@ -51,30 +60,19 @@ export function PaymentStep({
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState(false);
   const total = lineItems.reduce((sum, item) => sum + item.amount, 0);
+  const formatAmount = (amount: number) =>
+    variant === "domain" ? formatUsd(amount, locale) : formatXaf(amount, locale);
 
-  // Domain-variant state — untouched mock flow.
-  const [status, setStatus] = useState<"idle" | "processing" | "declined">("idle");
-
-  // Mailbox-variant state — real Elgiopay/Stripe checkout.
   const [checkoutStatus, setCheckoutStatus] = useState<
     "idle" | "creating" | "confirming-card" | "awaiting-approval" | "declined" | "timeout"
   >("idle");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [subscriptionId, setSubscriptionId] = useState<number | null>(null);
+  // Subscription id (mailbox variant) or payment id (domain variant) — same
+  // slot, since only one variant is ever mounted at a time.
+  const [pendingId, setPendingId] = useState<number | null>(null);
   const pollAttemptsRef = useRef(0);
 
-  function handleDomainPay(simulateDecline = false) {
-    setStatus("processing");
-    setTimeout(() => {
-      if (simulateDecline) {
-        setStatus("declined");
-      } else {
-        onPaid();
-      }
-    }, 1400);
-  }
-
-  async function handleMailboxPay() {
+  async function handlePay() {
     if (method !== "visa" && !phone.trim()) {
       setPhoneError(true);
       return;
@@ -84,22 +82,50 @@ export function PaymentStep({
 
     const paymentMethod =
       method === "visa" ? "card" : method === "orange" ? "orange_money" : "mtn_mobile_money";
+    const customerPhone = method === "visa" ? undefined : phone.trim();
 
-    const result = await checkoutSubscription({
-      planId: plan!,
-      mailboxQuantity: mailboxQuantity!,
-      billingMonths: billingMonths!,
+    if (variant === "mailbox") {
+      const result = await checkoutSubscription({
+        planId: plan!,
+        mailboxQuantity: mailboxQuantity!,
+        billingMonths: billingMonths!,
+        paymentMethod,
+        customerPhone,
+      });
+
+      if (!result) {
+        setCheckoutStatus("declined");
+        show(t("genericErrorDescription"), "error");
+        return;
+      }
+
+      setPendingId(result.id);
+
+      if ("clientSecret" in result && result.clientSecret) {
+        setClientSecret(result.clientSecret);
+        setCheckoutStatus("confirming-card");
+        return;
+      }
+
+      pollAttemptsRef.current = 0;
+      setCheckoutStatus("awaiting-approval");
+      return;
+    }
+
+    const result = await createDomainPurchaseCheckout({
+      domainName: domain!,
       paymentMethod,
-      customerPhone: method === "visa" ? undefined : phone.trim(),
+      customerPhone,
+      registrantContact: registrantContact!,
     });
 
-    if (!result) {
+    if (result instanceof Error) {
       setCheckoutStatus("declined");
       show(t("genericErrorDescription"), "error");
       return;
     }
 
-    setSubscriptionId(result.id);
+    setPendingId(result.paymentId);
 
     if ("clientSecret" in result && result.clientSecret) {
       setClientSecret(result.clientSecret);
@@ -112,25 +138,39 @@ export function PaymentStep({
   }
 
   useEffect(() => {
-    if (variant !== "mailbox" || checkoutStatus !== "awaiting-approval" || subscriptionId === null) {
-      return;
-    }
+    if (checkoutStatus !== "awaiting-approval" || pendingId === null) return;
 
     const interval = setInterval(async () => {
       pollAttemptsRef.current += 1;
-      const subscription = await getSubscriptionStatus(subscriptionId);
 
-      if (subscription?.status === "active") {
-        clearInterval(interval);
-        onCheckoutSuccess?.(subscriptionId);
-        onPaid();
-        return;
+      if (variant === "mailbox") {
+        const subscription = await getSubscriptionStatus(pendingId);
+        if (subscription?.status === "active") {
+          clearInterval(interval);
+          onCheckoutSuccess?.(pendingId);
+          onPaid();
+          return;
+        }
+        if (subscription?.status === "failed") {
+          clearInterval(interval);
+          setCheckoutStatus("declined");
+          return;
+        }
+      } else {
+        const purchase = await getDomainPurchaseStatus(pendingId);
+        const status = purchase instanceof Error ? null : purchase.status;
+        if (status === "completed") {
+          clearInterval(interval);
+          onPaid();
+          return;
+        }
+        if (status === "failed") {
+          clearInterval(interval);
+          setCheckoutStatus("declined");
+          return;
+        }
       }
-      if (subscription?.status === "failed") {
-        clearInterval(interval);
-        setCheckoutStatus("declined");
-        return;
-      }
+
       if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
         clearInterval(interval);
         setCheckoutStatus("timeout");
@@ -139,10 +179,10 @@ export function PaymentStep({
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variant, checkoutStatus, subscriptionId]);
+  }, [variant, checkoutStatus, pendingId]);
 
   function handleCardSuccess() {
-    if (subscriptionId) onCheckoutSuccess?.(subscriptionId);
+    if (variant === "mailbox" && pendingId) onCheckoutSuccess?.(pendingId);
     onPaid();
   }
 
@@ -156,9 +196,8 @@ export function PaymentStep({
     setCheckoutStatus("awaiting-approval");
   }
 
-  const isMailboxPending =
-    variant === "mailbox" && (checkoutStatus === "creating" || checkoutStatus === "awaiting-approval");
-  const isMailboxDeclined = variant === "mailbox" && checkoutStatus === "declined";
+  const isPending = checkoutStatus === "creating" || checkoutStatus === "awaiting-approval";
+  const isDeclined = checkoutStatus === "declined";
 
   return (
     <div>
@@ -182,14 +221,14 @@ export function PaymentStep({
                 className="flex items-center justify-between text-sm text-foreground/85"
               >
                 <span>{item.label}</span>
-                <span className="font-mono">{formatXaf(item.amount, locale)}</span>
+                <span className="font-mono">{formatAmount(item.amount)}</span>
               </li>
             ))}
           </ul>
           <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
             <span className="font-medium text-foreground">{t("total")}</span>
             <span className="font-mono text-lg font-semibold text-foreground">
-              {formatXaf(total, locale)}
+              {formatAmount(total)}
             </span>
           </div>
         </div>
@@ -201,7 +240,7 @@ export function PaymentStep({
           <button
             key={id}
             type="button"
-            disabled={isMailboxPending || checkoutStatus === "confirming-card"}
+            disabled={isPending || checkoutStatus === "confirming-card"}
             onClick={() => {
               setMethod(id);
               setPhoneError(false);
@@ -220,7 +259,7 @@ export function PaymentStep({
         ))}
       </div>
 
-      {variant === "mailbox" && method !== "visa" && checkoutStatus === "idle" && (
+      {method !== "visa" && checkoutStatus === "idle" && (
         <div className="mt-4">
           <label className="text-xs font-medium text-muted-foreground">{t("phoneLabel")}</label>
           <input
@@ -238,7 +277,7 @@ export function PaymentStep({
         </div>
       )}
 
-      {variant === "domain" && status === "declined" && (
+      {isDeclined && (
         <div className="mt-6 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-sm text-destructive">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
           <div>
@@ -252,21 +291,7 @@ export function PaymentStep({
         </div>
       )}
 
-      {isMailboxDeclined && (
-        <div className="mt-6 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-sm text-destructive">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
-          <div>
-            <p className="font-semibold">{t("declinedTitle")}</p>
-            <p className="mt-0.5 text-destructive/85">
-              {t("declinedDescription", {
-                method: methods.find((m) => m.id === method)?.name ?? "",
-              })}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {variant === "mailbox" && checkoutStatus === "awaiting-approval" && (
+      {checkoutStatus === "awaiting-approval" && (
         <div className="mt-6 flex items-start gap-2.5 rounded-xl border border-primary/25 bg-primary/5 p-3.5 text-sm text-foreground">
           <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" strokeWidth={1.5} />
           <div>
@@ -278,7 +303,7 @@ export function PaymentStep({
         </div>
       )}
 
-      {variant === "mailbox" && checkoutStatus === "timeout" && (
+      {checkoutStatus === "timeout" && (
         <div className="mt-6 flex flex-col gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm">
           <div>
             <p className="font-semibold text-foreground">{t("waitingTimeoutTitle")}</p>
@@ -290,50 +315,23 @@ export function PaymentStep({
         </div>
       )}
 
-      {variant === "mailbox" && checkoutStatus === "confirming-card" && clientSecret && (
+      {checkoutStatus === "confirming-card" && clientSecret && (
         <StripeCardForm
           clientSecret={clientSecret}
-          payLabel={t("pay", { amount: formatXaf(total, locale) })}
+          payLabel={t("pay", { amount: formatAmount(total) })}
           onSuccess={handleCardSuccess}
           onError={handleCardError}
         />
       )}
 
-      {variant === "domain" && (
-        <Button
-          size="lg"
-          className={cn("mt-8 w-full", premiumButton)}
-          disabled={status === "processing"}
-          onClick={() => handleDomainPay(false)}
-        >
-          {status === "processing" ? (
-            <>
-              <Loader2 className="size-4 animate-spin" strokeWidth={1.5} />
-              {t("processing")}
-            </>
-          ) : status === "declined" ? (
-            <>
-              <RotateCcw className="size-4" strokeWidth={2} />
-              {t("retry")}
-            </>
-          ) : (
-            <>
-              <Check className="size-4" strokeWidth={2} />
-              {t("pay", { amount: formatXaf(total, locale) })}
-            </>
-          )}
-        </Button>
-      )}
-
-      {variant === "mailbox" &&
-        checkoutStatus !== "confirming-card" &&
+      {checkoutStatus !== "confirming-card" &&
         checkoutStatus !== "awaiting-approval" &&
         checkoutStatus !== "timeout" && (
           <Button
             size="lg"
             className={cn("mt-8 w-full", premiumButton)}
             disabled={checkoutStatus === "creating"}
-            onClick={handleMailboxPay}
+            onClick={handlePay}
           >
             {checkoutStatus === "creating" ? (
               <>
@@ -348,21 +346,11 @@ export function PaymentStep({
             ) : (
               <>
                 <Check className="size-4" strokeWidth={2} />
-                {t("pay", { amount: formatXaf(total, locale) })}
+                {t("pay", { amount: formatAmount(total) })}
               </>
             )}
           </Button>
         )}
-
-      {variant === "domain" && status === "idle" && (
-        <button
-          type="button"
-          onClick={() => handleDomainPay(true)}
-          className="mt-3 w-full text-center text-xs text-muted-foreground/70 hover:text-muted-foreground"
-        >
-          {t("simulateDecline")}
-        </button>
-      )}
     </div>
   );
 }

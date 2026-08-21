@@ -25,3 +25,38 @@ export const onboardingCreateEmailSchema = z.object({
 export type OnboardingCreateEmailSchema = z.infer<
   typeof onboardingCreateEmailSchema
 >
+
+export const registrantContactSchema = z.object({
+  firstName: z.string().trim().min(1),
+  lastName: z.string().trim().min(1),
+  organizationName: z.string().trim().optional(),
+  addressLine1: z.string().trim().min(1),
+  addressLine2: z.string().trim().optional(),
+  city: z.string().trim().min(1),
+  state: z.string().trim().optional(),
+  countryCode: z.string().trim().length(2, "Use a 2-letter country code"),
+  zipCode: z.string().trim().min(1),
+  phoneNumber: z
+    .string()
+    .trim()
+    .regex(/^\+[0-9.]{6,20}$/, "Use the format +[country code].[number]"),
+  email: z.string().trim().email(),
+})
+export type RegistrantContactSchema = z.infer<typeof registrantContactSchema>
+
+export const checkDomainAvailabilitySchema = z.object({
+  domainName: onboardingRegisterDomainSchema.shape.name,
+})
+export type CheckDomainAvailabilitySchema = z.infer<
+  typeof checkDomainAvailabilitySchema
+>
+
+export const createDomainPurchaseCheckoutSchema = z.object({
+  domainName: onboardingRegisterDomainSchema.shape.name,
+  paymentMethod: z.enum(["card", "mtn_mobile_money", "orange_money"]),
+  customerPhone: z.string().trim().optional(),
+  registrantContact: registrantContactSchema,
+})
+export type CreateDomainPurchaseCheckoutSchema = z.infer<
+  typeof createDomainPurchaseCheckoutSchema
+>

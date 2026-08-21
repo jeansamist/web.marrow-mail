@@ -393,29 +393,68 @@
       {
         "title": "Produit",
         "links": [
-          { "label": "Fonctionnalités", "href": "/#features" },
-          { "label": "Tarifs", "href": "/#pricing" },
-          { "label": "Comparer", "href": "/#compare" },
-          { "label": "Guide de configuration", "href": "#" },
-          { "label": "État du service", "href": "#" }
+          {
+            "label": "Fonctionnalités",
+            "href": "/#features"
+          },
+          {
+            "label": "Tarifs",
+            "href": "/#pricing"
+          },
+          {
+            "label": "Comparer",
+            "href": "/#compare"
+          },
+          {
+            "label": "Guide de configuration",
+            "href": "#"
+          },
+          {
+            "label": "État du service",
+            "href": "#"
+          }
         ]
       },
       {
         "title": "Ressources",
         "links": [
-          { "label": "Centre d'aide", "href": "/assistance" },
-          { "label": "Migration", "href": "#" },
-          { "label": "Configuration du domaine", "href": "#" },
-          { "label": "Sécurité", "href": "#" }
+          {
+            "label": "Centre d'aide",
+            "href": "/assistance"
+          },
+          {
+            "label": "Migration",
+            "href": "#"
+          },
+          {
+            "label": "Configuration du domaine",
+            "href": "#"
+          },
+          {
+            "label": "Sécurité",
+            "href": "#"
+          }
         ]
       },
       {
         "title": "Entreprise",
         "links": [
-          { "label": "À propos", "href": "#" },
-          { "label": "Contact", "href": "/assistance" },
-          { "label": "Politique de confidentialité", "href": "/privacy" },
-          { "label": "Conditions", "href": "/terms" }
+          {
+            "label": "À propos",
+            "href": "#"
+          },
+          {
+            "label": "Contact",
+            "href": "/assistance"
+          },
+          {
+            "label": "Politique de confidentialité",
+            "href": "/privacy"
+          },
+          {
+            "label": "Conditions",
+            "href": "/terms"
+          }
         ]
       }
     ],
@@ -525,7 +564,11 @@
       "description": "Nous enregistrons votre domaine et configurons son DNS automatiquement. Cela ne prend qu'un instant.",
       "successTitle": "{domain} est à vous !",
       "successDescription": "Votre paiement a été effectué avec succès et votre domaine est enregistré. Configurons maintenant vos boîtes mail.",
-      "continueCta": "Configurer mes boîtes mail"
+      "continueCta": "Configurer mes boîtes mail",
+      "failedTitle": "Échec de l'enregistrement",
+      "failedDescription": "Nous n'avons pas pu terminer l'enregistrement de ce domaine. Veuillez contacter le support — vous n'avez pas été facturé pour un domaine dont l'enregistrement a échoué.",
+      "stillWorkingDescription": "Cela prend plus de temps que d'habitude — c'est normal pour certains domaines. Nous continuons en arrière-plan pendant que vous configurez vos boîtes mail.",
+      "continueAnywayCta": "Continuer — je vérifierai plus tard"
     },
     "dns": {
       "title": "Ajoutez ces enregistrements DNS",
@@ -549,6 +592,25 @@
       "mailboxesLabel": "Vos boîtes mail",
       "unassigned": "Pas encore assignée",
       "cta": "Aller à mon tableau de bord"
+    },
+    "registrantContact": {
+      "title": "Coordonnées du titulaire du domaine",
+      "description": "Ces informations sont exigées par les registres de domaines (ICANN) pour enregistrer votre domaine. Elles restent privées par défaut.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "organizationName": "Organisation (optionnel)",
+      "addressLine1": "Adresse",
+      "addressLine2": "Complément d'adresse (optionnel)",
+      "city": "Ville",
+      "state": "État / Province (optionnel)",
+      "countryCode": "Code pays",
+      "countryCodeHint": "Code à 2 lettres, ex. US, FR, CM",
+      "zipCode": "Code postal",
+      "phoneNumber": "Numéro de téléphone",
+      "phoneNumberHint": "Format : +[indicatif].[numéro], ex. +237.612345678",
+      "email": "Email",
+      "continue": "Continuer",
+      "error": "Veuillez vérifier les champs en surbrillance."
     }
   },
   "Dashboard": {

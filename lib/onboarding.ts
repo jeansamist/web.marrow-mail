@@ -261,33 +261,11 @@ export function formatXaf(amount: number, locale: string) {
   return `${formatted} XAF`;
 }
 
-const TLDS: { suffix: string; price: number }[] = [
-  { suffix: ".com", price: 15000 },
-  { suffix: ".africa", price: 10000 },
-  { suffix: ".co", price: 12000 },
-  { suffix: ".biz", price: 8000 },
-];
-
-export interface DomainOption {
-  domain: string;
-  price: number;
-  available: boolean;
-}
-
-export function searchDomains(query: string): DomainOption[] {
-  const slug = query
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "")
-    .slice(0, 40);
-  const base = slug || "yourbusiness";
-  return TLDS.map(({ suffix, price }) => ({
-    domain: `${base}${suffix}`,
-    price,
-    // Mock availability: the most-requested .com is shown as already registered,
-    // so users see how the flow guides them toward an available alternative.
-    available: suffix !== ".com",
-  }));
+export function formatUsd(amount: number, locale: string) {
+  return new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
 }
 
 function getDurationDiscount(months: number): number {

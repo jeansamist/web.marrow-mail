@@ -6,31 +6,59 @@ import { Check, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { searchDomains, formatXaf, type DomainOption } from "@/lib/onboarding";
+import { formatUsd } from "@/lib/onboarding";
+import { checkDomainAvailability } from "@/services/domain-purchase.services";
 import { premiumButton, softShadow } from "@/components/onboarding/styles";
+
+// Mirrors the curated TLD list enforced server-side in
+// api.marrow-mail/app/services/domain_purchase_service.ts — generic gTLDs
+// with plain ICANN requirements only.
+const SUPPORTED_TLDS = ["com", "net", "org", "io", "co", "biz", "info"];
+
+interface DomainResult {
+  domain: string;
+  priceUsd: number;
+  available: boolean;
+}
 
 export function DomainSearchStep({
   onContinue,
 }: {
-  onContinue: (domain: string, price: number) => void;
+  onContinue: (domain: string, priceUsd: number) => void;
 }) {
   const t = useTranslations("Onboarding.domainSearch");
   const locale = useLocale();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"idle" | "searching">("idle");
-  const [results, setResults] = useState<DomainOption[] | null>(null);
-  const [selected, setSelected] = useState<DomainOption | null>(null);
+  const [results, setResults] = useState<DomainResult[] | null>(null);
+  const [selected, setSelected] = useState<DomainResult | null>(null);
 
-  function handleSearch(e: React.FormEvent) {
+  async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!query.trim() || status === "searching") return;
+
+    const slug =
+      query
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "")
+        .slice(0, 40) || "yourbusiness";
+
     setStatus("searching");
     setResults(null);
     setSelected(null);
-    setTimeout(() => {
-      setResults(searchDomains(query));
-      setStatus("idle");
-    }, 900);
+
+    const checks = await Promise.all(
+      SUPPORTED_TLDS.map(async (tld) => {
+        const domain = `${slug}.${tld}`;
+        const resp = await checkDomainAvailability({ domainName: domain });
+        if (resp instanceof Error) return null;
+        return { domain, priceUsd: resp.priceUsd, available: resp.available };
+      }),
+    );
+
+    setResults(checks.filter((r): r is DomainResult => r !== null));
+    setStatus("idle");
   }
 
   return (
@@ -130,7 +158,7 @@ export function DomainSearchStep({
                       {t("available")}
                     </span>
                     <span className="font-mono text-sm text-muted-foreground">
-                      {t("perYear", { price: formatXaf(option.price, locale) })}
+                      {t("perYear", { price: formatUsd(option.priceUsd, locale) })}
                     </span>
                   </span>
                 ) : (
@@ -148,7 +176,7 @@ export function DomainSearchStep({
         size="lg"
         className={cn("mt-8 w-full", premiumButton)}
         disabled={!selected}
-        onClick={() => selected && onContinue(selected.domain, selected.price)}
+        onClick={() => selected && onContinue(selected.domain, selected.priceUsd)}
       >
         {t("continue")}
       </Button>

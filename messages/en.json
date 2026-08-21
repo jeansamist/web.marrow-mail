@@ -393,29 +393,68 @@
       {
         "title": "Product",
         "links": [
-          { "label": "Features", "href": "/#features" },
-          { "label": "Pricing", "href": "/#pricing" },
-          { "label": "Compare", "href": "/#compare" },
-          { "label": "Setup Guide", "href": "#" },
-          { "label": "Service Status", "href": "#" }
+          {
+            "label": "Features",
+            "href": "/#features"
+          },
+          {
+            "label": "Pricing",
+            "href": "/#pricing"
+          },
+          {
+            "label": "Compare",
+            "href": "/#compare"
+          },
+          {
+            "label": "Setup Guide",
+            "href": "#"
+          },
+          {
+            "label": "Service Status",
+            "href": "#"
+          }
         ]
       },
       {
         "title": "Resources",
         "links": [
-          { "label": "Help Center", "href": "/assistance" },
-          { "label": "Migration", "href": "#" },
-          { "label": "Domain Setup", "href": "#" },
-          { "label": "Security", "href": "#" }
+          {
+            "label": "Help Center",
+            "href": "/assistance"
+          },
+          {
+            "label": "Migration",
+            "href": "#"
+          },
+          {
+            "label": "Domain Setup",
+            "href": "#"
+          },
+          {
+            "label": "Security",
+            "href": "#"
+          }
         ]
       },
       {
         "title": "Company",
         "links": [
-          { "label": "About", "href": "#" },
-          { "label": "Contact", "href": "/assistance" },
-          { "label": "Privacy Policy", "href": "/privacy" },
-          { "label": "Terms", "href": "/terms" }
+          {
+            "label": "About",
+            "href": "#"
+          },
+          {
+            "label": "Contact",
+            "href": "/assistance"
+          },
+          {
+            "label": "Privacy Policy",
+            "href": "/privacy"
+          },
+          {
+            "label": "Terms",
+            "href": "/terms"
+          }
         ]
       }
     ],
@@ -525,7 +564,11 @@
       "description": "We're registering your domain and configuring its DNS automatically. This only takes a moment.",
       "successTitle": "{domain} is yours!",
       "successDescription": "Your payment was successful and your domain is registered. Next, let's set up your mailboxes.",
-      "continueCta": "Set up my mailboxes"
+      "continueCta": "Set up my mailboxes",
+      "failedTitle": "Registration failed",
+      "failedDescription": "We couldn't complete registering this domain. Please contact support — you haven't been charged for a domain that failed to register.",
+      "stillWorkingDescription": "This is taking longer than usual — that's normal for some domains. We'll keep working on it in the background while you set up your mailboxes.",
+      "continueAnywayCta": "Continue — I'll check back later"
     },
     "dns": {
       "title": "Add These DNS Records",
@@ -549,6 +592,25 @@
       "mailboxesLabel": "Your mailboxes",
       "unassigned": "Not assigned yet",
       "cta": "Go to My Dashboard"
+    },
+    "registrantContact": {
+      "title": "Domain Owner Details",
+      "description": "This information is required by domain registries (ICANN) to register your domain. It's kept private by default.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "organizationName": "Organization (optional)",
+      "addressLine1": "Address",
+      "addressLine2": "Address line 2 (optional)",
+      "city": "City",
+      "state": "State / Province (optional)",
+      "countryCode": "Country code",
+      "countryCodeHint": "2-letter code, e.g. US, FR, CM",
+      "zipCode": "Postal code",
+      "phoneNumber": "Phone number",
+      "phoneNumberHint": "Format: +[country code].[number], e.g. +1.4155552671",
+      "email": "Email",
+      "continue": "Continue",
+      "error": "Please check the highlighted fields."
     }
   },
   "Dashboard": {
