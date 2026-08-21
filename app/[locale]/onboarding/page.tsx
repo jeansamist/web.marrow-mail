@@ -7,6 +7,7 @@ import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
 import { DomainChoiceStep } from "@/components/onboarding/domain-choice-step";
 import { DomainEnterStep } from "@/components/onboarding/domain-enter-step";
 import { DomainSearchStep } from "@/components/onboarding/domain-search-step";
+import { RegistrantContactStep } from "@/components/onboarding/registrant-contact-step";
 import { MailboxSetupStep } from "@/components/onboarding/mailbox-setup-step";
 import { PlanSelectStep } from "@/components/onboarding/plan-select-step";
 import { PaymentStep } from "@/components/onboarding/payment-step";
@@ -27,11 +28,13 @@ import {
 import { useTranslations } from "next-intl";
 import { getProfile } from "@/services/auth.services";
 import { setupMailAccount } from "@/services/onboarding.services";
+import type { RegistrantContactSchema } from "@/schemas/onboarding.schemas";
 
 type Step =
   | "choice"
   | "domain-enter"
   | "domain-search"
+  | "registrant-contact"
   | "payment-domain"
   | "registering-domain"
   | "plan"
@@ -53,6 +56,7 @@ const CASE1_ORDER: Step[] = [
 const CASE2_ORDER: Step[] = [
   "choice",
   "domain-search",
+  "registrant-contact",
   "payment-domain",
   "registering-domain",
   "plan",
@@ -83,6 +87,9 @@ function OnboardingPageInner() {
   const [hasDomain, setHasDomain] = useState<boolean | null>(null);
   const [domain, setDomain] = useState("");
   const [domainPrice, setDomainPrice] = useState<number | null>(null);
+  const [registrantContact, setRegistrantContact] = useState<RegistrantContactSchema | null>(
+    null,
+  );
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([]);
   const [billingMonths, setBillingMonths] = useState<BillingMonths>(1);
   const [plan, setPlan] = useState<PlanId>("core");
@@ -203,17 +210,29 @@ function OnboardingPageInner() {
 
       {step === "domain-search" && (
         <DomainSearchStep
-          onContinue={(value, price) => {
+          onContinue={(value, priceUsd) => {
             setDomain(value);
-            setDomainPrice(price);
+            setDomainPrice(priceUsd);
+            setStep("registrant-contact");
+          }}
+        />
+      )}
+
+      {step === "registrant-contact" && (
+        <RegistrantContactStep
+          initialValue={registrantContact}
+          onContinue={(contact) => {
+            setRegistrantContact(contact);
             setStep("payment-domain");
           }}
         />
       )}
 
-      {step === "payment-domain" && domainPrice !== null && (
+      {step === "payment-domain" && domainPrice !== null && registrantContact && (
         <PaymentStep
           variant="domain"
+          domain={domain}
+          registrantContact={registrantContact}
           lineItems={[{ label: domain, amount: domainPrice }]}
           onPaid={() => setStep("registering-domain")}
         />
