@@ -1,14 +1,6 @@
 "use server"
 import { GET, POST } from "@/lib/api"
-import {
-  CheckDomainAvailabilitySchema,
-  CreateDomainPurchaseCheckoutSchema,
-} from "@/schemas/onboarding.schemas"
-
-export interface DomainAvailability {
-  available: boolean
-  priceUsd: number
-}
+import { CreateDomainPurchaseCheckoutSchema } from "@/schemas/onboarding.schemas"
 
 export type DomainPurchaseCheckoutResult =
   | { paymentId: number; clientSecret: string | null }
@@ -19,13 +11,19 @@ export interface DomainPurchaseStatus {
   domainName?: string
 }
 
-export const checkDomainAvailability = async (
-  data: CheckDomainAvailabilitySchema
-) => {
-  return POST<CheckDomainAvailabilitySchema, DomainAvailability>(
-    "/domain-purchase/check-availability",
-    data
-  )
+export interface DomainSearchResult {
+  domain: string
+  available: boolean
+  priceUsd: number
+}
+
+// Checks every supported TLD for a base name in a single request, rather
+// than firing one request per TLD — much less fragile (one bad TLD lookup
+// no longer drops the whole search).
+export const searchDomains = async (slug: string) => {
+  return POST<{ slug: string }, DomainSearchResult[]>("/domain-purchase/search", {
+    slug,
+  })
 }
 
 export const createDomainPurchaseCheckout = async (

@@ -7,19 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { formatUsd } from "@/lib/onboarding";
-import { checkDomainAvailability } from "@/services/domain-purchase.services";
+import { searchDomains, type DomainSearchResult } from "@/services/domain-purchase.services";
 import { premiumButton, softShadow } from "@/components/onboarding/styles";
 
-// Mirrors the curated TLD list enforced server-side in
-// api.marrow-mail/app/services/domain_purchase_service.ts — generic gTLDs
-// with plain ICANN requirements only.
-const SUPPORTED_TLDS = ["com", "net", "org", "io", "co", "biz", "info"];
-
-interface DomainResult {
-  domain: string;
-  priceUsd: number;
-  available: boolean;
-}
+type DomainResult = DomainSearchResult;
 
 export function DomainSearchStep({
   onContinue,
@@ -48,16 +39,8 @@ export function DomainSearchStep({
     setResults(null);
     setSelected(null);
 
-    const checks = await Promise.all(
-      SUPPORTED_TLDS.map(async (tld) => {
-        const domain = `${slug}.${tld}`;
-        const resp = await checkDomainAvailability({ domainName: domain });
-        if (resp instanceof Error) return null;
-        return { domain, priceUsd: resp.priceUsd, available: resp.available };
-      }),
-    );
-
-    setResults(checks.filter((r): r is DomainResult => r !== null));
+    const resp = await searchDomains(slug);
+    setResults(resp instanceof Error ? [] : resp);
     setStatus("idle");
   }
 

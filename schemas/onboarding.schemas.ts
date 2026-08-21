@@ -44,13 +44,6 @@ export const registrantContactSchema = z.object({
 })
 export type RegistrantContactSchema = z.infer<typeof registrantContactSchema>
 
-export const checkDomainAvailabilitySchema = z.object({
-  domainName: onboardingRegisterDomainSchema.shape.name,
-})
-export type CheckDomainAvailabilitySchema = z.infer<
-  typeof checkDomainAvailabilitySchema
->
-
 export const createDomainPurchaseCheckoutSchema = z.object({
   domainName: onboardingRegisterDomainSchema.shape.name,
   paymentMethod: z.enum(["card", "mtn_mobile_money", "orange_money"]),
