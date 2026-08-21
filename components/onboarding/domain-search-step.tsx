@@ -23,24 +23,55 @@ export function DomainSearchStep({
   const [status, setStatus] = useState<"idle" | "searching">("idle");
   const [results, setResults] = useState<DomainResult[] | null>(null);
   const [selected, setSelected] = useState<DomainResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [exactDomain, setExactDomain] = useState<string | null>(null);
+
+  // Splits "ephraim-baha.com" into base="ephraim-baha" (search slug) and a
+  // remembered exact domain to prioritize in the results, instead of
+  // treating the whole string as one slug and stripping the "." and TLD
+  // into the base name (which used to turn "ephraim-baha.com" into a
+  // meaningless "ephraimbahacom" search).
+  function parseQuery(raw: string): { slug: string; exactDomain: string | null } {
+    const lower = raw.toLowerCase().trim();
+    const lastDot = lower.lastIndexOf(".");
+    const hasTypedTld = lastDot > 0 && /^[a-z]{2,}$/.test(lower.slice(lastDot + 1));
+    const base = hasTypedTld ? lower.slice(0, lastDot) : lower;
+    // Hyphens are valid in domain labels — only strip characters that
+    // genuinely can't appear in one, and trim stray leading/trailing hyphens.
+    const slug = base.replace(/[^a-z0-9-]+/g, "").replace(/^-+|-+$/g, "").slice(0, 63);
+    return {
+      slug: slug || "yourbusiness",
+      exactDomain: hasTypedTld && slug ? `${slug}.${lower.slice(lastDot + 1)}` : null,
+    };
+  }
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!query.trim() || status === "searching") return;
 
-    const slug =
-      query
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "")
-        .slice(0, 40) || "yourbusiness";
+    const { slug, exactDomain: parsedExactDomain } = parseQuery(query);
 
     setStatus("searching");
     setResults(null);
     setSelected(null);
+    setError(null);
+    setExactDomain(parsedExactDomain);
 
     const resp = await searchDomains(slug);
-    setResults(resp instanceof Error ? [] : resp);
+    if (resp instanceof Error) {
+      setError(t("searchError"));
+      setResults([]);
+    } else {
+      const sorted = parsedExactDomain
+        ? [...resp].sort((a, b) =>
+            a.domain === parsedExactDomain ? -1 : b.domain === parsedExactDomain ? 1 : 0,
+          )
+        : resp;
+      setResults(sorted);
+      if (sorted.length === 0) setError(t("noResultsError"));
+      const exactMatch = sorted.find((r) => r.domain === parsedExactDomain && r.available);
+      if (exactMatch) setSelected(exactMatch);
+    }
     setStatus("idle");
   }
 
@@ -97,24 +128,31 @@ export function DomainSearchStep({
         </div>
       )}
 
-      {status === "idle" && results && (
+      {status === "idle" && error && (
+        <p className="mt-6 text-sm text-destructive">{error}</p>
+      )}
+
+      {status === "idle" && results && results.length > 0 && (
         <div className="mt-6 flex flex-col gap-2.5">
           {results.map((option) => {
             const isSelected = selected?.domain === option.domain;
+            const isExactMatch = option.domain === exactDomain;
             return (
               <button
                 key={option.domain}
                 type="button"
                 disabled={!option.available}
                 onClick={() => option.available && setSelected(option)}
-                style={isSelected ? { borderColor: "var(--primary)" } : undefined}
+                style={isSelected || isExactMatch ? { borderColor: "var(--primary)" } : undefined}
                 className={cn(
                   "flex items-center justify-between gap-4 rounded-xl border p-4 text-left transition-all duration-300 ease-out",
                   !option.available
                     ? "cursor-not-allowed border-border bg-muted/30 opacity-60"
                     : isSelected
                       ? cn("bg-accent/40 ring-2 ring-primary/15", softShadow)
-                      : "border-border bg-card hover:-translate-y-1 hover:border-primary/30 hover:shadow-md",
+                      : isExactMatch
+                        ? cn("bg-accent/20 ring-1 ring-primary/20", softShadow)
+                        : "border-border bg-card hover:-translate-y-1 hover:border-primary/30 hover:shadow-md",
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -134,6 +172,11 @@ export function DomainSearchStep({
                   >
                     {option.domain}
                   </span>
+                  {isExactMatch && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                      {t("yourSearch")}
+                    </span>
+                  )}
                 </div>
                 {option.available ? (
                   <span className="flex shrink-0 items-center gap-2">

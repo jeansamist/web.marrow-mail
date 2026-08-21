@@ -494,7 +494,10 @@
       "perYear": "{price}/yr",
       "available": "Available",
       "taken": "Taken",
-      "continue": "Continue"
+      "continue": "Continue",
+      "searchError": "Something went wrong searching for domains. If this keeps happening, try signing out and back in.",
+      "noResultsError": "No results for that search. Try a different name.",
+      "yourSearch": "Your search"
     },
     "plan": {
       "title": "Choose Your Plan",

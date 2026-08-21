@@ -494,7 +494,10 @@
       "perYear": "{price}/an",
       "available": "Disponible",
       "taken": "Indisponible",
-      "continue": "Continuer"
+      "continue": "Continuer",
+      "searchError": "Une erreur s'est produite lors de la recherche de domaines. Si le problème persiste, essayez de vous déconnecter puis de vous reconnecter.",
+      "noResultsError": "Aucun résultat pour cette recherche. Essayez un autre nom.",
+      "yourSearch": "Votre recherche"
     },
     "plan": {
       "title": "Choisissez votre forfait",
