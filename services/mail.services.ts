@@ -113,6 +113,12 @@ export const getFiles = async (): Promise<UploadedFile[]> => {
   return resp
 }
 
+export const getMailAttachments = async (mailId: number): Promise<UploadedFile[]> => {
+  const resp = await GET<UploadedFile[]>(`/mails/${mailId}/attachments`)
+  if (resp instanceof Error) return []
+  return resp
+}
+
 export const uploadFiles = async (
   files: {
     name: string

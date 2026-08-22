@@ -643,6 +643,8 @@ export interface EmailAttachment {
   cardColor?: string;
   /** The uploaded file's real backend id, once storage upload completes. */
   fileId?: number;
+  /** Download URL — only set for attachments resolved from an existing mail. */
+  url?: string;
 }
 
 export interface EmailMessage {
@@ -656,6 +658,7 @@ export interface EmailMessage {
   subject: string;
   preview: string;
   body: string;
+  bodyHtml?: string;
   date: string;
   read: boolean;
   starred: boolean;

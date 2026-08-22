@@ -11,6 +11,16 @@ import {
 } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { motion } from "motion/react";
+import DOMPurify from "isomorphic-dompurify";
+
+// Received mail HTML is untrusted external content — force any link it
+// contains to open in a new tab without handing it window.opener access.
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if (node.tagName === "A") {
+    node.setAttribute("target", "_blank");
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
 import {
   AlignCenter,
   AlignJustify,
@@ -116,6 +126,7 @@ import type {
   Mail as MailRecord,
   Signature as SignatureRecord,
   TwoFactorSetup,
+  UploadedFile,
 } from "@/types";
 import {
   cancelScheduledMail,
@@ -125,6 +136,7 @@ import {
   forwardMail as forwardMailApi,
   getDrafts,
   getMailAccountProfile,
+  getMailAttachments,
   getReceivedMails,
   getScheduledMails,
   getSentMails,
@@ -165,6 +177,26 @@ function extractEmailAddress(raw: string): string {
   return match ? match[1] : raw;
 }
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function attachmentTypeFromMime(mimeType: string | null): EmailAttachment["type"] {
+  if (mimeType === "application/pdf") return "pdf";
+  if (mimeType?.startsWith("image/")) return "image";
+  return "doc";
+}
+
+function fileToEmailAttachment(file: UploadedFile): EmailAttachment {
+  return {
+    name: file.originalName,
+    sizeKb: Math.max(1, Math.round((file.size ?? 0) / 1024)),
+    type: attachmentTypeFromMime(file.mimeType),
+    fileId: file.id,
+    url: file.publicUrl,
+  };
+}
+
 /** System folder is derived from status/direction/flags — the backend has no single "folder" field. */
 function mailFolder(mail: MailRecord): MailFolder {
   if (mail.deleted) return "trash";
@@ -194,8 +226,9 @@ function mailToEmailMessage(mail: MailRecord): EmailMessage {
       ? mail.bccAddresses.join(", ")
       : undefined,
     subject: mail.subject || "(no subject)",
-    preview: (mail.bodyText ?? "").slice(0, 80),
-    body: mail.bodyText ?? mail.bodyHtml ?? "",
+    preview: (mail.bodyText || (mail.bodyHtml ? stripHtml(mail.bodyHtml) : "")).slice(0, 80),
+    body: mail.bodyText ?? "",
+    bodyHtml: mail.bodyHtml ?? undefined,
     date: mail.createdAt,
     read: mail.isRead,
     starred: mail.important,
@@ -4347,6 +4380,17 @@ export default function MailPage() {
 
   const selected = messages.find((m) => m.id === selectedId) ?? null;
 
+  useEffect(() => {
+    if (!selected || selected.attachments !== undefined) return;
+    const id = selected.id;
+    getMailAttachments(Number(id)).then((files) => {
+      const attachments = files.map(fileToEmailAttachment);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, attachments } : m)),
+      );
+    });
+  }, [selected]);
+
   if (!checked || !account) return null;
 
   function toggleCollapsed() {
@@ -5251,16 +5295,28 @@ export default function MailPage() {
                                 {formatFileSize(att.sizeKb)}
                               </p>
                             </div>
-                            <button
-                              type="button"
-                              aria-label={t("downloadAttachment")}
-                              onClick={() =>
-                                show(t("downloadComingSoon"), "info")
-                              }
-                              className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary"
-                            >
-                              <Download className="size-4" strokeWidth={1.5} />
-                            </button>
+                            {att.url ? (
+                              <a
+                                href={att.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={t("downloadAttachment")}
+                                className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary"
+                              >
+                                <Download className="size-4" strokeWidth={1.5} />
+                              </a>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label={t("downloadAttachment")}
+                                onClick={() =>
+                                  show(t("downloadComingSoon"), "info")
+                                }
+                                className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary"
+                              >
+                                <Download className="size-4" strokeWidth={1.5} />
+                              </button>
+                            )}
                           </div>
                         ),
                       )}
@@ -5271,9 +5327,18 @@ export default function MailPage() {
                 </div>
 
                 <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-8 pb-8 md:px-12 md:pb-12">
-                  <p className="pt-6 text-sm leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-300 sm:text-base">
-                    {selected.body}
-                  </p>
+                  {selected.bodyHtml ? (
+                    <div
+                      className="mail-body-html pt-6 text-sm leading-relaxed text-slate-700 dark:text-slate-300 sm:text-base"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(selected.bodyHtml),
+                      }}
+                    />
+                  ) : (
+                    <p className="pt-6 text-sm leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-300 sm:text-base">
+                      {selected.body}
+                    </p>
+                  )}
 
                   {!replyOpen && (
                     <div className="mt-6 inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/70 p-1 shadow-xs">
