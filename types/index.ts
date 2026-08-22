@@ -212,6 +212,14 @@ export type StorageUsage = {
   totalQuotaBytes: number
 }
 
+export type StorageAddonCheckoutResult =
+  | { paymentId: number; clientSecret: string | null }
+  | { paymentId: number; transactionId: string }
+
+export type StorageAddonPaymentStatus = {
+  status: string
+}
+
 export type Record = {
   id: number
   type: string

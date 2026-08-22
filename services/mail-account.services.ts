@@ -19,16 +19,6 @@ export const toggleMailAccountActive = async (id: number): Promise<MailAccount |
   return resp
 }
 
-export const updateMailAccountStorageQuota = async (
-  id: number,
-  quotaBytes: number
-): Promise<boolean> => {
-  const resp = await PUT<{ quotaBytes: number }, null>(`/mail-accounts/${id}/storage-quota`, {
-    quotaBytes,
-  })
-  return !(resp instanceof Error)
-}
-
 export const resendMailAccountInvite = async (id: number): Promise<boolean> => {
   const resp = await POST<undefined, null>(`/mail-accounts/${id}/resend-invite`, undefined)
   return !(resp instanceof Error)

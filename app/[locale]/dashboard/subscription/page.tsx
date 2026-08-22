@@ -7,9 +7,10 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { useToast } from "@/components/dashboard/toast";
+import { PaymentStep } from "@/components/onboarding/payment-step";
 import { premiumButton, softShadow } from "@/components/onboarding/styles";
 import { cn } from "@/lib/utils";
-import { PLANS, formatXaf, type PlanId } from "@/lib/onboarding";
+import { PLANS, calcMailboxPricing, formatXaf, type PlanId } from "@/lib/onboarding";
 import { listDomains } from "@/services/domain.services";
 import { listRoleAliases } from "@/services/role-alias.services";
 import { getProfile } from "@/services/auth.services";
@@ -36,8 +37,11 @@ export default function SubscriptionPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [roleAliasCount, setRoleAliasCount] = useState(0);
 
-  const [switchingPlan, setSwitchingPlan] = useState(false);
   const [downgradeTarget, setDowngradeTarget] = useState<PlanId | null>(null);
+  const [downgradePassword, setDowngradePassword] = useState("");
+  const [downgradePasswordError, setDowngradePasswordError] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
+  const [upgradeTarget, setUpgradeTarget] = useState<PlanId | null>(null);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const [reactivating, setReactivating] = useState(false);
@@ -64,30 +68,53 @@ export default function SubscriptionPage() {
 
   if (!checked || !domain) return null;
 
-  async function applyPlanSwitch(planId: PlanId) {
-    if (!subscription) return;
-    setSwitchingPlan(true);
-    const updated = await changeSubscriptionPlan(subscription.id, planId);
-    setSwitchingPlan(false);
-    if (!updated) {
-      show(t("planChangeFailed"), "error");
-      return;
-    }
-    setSubscription(updated);
-    show(t("planChanged", { plan: PLANS[planId].name }), "success");
+  function isUpgrade(planId: PlanId) {
+    if (!subscription) return false;
+    return PLANS[planId].priceXaf > PLANS[subscription.planId as PlanId].priceXaf;
   }
 
   function handleSwitchPlan(planId: PlanId) {
-    if (!subscription || planId === subscription.planId) return;
-    const currentPlan = PLANS[subscription.planId as PlanId];
-    const target = PLANS[planId];
-    const losesRoleAliases = roleAliasCount > target.roleAliasLimit;
-    const losesVoiceNotes = currentPlan.voiceNotes && !target.voiceNotes;
-    if (losesRoleAliases || losesVoiceNotes) {
-      setDowngradeTarget(planId);
+    if (!subscription || planId === subscription.planId || subscription.pendingPlanId) return;
+    if (isUpgrade(planId)) {
+      setUpgradeTarget(planId);
       return;
     }
-    applyPlanSwitch(planId);
+    setDowngradeTarget(planId);
+  }
+
+  async function submitDowngrade() {
+    if (!subscription || !downgradeTarget) return;
+    setScheduling(true);
+    setDowngradePasswordError(false);
+    const result = await changeSubscriptionPlan(
+      subscription.id,
+      downgradeTarget,
+      downgradePassword,
+    );
+    setScheduling(false);
+    if (result instanceof Error) {
+      setDowngradePasswordError(true);
+      return;
+    }
+    setSubscription(result);
+    show(
+      t("downgradeScheduled", {
+        plan: PLANS[downgradeTarget].name,
+        date: renewalDateFormatted ?? "—",
+      }),
+      "info",
+    );
+    setDowngradeTarget(null);
+    setDowngradePassword("");
+  }
+
+  function handleUpgradePaid() {
+    setUpgradeTarget(null);
+    (async () => {
+      const updated = await getCurrentSubscription();
+      if (updated) setSubscription(updated);
+    })();
+    if (upgradeTarget) show(t("planChanged", { plan: PLANS[upgradeTarget].name }), "success");
   }
 
   async function handleCancelSubscription() {
@@ -185,6 +212,30 @@ export default function SubscriptionPage() {
         </div>
       )}
 
+      {subscription?.pendingPlanId && (
+        <div className="mt-6 flex flex-col gap-3 rounded-xl border border-primary/25 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-start gap-2.5 text-sm text-foreground">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.5} />
+            {isUpgrade(subscription.pendingPlanId)
+              ? t("pendingUpgradeBanner", { plan: PLANS[subscription.pendingPlanId].name })
+              : t("pendingDowngradeBanner", {
+                  plan: PLANS[subscription.pendingPlanId].name,
+                  date: renewalDateFormatted ?? "—",
+                })}
+          </p>
+          {isUpgrade(subscription.pendingPlanId) && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setUpgradeTarget(subscription.pendingPlanId as PlanId)}
+            >
+              {t("pendingUpgradeResume")}
+            </Button>
+          )}
+        </div>
+      )}
+
       {!subscription ? (
         <div className="mt-8 rounded-2xl border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">{t("noSubscription")}</p>
@@ -256,10 +307,10 @@ export default function SubscriptionPage() {
                     size="sm"
                     variant="outline"
                     className="mt-4 w-full"
-                    disabled={switchingPlan}
+                    disabled={!!subscription.pendingPlanId}
                     onClick={() => handleSwitchPlan(planId)}
                   >
-                    {switchingPlan ? t("switching") : t("switchTo", { plan: plan.name })}
+                    {t("switchTo", { plan: plan.name })}
                   </Button>
                 )}
               </div>
@@ -307,7 +358,11 @@ export default function SubscriptionPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             aria-hidden
-            onClick={() => setDowngradeTarget(null)}
+            onClick={() => {
+              setDowngradeTarget(null);
+              setDowngradePassword("");
+              setDowngradePasswordError(false);
+            }}
             className="absolute inset-0 bg-black/30"
           />
           <div className={cn("relative w-full max-w-md rounded-2xl border border-border bg-card p-6", softShadow)}>
@@ -320,6 +375,12 @@ export default function SubscriptionPage() {
                   {t("downgradeModalTitle", { plan: downgradePlan.name })}
                 </h2>
                 <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted-foreground">
+                  <li>
+                    {t("downgradeModalScheduledNote", {
+                      plan: downgradePlan.name,
+                      date: renewalDateFormatted ?? "—",
+                    })}
+                  </li>
                   {roleAliasCount > downgradePlan.roleAliasLimit && (
                     <li>
                       {t("downgradeModalRoleAliasWarning", {
@@ -335,21 +396,81 @@ export default function SubscriptionPage() {
                 </ul>
               </div>
             </div>
+
+            <div className="mt-4">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("downgradeModalPasswordLabel")}
+              </label>
+              <input
+                type="password"
+                value={downgradePassword}
+                onChange={(e) => {
+                  setDowngradePassword(e.target.value);
+                  setDowngradePasswordError(false);
+                }}
+                placeholder={t("downgradeModalPasswordPlaceholder")}
+                className="mt-1.5 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 outline-none transition-all duration-200 placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+              {downgradePasswordError && (
+                <p className="mt-1.5 text-xs text-destructive">
+                  {t("downgradeModalWrongPassword")}
+                </p>
+              )}
+            </div>
+
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setDowngradeTarget(null)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDowngradeTarget(null);
+                  setDowngradePassword("");
+                  setDowngradePasswordError(false);
+                }}
+              >
                 {t("downgradeModalCancel")}
               </Button>
               <Button
                 className="border-destructive/30 text-destructive hover:bg-destructive/10"
                 variant="outline"
-                onClick={() => {
-                  applyPlanSwitch(downgradeTarget!);
-                  setDowngradeTarget(null);
-                }}
+                disabled={scheduling || !downgradePassword}
+                onClick={submitDowngrade}
               >
-                {t("downgradeModalConfirm")}
+                {scheduling ? t("switching") : t("downgradeModalConfirm")}
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {upgradeTarget && subscription && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            aria-hidden
+            onClick={() => setUpgradeTarget(null)}
+            className="absolute inset-0 bg-black/30"
+          />
+          <div
+            className={cn(
+              "relative w-full max-w-md rounded-2xl border border-border bg-card p-6",
+              softShadow,
+            )}
+          >
+            <PaymentStep
+              variant="upgrade"
+              subscriptionId={subscription.id}
+              plan={upgradeTarget}
+              lineItems={[
+                {
+                  label: t("upgradeLineItem", { plan: PLANS[upgradeTarget].name }),
+                  amount: calcMailboxPricing(
+                    subscription.mailboxQuantity,
+                    subscription.billingMonths,
+                    upgradeTarget,
+                  ).total,
+                },
+              ]}
+              onPaid={handleUpgradePaid}
+            />
           </div>
         </div>
       )}

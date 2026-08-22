@@ -22,6 +22,10 @@ import {
   createDomainPurchaseCheckout,
   getDomainPurchaseStatus,
 } from "@/services/domain-purchase.services";
+import {
+  createStorageAddonCheckout,
+  getStorageAddonPaymentStatus,
+} from "@/services/storage.services";
 import type { RegistrantContactSchema } from "@/schemas/onboarding.schemas";
 import { StripeCardForm } from "@/components/onboarding/stripe-card-form";
 
@@ -47,8 +51,10 @@ export function PaymentStep({
   domain,
   registrantContact,
   subscriptionId,
+  mailAccountId,
+  extraGB,
 }: {
-  variant: "domain" | "mailbox" | "upgrade";
+  variant: "domain" | "mailbox" | "upgrade" | "storage";
   lineItems: { label: string; amount: number }[];
   onPaid: () => void;
   plan?: PlanId;
@@ -59,6 +65,9 @@ export function PaymentStep({
   registrantContact?: RegistrantContactSchema;
   /** Existing subscription being upgraded — required for variant "upgrade". */
   subscriptionId?: number;
+  /** Required for variant "storage". */
+  mailAccountId?: number;
+  extraGB?: number;
 }) {
   const t = useTranslations("Onboarding.payment");
   const locale = useLocale();
@@ -145,6 +154,33 @@ export function PaymentStep({
       return;
     }
 
+    if (variant === "storage") {
+      const result = await createStorageAddonCheckout({
+        mailAccountId: mailAccountId!,
+        extraGB: extraGB!,
+        paymentMethod,
+        customerPhone,
+      });
+
+      if (result instanceof Error) {
+        setCheckoutStatus("declined");
+        show(t("genericErrorDescription"), "error");
+        return;
+      }
+
+      setPendingId(result.paymentId);
+
+      if ("clientSecret" in result && result.clientSecret) {
+        setClientSecret(result.clientSecret);
+        setCheckoutStatus("confirming-card");
+        return;
+      }
+
+      pollAttemptsRef.current = 0;
+      setCheckoutStatus("awaiting-approval");
+      return;
+    }
+
     const result = await createDomainPurchaseCheckout({
       domainName: domain!,
       paymentMethod,
@@ -200,6 +236,19 @@ export function PaymentStep({
           }
           return;
         }
+      } else if (variant === "storage") {
+        const result = await getStorageAddonPaymentStatus(pendingId);
+        const status = result instanceof Error ? null : result.status;
+        if (status === "completed") {
+          clearInterval(interval);
+          onPaid();
+          return;
+        }
+        if (status === "failed") {
+          clearInterval(interval);
+          setCheckoutStatus("declined");
+          return;
+        }
       } else {
         const purchase = await getDomainPurchaseStatus(pendingId);
         const status = purchase instanceof Error ? null : purchase.status;
@@ -231,13 +280,21 @@ export function PaymentStep({
   }
 
   const title =
-    variant === "domain" ? t("domainTitle") : variant === "upgrade" ? t("upgradeTitle") : t("mailboxTitle");
+    variant === "domain"
+      ? t("domainTitle")
+      : variant === "upgrade"
+        ? t("upgradeTitle")
+        : variant === "storage"
+          ? t("storageTitle")
+          : t("mailboxTitle");
   const description =
     variant === "domain"
       ? t("domainDescription")
       : variant === "upgrade"
         ? t("upgradeDescription")
-        : t("mailboxDescription");
+        : variant === "storage"
+          ? t("storageDescription")
+          : t("mailboxDescription");
 
   function handleCardError(message?: string) {
     setCheckoutStatus("declined");

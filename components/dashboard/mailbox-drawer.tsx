@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { motion } from "motion/react";
 import {
+  ArrowLeft,
   Ban,
   Copy,
   HardDrive,
@@ -15,7 +17,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/dashboard/toast";
 import { SITE_URL } from "@/lib/seo";
-import { getStorageTier, storageTierBarClass } from "@/lib/onboarding";
+import {
+  getStorageTier,
+  storageTierBarClass,
+  STORAGE_PRICE_PER_GB_XAF,
+} from "@/lib/onboarding";
+import { PaymentStep } from "@/components/onboarding/payment-step";
 import type { MailAccount } from "@/types";
 
 const BYTES_PER_GB = 1024 ** 3;
@@ -41,7 +48,7 @@ export function MailboxDrawer({
   onDelete,
   onResendInvite,
   onResetPassword,
-  onAddStorage,
+  onStorageAdded,
 }: {
   mailAccount: MailAccount;
   domain: string;
@@ -52,11 +59,12 @@ export function MailboxDrawer({
   onDelete: () => void;
   onResendInvite: () => void;
   onResetPassword: () => void;
-  onAddStorage: (extraGB: number) => void;
+  onStorageAdded: () => void;
 }) {
   const t = useTranslations("Dashboard.mailboxesPage");
   const locale = useLocale();
   const { show } = useToast();
+  const [addingGB, setAddingGB] = useState<number | null>(null);
   const usedGB = usedBytes / BYTES_PER_GB;
   const quotaGB = quotaBytes / BYTES_PER_GB;
   const usageFraction = quotaBytes > 0 ? Math.min(usedBytes / quotaBytes, 1) : 0;
@@ -134,21 +142,49 @@ export function MailboxDrawer({
               style={{ width: `${usageFraction * 100}%` }}
             />
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {STORAGE_ADD_OPTIONS_GB.map((gb) => (
+          {addingGB === null ? (
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {STORAGE_ADD_OPTIONS_GB.map((gb) => (
+                <button
+                  key={gb}
+                  type="button"
+                  onClick={() => setAddingGB(gb)}
+                  className="flex flex-col items-center gap-0.5 rounded-lg border border-border py-2 text-xs transition-colors hover:border-primary/40 hover:bg-muted/40"
+                >
+                  <span className="font-semibold text-foreground">+{gb} GB</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4">
               <button
-                key={gb}
                 type="button"
-                onClick={() => {
-                  onAddStorage(gb);
-                  show(t("drawer.storageAdded", { gb }), "success");
-                }}
-                className="flex flex-col items-center gap-0.5 rounded-lg border border-border py-2 text-xs transition-colors hover:border-primary/40 hover:bg-muted/40"
+                onClick={() => setAddingGB(null)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
-                <span className="font-semibold text-foreground">+{gb} GB</span>
+                <ArrowLeft className="size-3.5" strokeWidth={1.5} />
+                {t("drawer.storageAddCancel")}
               </button>
-            ))}
-          </div>
+              <div className="mt-3">
+                <PaymentStep
+                  variant="storage"
+                  mailAccountId={mailAccount.id}
+                  extraGB={addingGB}
+                  lineItems={[
+                    {
+                      label: t("drawer.storageAddLineItem", { gb: addingGB }),
+                      amount: addingGB * STORAGE_PRICE_PER_GB_XAF,
+                    },
+                  ]}
+                  onPaid={() => {
+                    show(t("drawer.storageAdded", { gb: addingGB }), "success");
+                    setAddingGB(null);
+                    onStorageAdded();
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-5 flex flex-col gap-2 border-t border-border pt-5">
