@@ -13,7 +13,11 @@ import {
 } from "@/components/marketing/payment-logos";
 import { premiumButton, softShadow } from "@/components/onboarding/styles";
 import { useToast } from "@/components/dashboard/toast";
-import { checkoutSubscription, getSubscriptionStatus } from "@/services/subscription.services";
+import {
+  checkoutSubscription,
+  getSubscriptionStatus,
+  upgradeSubscriptionCheckout,
+} from "@/services/subscription.services";
 import {
   createDomainPurchaseCheckout,
   getDomainPurchaseStatus,
@@ -42,8 +46,9 @@ export function PaymentStep({
   onCheckoutSuccess,
   domain,
   registrantContact,
+  subscriptionId,
 }: {
-  variant: "domain" | "mailbox";
+  variant: "domain" | "mailbox" | "upgrade";
   lineItems: { label: string; amount: number }[];
   onPaid: () => void;
   plan?: PlanId;
@@ -52,6 +57,8 @@ export function PaymentStep({
   onCheckoutSuccess?: (subscriptionId: number) => void;
   domain?: string;
   registrantContact?: RegistrantContactSchema;
+  /** Existing subscription being upgraded — required for variant "upgrade". */
+  subscriptionId?: number;
 }) {
   const t = useTranslations("Onboarding.payment");
   const locale = useLocale();
@@ -112,6 +119,32 @@ export function PaymentStep({
       return;
     }
 
+    if (variant === "upgrade") {
+      const result = await upgradeSubscriptionCheckout(subscriptionId!, {
+        planId: plan!,
+        paymentMethod,
+        customerPhone,
+      });
+
+      if (!result) {
+        setCheckoutStatus("declined");
+        show(t("genericErrorDescription"), "error");
+        return;
+      }
+
+      setPendingId(subscriptionId!);
+
+      if ("clientSecret" in result && result.clientSecret) {
+        setClientSecret(result.clientSecret);
+        setCheckoutStatus("confirming-card");
+        return;
+      }
+
+      pollAttemptsRef.current = 0;
+      setCheckoutStatus("awaiting-approval");
+      return;
+    }
+
     const result = await createDomainPurchaseCheckout({
       domainName: domain!,
       paymentMethod,
@@ -156,6 +189,17 @@ export function PaymentStep({
           setCheckoutStatus("declined");
           return;
         }
+      } else if (variant === "upgrade") {
+        const subscription = await getSubscriptionStatus(pendingId);
+        if (subscription && !subscription.pendingPlanId) {
+          clearInterval(interval);
+          if (subscription.planId === plan) {
+            onPaid();
+          } else {
+            setCheckoutStatus("declined");
+          }
+          return;
+        }
       } else {
         const purchase = await getDomainPurchaseStatus(pendingId);
         const status = purchase instanceof Error ? null : purchase.status;
@@ -186,6 +230,15 @@ export function PaymentStep({
     onPaid();
   }
 
+  const title =
+    variant === "domain" ? t("domainTitle") : variant === "upgrade" ? t("upgradeTitle") : t("mailboxTitle");
+  const description =
+    variant === "domain"
+      ? t("domainDescription")
+      : variant === "upgrade"
+        ? t("upgradeDescription")
+        : t("mailboxDescription");
+
   function handleCardError(message?: string) {
     setCheckoutStatus("declined");
     show(message ?? t("genericErrorDescription"), "error");
@@ -201,12 +254,8 @@ export function PaymentStep({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-        {variant === "domain" ? t("domainTitle") : t("mailboxTitle")}
-      </h1>
-      <p className="mt-2 text-muted-foreground">
-        {variant === "domain" ? t("domainDescription") : t("mailboxDescription")}
-      </p>
+      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+      <p className="mt-2 text-muted-foreground">{description}</p>
 
       <div className="relative mt-8">
         <div

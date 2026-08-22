@@ -143,6 +143,7 @@ export type Subscription = {
   currency: string
   amountTotal: number
   currentPeriodEnd: string | null
+  pendingPlanId: "core" | "plus" | null
   createdAt: string
   updatedAt: string | null
 }

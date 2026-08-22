@@ -541,6 +541,8 @@
       "domainDescription": "Ceci enregistre le domaine et configure son DNS automatiquement.",
       "mailboxTitle": "Payez vos boîtes mail",
       "mailboxDescription": "Un seul paiement couvre toutes les boîtes mail créées aujourd'hui.",
+      "upgradeTitle": "Payez votre mise à niveau",
+      "upgradeDescription": "Votre nouveau forfait s'active dès que ce paiement est confirmé.",
       "total": "Total",
       "payWith": "Payer avec",
       "processing": "Traitement du paiement…",

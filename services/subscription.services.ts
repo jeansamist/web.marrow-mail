@@ -28,11 +28,27 @@ export const getCurrentSubscription = async (): Promise<Subscription | null> => 
 
 export const changeSubscriptionPlan = async (
   id: number,
-  planId: "core" | "plus"
-): Promise<Subscription | null> => {
-  const resp = await PUT<{ planId: "core" | "plus" }, Subscription>(
-    `/subscriptions/${id}/change-plan`,
-    { planId }
+  planId: "core" | "plus",
+  currentPassword?: string
+): Promise<Subscription | Error> => {
+  const resp = await PUT<
+    { planId: "core" | "plus"; currentPassword?: string },
+    Subscription
+  >(`/subscriptions/${id}/change-plan`, { planId, currentPassword })
+  return resp
+}
+
+export const upgradeSubscriptionCheckout = async (
+  id: number,
+  data: {
+    planId: "core" | "plus"
+    paymentMethod: "card" | "mtn_mobile_money" | "orange_money"
+    customerPhone?: string
+  }
+): Promise<CheckoutResult | null> => {
+  const resp = await POST<typeof data, CheckoutResult>(
+    `/subscriptions/${id}/upgrade-checkout`,
+    data
   )
   if (resp instanceof Error) return null
   return resp

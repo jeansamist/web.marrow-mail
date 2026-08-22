@@ -541,6 +541,8 @@
       "domainDescription": "This registers the domain and configures its DNS automatically.",
       "mailboxTitle": "Pay for Your Mailboxes",
       "mailboxDescription": "One charge covers every mailbox you set up today.",
+      "upgradeTitle": "Pay for Your Upgrade",
+      "upgradeDescription": "Your new plan activates as soon as this payment is confirmed.",
       "total": "Total",
       "payWith": "Pay with",
       "processing": "Processing payment…",
