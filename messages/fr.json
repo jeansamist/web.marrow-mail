@@ -750,7 +750,6 @@
         "mailboxDeleted": "Boîte mail supprimée",
         "deleteError": "Impossible de supprimer cette boîte mail. Veuillez réessayer.",
         "toggleError": "Impossible de mettre à jour le statut de cette boîte mail. Veuillez réessayer.",
-        "storageError": "Impossible de mettre à jour le stockage. Veuillez réessayer.",
         "inviteError": "Impossible de renvoyer l'invitation. Veuillez réessayer.",
         "passwordResetError": "Impossible d'envoyer le lien de réinitialisation. Veuillez réessayer.",
         "unavailableSoon": "Bientôt disponible",

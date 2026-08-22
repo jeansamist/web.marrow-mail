@@ -750,7 +750,6 @@
         "mailboxDeleted": "Mailbox deleted",
         "deleteError": "Couldn't delete this mailbox. Please try again.",
         "toggleError": "Couldn't update this mailbox's status. Please try again.",
-        "storageError": "Couldn't update storage. Please try again.",
         "inviteError": "Couldn't resend the invitation. Please try again.",
         "passwordResetError": "Couldn't send a password reset link. Please try again.",
         "unavailableSoon": "Coming soon",

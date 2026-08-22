@@ -18,7 +18,6 @@ import {
   listMailAccounts,
   deleteMailAccountApi,
   toggleMailAccountActive,
-  updateMailAccountStorageQuota,
   resendMailAccountInvite,
 } from "@/services/mail-account.services";
 import { getStorageUsage } from "@/services/storage.services";
@@ -106,18 +105,11 @@ export default function MailboxesPage() {
     setMailAccounts((current) => current.map((a) => (a.id === id ? updated : a)));
   }
 
-  async function addStorage(id: number, extraGB: number) {
-    const currentQuotaBytes = usageByAccount[id]?.quotaBytes ?? 0;
-    const nextQuotaBytes = currentQuotaBytes + extraGB * 1024 ** 3;
-    const ok = await updateMailAccountStorageQuota(id, nextQuotaBytes);
-    if (!ok) {
-      show(t("drawer.storageError"), "error");
-      return;
-    }
-    setUsageByAccount((current) => ({
-      ...current,
-      [id]: { ...current[id], quotaBytes: nextQuotaBytes },
-    }));
+  async function refreshStorageUsage() {
+    const storage = await getStorageUsage();
+    setUsageByAccount(
+      Object.fromEntries((storage?.mailboxes ?? []).map((m) => [m.mailAccountId, m])),
+    );
   }
 
   async function resendInvite(id: number) {
@@ -329,7 +321,7 @@ export default function MailboxesPage() {
           onClose={() => setOpenMailboxId(null)}
           onDelete={() => deleteMailbox(openMailbox.id)}
           onToggleActive={() => toggleActive(openMailbox.id)}
-          onAddStorage={(extraGB) => addStorage(openMailbox.id, extraGB)}
+          onStorageAdded={refreshStorageUsage}
           onResendInvite={() => resendInvite(openMailbox.id)}
           onResetPassword={() => resetPassword(openMailbox)}
         />
