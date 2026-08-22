@@ -19,6 +19,7 @@ import {
   consumePendingOwnerName,
   defaultBranding,
   defaultMailPreferences,
+  hasCompletedOnboardingOnServer,
   loadAccount,
   saveAccount,
   type BillingMonths,
@@ -111,6 +112,16 @@ function OnboardingPageInner() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    // The localStorage-backed check below only catches a returning visit on
+    // the same device the wizard was completed on. This one asks the
+    // backend directly, so a user who already finished onboarding gets sent
+    // to /dashboard even from a new device or a cleared browser.
+    hasCompletedOnboardingOnServer().then((completed) => {
+      if (completed) router.replace("/dashboard");
+    });
+  }, [router]);
 
   useEffect(() => {
     const account = loadAccount();

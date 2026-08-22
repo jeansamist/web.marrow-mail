@@ -88,7 +88,7 @@ export function TeamLoginLinkCompact({
   const { loginUrl, copied, handleCopy } = useLoginLinkCopy(domain);
 
   return (
-    <div className="mt-4 flex items-center gap-2 rounded-xl border border-border/70 bg-muted/30 py-1.5 pl-3.5 pr-1.5">
+    <div className="w-full mt-4 flex items-center gap-2 rounded-xl border border-border/70 bg-muted/30 py-1.5 pl-3.5 pr-1.5">
       <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
         {loginUrl}
       </span>

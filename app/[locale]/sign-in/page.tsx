@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LanguageSwitcher } from "@/components/marketing/language-switcher";
-import { loadAccount } from "@/lib/onboarding";
+import { hasCompletedOnboardingOnServer } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { cardShadow, premiumButton } from "@/components/onboarding/styles";
 import { signInSchema } from "@/schemas/auth.schemas";
@@ -49,8 +49,8 @@ export default function SignInPage() {
       return;
     }
 
-    const account = loadAccount();
-    router.push(account?.stage === "complete" ? "/dashboard" : "/onboarding");
+    const completed = await hasCompletedOnboardingOnServer();
+    router.push(completed ? "/dashboard" : "/onboarding");
   }
 
   return (

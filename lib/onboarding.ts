@@ -1,3 +1,18 @@
+import { listDomains } from "@/services/domain.services";
+import { getCurrentSubscription } from "@/services/subscription.services";
+
+// The authoritative "has this user already finished onboarding" check —
+// unlike loadAccount()/saveAccount() below (plain localStorage, so it only
+// ever reflects the device/browser the wizard was completed on), this asks
+// the backend directly, so it survives a new device, a cleared browser, or
+// signing in as the same user somewhere else. An active subscription plus
+// at least one domain is the same end-state the onboarding wizard itself
+// treats as "complete" (see persistComplete() in app/[locale]/onboarding).
+export async function hasCompletedOnboardingOnServer(): Promise<boolean> {
+  const [subscription, domains] = await Promise.all([getCurrentSubscription(), listDomains()]);
+  return subscription?.status === "active" && domains.length > 0;
+}
+
 export const MAILBOX_PRICE_XAF = 2500;
 
 export const DURATION_OPTIONS = [1, 3, 6, 12] as const;
