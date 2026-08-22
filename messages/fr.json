@@ -1517,5 +1517,11 @@
     "successTitle": "Demande reçue",
     "successDescription": "Merci, {name}. Notre équipe vous contactera à {email} sous un jour ouvré.",
     "successCta": "Retour à l'accueil"
+  },
+  "VoicePlayback": {
+    "eyebrow": "Message vocal",
+    "title": "Quelqu'un vous a envoyé un message vocal",
+    "notFoundTitle": "Ce message vocal n'est pas disponible",
+    "notFoundDescription": "Le lien a peut-être expiré ou le message a été supprimé."
   }
 }

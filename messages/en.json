@@ -1517,5 +1517,11 @@
     "successTitle": "Request received",
     "successDescription": "Thanks, {name}. Our team will reach out to {email} within one business day.",
     "successCta": "Back to home"
+  },
+  "VoicePlayback": {
+    "eyebrow": "Voice message",
+    "title": "Someone sent you a voice message",
+    "notFoundTitle": "This voice message isn't available",
+    "notFoundDescription": "The link may have expired or the message may have been removed."
   }
 }

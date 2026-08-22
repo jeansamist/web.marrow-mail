@@ -722,6 +722,7 @@ interface ComposeSendPayload {
   bcc?: string;
   subject: string;
   bodyText: string;
+  bodyHtml: string;
   attachments: EmailAttachment[];
   confidential: boolean;
   scheduledFor?: string;
@@ -779,6 +780,7 @@ function ComposeDialog({
       bcc: bcc.trim() || undefined,
       subject: subject.trim(),
       bodyText: content?.bodyText ?? "",
+      bodyHtml: content?.bodyHtml ?? "",
       attachments: content?.attachments ?? [],
       confidential: content?.confidential ?? false,
       scheduledFor,
@@ -3025,7 +3027,7 @@ function VoiceRecorderPanel({
 
     const data = new Uint8Array(await blob.arrayBuffer());
     const [uploaded] = await uploadFiles([
-      { name: `${name}.webm`, type: blob.type, size: blob.size, data },
+      { name: `${name}.webm`, type: blob.type, size: blob.size, data, kind: "voice_note" },
     ]);
     if (!uploaded) {
       show(t("attachmentUploadFailed"), "error");
@@ -3228,6 +3230,7 @@ function VoiceRecorderPanel({
 
 interface ComposerPayload {
   bodyText: string;
+  bodyHtml: string;
   attachments: EmailAttachment[];
   confidential: boolean;
 }
@@ -3286,6 +3289,7 @@ const ComposerBody = forwardRef<
   useImperativeHandle(ref, () => ({
     getContent: () => ({
       bodyText: editorRef.current?.innerText.trim() ?? "",
+      bodyHtml: editorRef.current?.innerHTML.trim() ?? "",
       attachments,
       confidential,
     }),
@@ -4514,7 +4518,7 @@ export default function MailPage() {
   }
 
   async function handleSend(payload: ComposeSendPayload) {
-    const { to, cc, bcc, subject, bodyText, attachments, scheduledFor } =
+    const { to, cc, bcc, subject, bodyText, bodyHtml, attachments, scheduledFor } =
       payload;
     const toAddresses = splitAddresses(to);
     if (!toAddresses) return;
@@ -4526,6 +4530,7 @@ export default function MailPage() {
         cc: splitAddresses(cc),
         bcc: splitAddresses(bcc),
         bodyText,
+        bodyHtml: bodyHtml || undefined,
       });
       setForwardingId(null);
       if (!mail) {
@@ -4545,6 +4550,7 @@ export default function MailPage() {
           bcc: splitAddresses(bcc),
           subject: subject || "(no subject)",
           bodyText,
+          bodyHtml: bodyHtml || undefined,
           attachmentIds,
           scheduledAt: new Date(scheduledFor),
         })
@@ -4554,6 +4560,7 @@ export default function MailPage() {
           bcc: splitAddresses(bcc),
           subject: subject || "(no subject)",
           bodyText,
+          bodyHtml: bodyHtml || undefined,
           attachmentIds,
         });
 
@@ -4569,6 +4576,7 @@ export default function MailPage() {
 
   async function handleSendReply(payload: {
     bodyText: string;
+    bodyHtml: string;
     attachments: EmailAttachment[];
     confidential: boolean;
   }) {
@@ -4580,6 +4588,7 @@ export default function MailPage() {
       to: [selected.fromEmail],
       subject,
       bodyText: payload.bodyText,
+      bodyHtml: payload.bodyHtml || undefined,
       attachmentIds: attachmentIdsOf(payload.attachments),
     });
 

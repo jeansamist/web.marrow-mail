@@ -114,16 +114,23 @@ export const getFiles = async (): Promise<UploadedFile[]> => {
 }
 
 export const uploadFiles = async (
-  files: { name: string; type: string; size: number; data: Uint8Array }[]
+  files: {
+    name: string
+    type: string
+    size: number
+    data: Uint8Array
+    kind?: "file" | "voice_note"
+  }[]
 ): Promise<(UploadedFile | null)[]> => {
   const links = await POST<
-    { files: { originalName: string; mimeType?: string; size?: number }[] },
+    { files: { originalName: string; mimeType?: string; size?: number; kind?: string }[] },
     UploadLink[]
   >("/storage/upload-links", {
     files: files.map((f) => ({
       originalName: f.name,
       mimeType: f.type || undefined,
       size: f.size,
+      kind: f.kind,
     })),
   })
   if (links instanceof Error) return files.map(() => null)
