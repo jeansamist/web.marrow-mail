@@ -9,11 +9,10 @@ import { DashboardShell } from "@/components/dashboard/shell";
 import { useToast } from "@/components/dashboard/toast";
 import { premiumButton } from "@/components/onboarding/styles";
 import { cn } from "@/lib/utils";
-import {
-  getAiCreditsSummary,
-  loadAccount,
-  type OnboardingAccount,
-} from "@/lib/onboarding";
+import { getAiCreditsSummary } from "@/lib/onboarding";
+import { listDomains } from "@/services/domain.services";
+import { getProfile } from "@/services/auth.services";
+import type { Domain, User } from "@/types";
 
 const FEATURE_ICONS = {
   rewrite: WandSparkles,
@@ -25,26 +24,31 @@ export default function AiCreditsPage() {
   const t = useTranslations("Dashboard.aiCreditsPage");
   const router = useRouter();
   const { show } = useToast();
-  const [account, setAccount] = useState<OnboardingAccount | null>(null);
+  const [domain, setDomain] = useState<Domain | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (!stored) {
-      router.replace("/onboarding");
-      return;
-    }
-    setAccount(stored);
-    setChecked(true);
+    (async () => {
+      const [domains, user] = await Promise.all([listDomains(), getProfile()]);
+      if (domains.length === 0) {
+        router.replace("/onboarding");
+        return;
+      }
+      setDomain(domains[0]);
+      setProfile(user);
+      setChecked(true);
+    })();
   }, [router]);
 
-  if (!checked || !account) return null;
+  if (!checked || !domain) return null;
 
+  const ownerName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : "";
   const summary = getAiCreditsSummary();
   const remainingPct = Math.round((summary.remaining / summary.totalIncluded) * 100);
 
   return (
-    <DashboardShell domain={account.domain} ownerName={account.ownerName}>
+    <DashboardShell domain={domain.name} ownerName={ownerName}>
       <div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight text-foreground">

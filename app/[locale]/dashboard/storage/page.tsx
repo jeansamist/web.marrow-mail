@@ -117,8 +117,8 @@ export default function StoragePage() {
       )}
 
       <div className="mt-8 rounded-2xl border border-border bg-card p-6 sm:p-8">
-        <div className="grid grid-cols-3 divide-x divide-border/70">
-          <div className="pr-4">
+        <div className="flex flex-col divide-y divide-border/70 sm:flex-row sm:divide-x sm:divide-y-0">
+          <div className="flex-1 pb-4 sm:pb-0 sm:pr-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-foreground/75">
               {t("purchased")}
             </p>
@@ -133,7 +133,7 @@ export default function StoragePage() {
               })}
             </p>
           </div>
-          <div className="px-4">
+          <div className="flex-1 py-4 sm:py-0 sm:px-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-foreground/75">
               {t("used")}
             </p>
@@ -142,7 +142,7 @@ export default function StoragePage() {
               <span className="text-lg font-semibold"> GB</span>
             </p>
           </div>
-          <div className="pl-4">
+          <div className="flex-1 pt-4 sm:pt-0 sm:pl-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-foreground/75">
               {t("available")}
             </p>

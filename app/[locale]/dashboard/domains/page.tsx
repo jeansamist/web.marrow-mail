@@ -10,17 +10,16 @@ import { DashboardShell } from "@/components/dashboard/shell";
 import { DomainDnsDrawer } from "@/components/dashboard/domain-dns-drawer";
 import { useToast } from "@/components/dashboard/toast";
 import { cn } from "@/lib/utils";
-import { loadAccount, type OnboardingAccount } from "@/lib/onboarding";
 import { onboardingRegisterDomainSchema } from "@/schemas/onboarding.schemas";
 import { addDomain, deleteDomain, listDomains } from "@/services/domain.services";
-import { getErrorStatus } from "@/lib/api-error";
-import type { Domain } from "@/types";
+import { getProfile } from "@/services/auth.services";
+import type { Domain, User } from "@/types";
 
 export default function DomainsPage() {
   const t = useTranslations("Dashboard.domainsPage");
   const router = useRouter();
   const { show } = useToast();
-  const [account, setAccount] = useState<OnboardingAccount | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [checked, setChecked] = useState(false);
   const [domains, setDomains] = useState<Domain[]>([]);
   const [loadingDomains, setLoadingDomains] = useState(true);
@@ -33,23 +32,23 @@ export default function DomainsPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (!stored) {
-      router.replace("/onboarding");
-      return;
-    }
-    setAccount(stored);
-    setChecked(true);
-  }, [router]);
-
-  useEffect(() => {
-    listDomains().then((list) => {
+    (async () => {
+      const [list, user] = await Promise.all([listDomains(), getProfile()]);
+      if (list.length === 0) {
+        router.replace("/onboarding");
+        return;
+      }
       setDomains(list);
       setLoadingDomains(false);
-    });
-  }, []);
+      setProfile(user);
+      setChecked(true);
+    })();
+  }, [router]);
 
-  if (!checked || !account) return null;
+  if (!checked || domains.length === 0) return null;
+
+  const primaryDomain = domains[0];
+  const ownerName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : "";
 
   async function handleAddDomain(e: React.FormEvent) {
     e.preventDefault();
@@ -92,7 +91,7 @@ export default function DomainsPage() {
   }
 
   return (
-    <DashboardShell domain={account.domain} ownerName={account.ownerName}>
+    <DashboardShell domain={primaryDomain.name} ownerName={ownerName}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -198,7 +197,7 @@ export default function DomainsPage() {
         </div>
       )}
 
-      {!account.dnsVerified && (
+      {!primaryDomain.verified && (
         <div className={cn("mt-6 flex items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3")}>
           <p className="text-sm text-amber-700">{t("finishSetupHint")}</p>
           <Button size="sm" asChild>

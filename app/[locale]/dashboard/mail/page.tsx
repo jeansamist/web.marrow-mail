@@ -94,6 +94,8 @@ import { premiumButton } from "@/components/onboarding/styles";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import {
+  defaultBranding,
+  defaultMailPreferences,
   generateImportedMessages,
   hasVoiceNotes,
   loadAccount,
@@ -105,6 +107,8 @@ import {
   type OnboardingAccount,
   type SignatureSettings,
 } from "@/lib/onboarding";
+import { getProfile } from "@/services/auth.services";
+import { listDomains } from "@/services/domain.services";
 import { getSignature, updateSignature } from "@/services/signature.services";
 import { updateSignatureSchema } from "@/schemas/signature.schemas";
 import type {
@@ -186,7 +190,9 @@ function mailToEmailMessage(mail: MailRecord): EmailMessage {
     fromEmail,
     toEmail: mail.toAddresses?.[0] ?? "",
     ccEmail: mail.ccAddresses?.length ? mail.ccAddresses.join(", ") : undefined,
-    bccEmail: mail.bccAddresses?.length ? mail.bccAddresses.join(", ") : undefined,
+    bccEmail: mail.bccAddresses?.length
+      ? mail.bccAddresses.join(", ")
+      : undefined,
     subject: mail.subject || "(no subject)",
     preview: (mail.bodyText ?? "").slice(0, 80),
     body: mail.bodyText ?? mail.bodyHtml ?? "",
@@ -211,7 +217,14 @@ async function fetchAllMailMessages(): Promise<EmailMessage[]> {
     getSpamMails(),
   ]);
   const byId = new Map<number, MailRecord>();
-  for (const mail of [...received, ...sent, ...drafts, ...scheduled, ...trash, ...spam]) {
+  for (const mail of [
+    ...received,
+    ...sent,
+    ...drafts,
+    ...scheduled,
+    ...trash,
+    ...spam,
+  ]) {
     byId.set(mail.id, mail);
   }
   return Array.from(byId.values()).map(mailToEmailMessage);
@@ -298,7 +311,8 @@ const AVATAR_PALETTE = [
 
 function hashSeed(value: string) {
   let h = 0;
-  for (let i = 0; i < value.length; i++) h = (h * 31 + value.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < value.length; i++)
+    h = (h * 31 + value.charCodeAt(i)) >>> 0;
   return h;
 }
 
@@ -383,10 +397,18 @@ function SenderPreviewCard({
       {open && (
         <div className="absolute top-full left-0 z-50 mt-2 w-80 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl shadow-slate-300/60 dark:shadow-black/40">
           <div className="flex items-center gap-3">
-            <ContactAvatar name={name} email={email} className="size-12 shrink-0 text-base" />
+            <ContactAvatar
+              name={name}
+              email={email}
+              className="size-12 shrink-0 text-base"
+            />
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-50">{name}</p>
-              <p className="truncate text-sm text-slate-500 dark:text-slate-400">{email}</p>
+              <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-50">
+                {name}
+              </p>
+              <p className="truncate text-sm text-slate-500 dark:text-slate-400">
+                {email}
+              </p>
             </div>
           </div>
 
@@ -479,7 +501,9 @@ function ContactDetailPanel({
         )}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t("viewDetails")}</h2>
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {t("viewDetails")}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -497,8 +521,12 @@ function ContactDetailPanel({
               email={contact.email}
               className="size-16 text-xl"
             />
-            <p className="mt-3 text-base font-semibold text-slate-900 dark:text-slate-50">{contact.name}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{contact.email}</p>
+            <p className="mt-3 text-base font-semibold text-slate-900 dark:text-slate-50">
+              {contact.name}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {contact.email}
+            </p>
             <div className="mt-4 flex items-center gap-2">
               <button
                 type="button"
@@ -521,16 +549,31 @@ function ContactDetailPanel({
 
           <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 pt-5">
             <div className="flex items-center gap-3 text-sm">
-              <Mail className="size-4 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
-              <span className="min-w-0 truncate text-slate-700 dark:text-slate-300">{contact.email}</span>
+              <Mail
+                className="size-4 shrink-0 text-slate-400 dark:text-slate-500"
+                strokeWidth={1.5}
+              />
+              <span className="min-w-0 truncate text-slate-700 dark:text-slate-300">
+                {contact.email}
+              </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <Phone className="size-4 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
-              <span className="text-slate-400 dark:text-slate-500">{t("phoneNotProvided")}</span>
+              <Phone
+                className="size-4 shrink-0 text-slate-400 dark:text-slate-500"
+                strokeWidth={1.5}
+              />
+              <span className="text-slate-400 dark:text-slate-500">
+                {t("phoneNotProvided")}
+              </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <Building2 className="size-4 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
-              <span className="min-w-0 truncate text-slate-700 dark:text-slate-300">{organization}</span>
+              <Building2
+                className="size-4 shrink-0 text-slate-400 dark:text-slate-500"
+                strokeWidth={1.5}
+              />
+              <span className="min-w-0 truncate text-slate-700 dark:text-slate-300">
+                {organization}
+              </span>
             </div>
           </div>
 
@@ -539,7 +582,9 @@ function ContactDetailPanel({
               {t("recentInteractions")}
             </h3>
             {interactions.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">{t("noInteractions")}</p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {t("noInteractions")}
+              </p>
             ) : (
               <div className="mt-3 flex flex-col gap-1.5">
                 {interactions.map((m) => (
@@ -550,8 +595,12 @@ function ContactDetailPanel({
                     className="flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{m.subject}</p>
-                      <p className="truncate text-xs text-muted-foreground">{m.preview}</p>
+                      <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                        {m.subject}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {m.preview}
+                      </p>
                     </div>
                     <span className="shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-500 dark:text-slate-400 uppercase">
                       {m.folder}
@@ -593,16 +642,32 @@ function formatMessageTime(date: string, locale: string) {
 }
 
 function escapeSignatureHtml(value: string) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
-function buildSignatureHtml(s: SignatureSettings, avatarDataUrl: string | null): string {
+function buildSignatureHtml(
+  s: SignatureSettings,
+  avatarDataUrl: string | null,
+): string {
   const hasContent = Boolean(
-    s.name || s.jobTitle || s.phone || s.website || s.address || s.linkedin || s.facebook || s.instagram,
+    s.name ||
+    s.jobTitle ||
+    s.phone ||
+    s.website ||
+    s.address ||
+    s.linkedin ||
+    s.facebook ||
+    s.instagram,
   );
   if (!hasContent) return "";
 
-  const contact = [s.phone, s.website].filter(Boolean).map(escapeSignatureHtml).join(" &middot; ");
+  const contact = [s.phone, s.website]
+    .filter(Boolean)
+    .map(escapeSignatureHtml)
+    .join(" &middot; ");
   const socials = [
     s.linkedin && { label: "in", handle: s.linkedin },
     s.facebook && { label: "f", handle: s.facebook },
@@ -627,7 +692,8 @@ function buildSignatureHtml(s: SignatureSettings, avatarDataUrl: string | null):
       `<div style="font-size:13px;color:#64748b;">${escapeSignatureHtml(s.jobTitle)}</div>`,
     );
   }
-  if (contact) lines.push(`<div style="font-size:13px;color:#64748b;">${contact}</div>`);
+  if (contact)
+    lines.push(`<div style="font-size:13px;color:#64748b;">${contact}</div>`);
   if (s.address) {
     lines.push(
       `<div style="font-size:13px;color:#64748b;">${escapeSignatureHtml(s.address)}</div>`,
@@ -646,7 +712,9 @@ function buildSignatureHtml(s: SignatureSettings, avatarDataUrl: string | null):
   return `<div style="display:flex;align-items:flex-start;gap:12px;">${photoHtml}<div style="display:flex;flex-direction:column;gap:2px;">${lines.join("")}</div></div>`;
 }
 
-type Selection = { type: "folder"; folder: MailFolder } | { type: "custom"; id: number; name: string };
+type Selection =
+  | { type: "folder"; folder: MailFolder }
+  | { type: "custom"; id: number; name: string };
 
 interface ComposeSendPayload {
   to: string;
@@ -692,14 +760,18 @@ function ComposeDialog({
   const [bcc, setBcc] = useState("");
   const [bccVisible, setBccVisible] = useState(false);
   const [subject, setSubject] = useState("");
-  const [scheduleEnabled, setScheduleEnabled] = useState(initialScheduleEnabled ?? false);
+  const [scheduleEnabled, setScheduleEnabled] = useState(
+    initialScheduleEnabled ?? false,
+  );
   const [scheduleDate, setScheduleDate] = useState("");
   const [expanded, setExpanded] = useState(false);
   const composerRef = useRef<ComposerBodyHandle>(null);
 
   function handleSubmit() {
     const scheduledFor =
-      scheduleEnabled && scheduleDate ? new Date(scheduleDate).toISOString() : undefined;
+      scheduleEnabled && scheduleDate
+        ? new Date(scheduleDate).toISOString()
+        : undefined;
     const content = composerRef.current?.getContent();
     onSend({
       to: to.trim(),
@@ -715,7 +787,11 @@ function ComposeDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div aria-hidden onClick={onClose} className="absolute inset-0 bg-black/30" />
+      <div
+        aria-hidden
+        onClick={onClose}
+        className="absolute inset-0 bg-black/30"
+      />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -726,7 +802,9 @@ function ComposeDialog({
         )}
       >
         <div className="flex shrink-0 items-center justify-between rounded-t-2xl bg-slate-50/70 dark:bg-slate-800/70 px-5 py-3.5">
-          <h2 className="text-sm font-semibold text-foreground">{t("composeTitle")}</h2>
+          <h2 className="text-sm font-semibold text-foreground">
+            {t("composeTitle")}
+          </h2>
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -760,12 +838,17 @@ function ComposeDialog({
         >
           {!domainVerified && (
             <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm text-amber-700">
-              <ShieldAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
+              <ShieldAlert
+                className="mt-0.5 size-4 shrink-0"
+                strokeWidth={1.5}
+              />
               <p>{t("domainNotVerifiedWarning")}</p>
             </div>
           )}
           <div className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
-            <span className="shrink-0 text-sm text-slate-500 dark:text-slate-400">{t("sendingTo")}</span>
+            <span className="shrink-0 text-sm text-slate-500 dark:text-slate-400">
+              {t("sendingTo")}
+            </span>
             {!toEditing && to.trim() ? (
               <button
                 type="button"
@@ -826,7 +909,9 @@ function ComposeDialog({
           </div>
           {ccVisible && (
             <div className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
-              <span className="w-9 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-300">{t("cc")}</span>
+              <span className="w-9 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                {t("cc")}
+              </span>
               <input
                 autoFocus
                 value={cc}
@@ -848,7 +933,9 @@ function ComposeDialog({
           )}
           {bccVisible && (
             <div className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
-              <span className="w-9 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-300">{t("bcc")}</span>
+              <span className="w-9 shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                {t("bcc")}
+              </span>
               <input
                 autoFocus
                 value={bcc}
@@ -898,7 +985,11 @@ function ComposeDialog({
                 <Button
                   size="sm"
                   className={cn(premiumButton)}
-                  disabled={!to.trim() || (scheduleEnabled && !scheduleDate) || !domainVerified}
+                  disabled={
+                    !to.trim() ||
+                    (scheduleEnabled && !scheduleDate) ||
+                    !domainVerified
+                  }
                   onClick={handleSubmit}
                 >
                   <Send className="size-3.5" strokeWidth={1.5} />
@@ -958,7 +1049,11 @@ function SettingsModal({
   const t = useTranslations("Dashboard.mailPage");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div aria-hidden onClick={onClose} className="absolute inset-0 bg-black/30" />
+      <div
+        aria-hidden
+        onClick={onClose}
+        className="absolute inset-0 bg-black/30"
+      />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -966,7 +1061,9 @@ function SettingsModal({
         className="relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl shadow-slate-300/60 dark:shadow-black/40"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{title}</h2>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            {title}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -976,7 +1073,9 @@ function SettingsModal({
             <X className="size-4" strokeWidth={1.5} />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+          {children}
+        </div>
         {footer && (
           <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800 px-6 py-4">
             {footer}
@@ -1015,7 +1114,9 @@ function SettingsCard({
         <Icon className="size-5" strokeWidth={1.5} />
       </span>
       <div>
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+          {title}
+        </h3>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
     </button>
@@ -1031,7 +1132,11 @@ function ThemeMenu({
 }) {
   const t = useTranslations("Dashboard.mailPage");
 
-  const options: { value: MailPreferences["theme"]; label: string; icon: LucideIcon }[] = [
+  const options: {
+    value: MailPreferences["theme"];
+    label: string;
+    icon: LucideIcon;
+  }[] = [
     { value: "light", label: t("settings.themeLight"), icon: Sun },
     { value: "dark", label: t("settings.themeDark"), icon: Moon },
   ];
@@ -1081,8 +1186,12 @@ function ProfileModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [ownerName, setOwnerName] = useState(displayName);
   const [jobTitle, setJobTitle] = useState(account.mailPreferences.jobTitle);
-  const [avatarDataUrl, setAvatarDataUrl] = useState(account.mailPreferences.avatarDataUrl);
-  const [avatarUrl, setAvatarUrl] = useState(account.mailPreferences.avatarDataUrl);
+  const [avatarDataUrl, setAvatarDataUrl] = useState(
+    account.mailPreferences.avatarDataUrl,
+  );
+  const [avatarUrl, setAvatarUrl] = useState(
+    account.mailPreferences.avatarDataUrl,
+  );
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -1145,7 +1254,11 @@ function ProfileModal({
         >
           {avatarDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarDataUrl} alt="" className="size-full object-cover" />
+            <img
+              src={avatarDataUrl}
+              alt=""
+              className="size-full object-cover"
+            />
           ) : (
             <span className="text-xl font-semibold">
               {(ownerName || "?").charAt(0).toUpperCase()}
@@ -1153,7 +1266,9 @@ function ProfileModal({
           )}
           <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-full bg-slate-900/60 text-white opacity-0 transition-opacity group-hover:opacity-100">
             <Camera className="size-4" strokeWidth={1.5} />
-            <span className="text-[11px] font-medium">{t("settings.editPhoto")}</span>
+            <span className="text-[11px] font-medium">
+              {t("settings.editPhoto")}
+            </span>
           </span>
         </button>
         <input
@@ -1167,7 +1282,9 @@ function ProfileModal({
 
       <div className="mt-6 flex flex-col gap-4">
         <div>
-          <label className="text-xs font-medium text-muted-foreground">{t("displayName")}</label>
+          <label className="text-xs font-medium text-muted-foreground">
+            {t("displayName")}
+          </label>
           <Input
             value={ownerName}
             onChange={(e) => setOwnerName(e.target.value)}
@@ -1274,7 +1391,10 @@ function SecurityModal({
       return;
     }
     setUpdatingPassword(true);
-    const ok = await changeMailAccountPassword({ currentPassword, newPassword });
+    const ok = await changeMailAccountPassword({
+      currentPassword,
+      newPassword,
+    });
     setUpdatingPassword(false);
     if (!ok) {
       show(t("settings.passwordUpdateError"), "error");
@@ -1297,7 +1417,10 @@ function SecurityModal({
             className="flex w-full items-center justify-between gap-3 text-left"
           >
             <span className="flex items-center gap-3">
-              <KeyRound className="size-4 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+              <KeyRound
+                className="size-4 text-slate-400 dark:text-slate-500"
+                strokeWidth={1.5}
+              />
               <span className="text-sm font-medium text-slate-900 dark:text-slate-50">
                 {t("settings.changePassword")}
               </span>
@@ -1345,7 +1468,10 @@ function SecurityModal({
         <div className="py-4">
           <div className="flex items-center justify-between gap-3">
             <span className="flex items-center gap-3">
-              <ShieldCheck className="size-4 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+              <ShieldCheck
+                className="size-4 text-slate-400 dark:text-slate-500"
+                strokeWidth={1.5}
+              />
               <span className="flex flex-col">
                 <span className="text-sm font-medium text-slate-900 dark:text-slate-50">
                   {t("settings.twoFactorAuth")}
@@ -1372,7 +1498,9 @@ function SecurityModal({
                 disabled={settingUpTwoFactor}
                 className="text-sm font-medium text-primary hover:underline"
               >
-                {settingUpTwoFactor ? t("settings.twoFactorSettingUp") : t("settings.enable")}
+                {settingUpTwoFactor
+                  ? t("settings.twoFactorSettingUp")
+                  : t("settings.enable")}
               </button>
             )}
           </div>
@@ -1421,7 +1549,9 @@ function SecurityModal({
                     onClick={handleConfirmTwoFactor}
                     disabled={confirmingTwoFactor || !twoFactorCode}
                   >
-                    {confirmingTwoFactor ? t("saving") : t("settings.twoFactorConfirm")}
+                    {confirmingTwoFactor
+                      ? t("saving")
+                      : t("settings.twoFactorConfirm")}
                   </Button>
                   <Button
                     size="sm"
@@ -1456,9 +1586,13 @@ function SecurityModal({
                 variant="outline"
                 className="self-start border-destructive/40 text-destructive hover:bg-destructive/10"
                 onClick={handleDisableTwoFactor}
-                disabled={disablingTwoFactor || !disableCurrentPassword || !disableCode}
+                disabled={
+                  disablingTwoFactor || !disableCurrentPassword || !disableCode
+                }
               >
-                {disablingTwoFactor ? t("saving") : t("settings.twoFactorDisableConfirm")}
+                {disablingTwoFactor
+                  ? t("saving")
+                  : t("settings.twoFactorDisableConfirm")}
               </Button>
             </div>
           )}
@@ -1466,7 +1600,10 @@ function SecurityModal({
 
         <div className="flex items-center justify-between gap-3 py-4">
           <span className="flex items-center gap-3">
-            <Mail className="size-4 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+            <Mail
+              className="size-4 text-slate-400 dark:text-slate-500"
+              strokeWidth={1.5}
+            />
             <span className="flex flex-col">
               <span className="text-sm font-medium text-slate-900 dark:text-slate-50">
                 {t("settings.recoveryEmail")}
@@ -1487,7 +1624,10 @@ function SecurityModal({
 
         <div className="flex items-center justify-between gap-3 pt-4">
           <span className="flex items-center gap-3">
-            <Smartphone className="size-4 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+            <Smartphone
+              className="size-4 text-slate-400 dark:text-slate-500"
+              strokeWidth={1.5}
+            />
             <span className="flex flex-col">
               <span className="text-sm font-medium text-slate-900 dark:text-slate-50">
                 {t("settings.activeSessions")}
@@ -1530,21 +1670,28 @@ function ForwardingModal({
   );
   const [sendingVerification, setSendingVerification] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
-  const [keepCopy, setKeepCopy] = useState(account.mailPreferences.keepForwardedCopy);
+  const [keepCopy, setKeepCopy] = useState(
+    account.mailPreferences.keepForwardedCopy,
+  );
   const [savingPreferences, setSavingPreferences] = useState(false);
   const verified = account.mailPreferences.forwardingVerified;
 
   async function handleSendVerification() {
     if (!forwardingEmailInput.trim()) return;
     setSendingVerification(true);
-    const ok = await setForwardingEmail({ forwardingEmail: forwardingEmailInput });
+    const ok = await setForwardingEmail({
+      forwardingEmail: forwardingEmailInput,
+    });
     setSendingVerification(false);
     if (!ok) {
       show(t("settings.forwardingSendError"), "error");
       return;
     }
     setVerificationSent(true);
-    show(t("settings.verifyEmailSent", { email: forwardingEmailInput }), "info");
+    show(
+      t("settings.verifyEmailSent", { email: forwardingEmailInput }),
+      "info",
+    );
   }
 
   async function handleSave() {
@@ -1572,13 +1719,19 @@ function ForwardingModal({
           <Button variant="outline" onClick={onClose}>
             {t("cancel")}
           </Button>
-          <Button className={cn(premiumButton)} disabled={savingPreferences} onClick={handleSave}>
+          <Button
+            className={cn(premiumButton)}
+            disabled={savingPreferences}
+            onClick={handleSave}
+          >
             {savingPreferences ? t("saving") : t("save")}
           </Button>
         </>
       }
     >
-      <p className="text-sm text-muted-foreground">{t("settings.forwardingDescription")}</p>
+      <p className="text-sm text-muted-foreground">
+        {t("settings.forwardingDescription")}
+      </p>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1">
@@ -1610,7 +1763,9 @@ function ForwardingModal({
           {t("settings.forwardingVerified")}
         </p>
       ) : verificationSent ? (
-        <p className="mt-2 text-xs text-muted-foreground">{t("settings.forwardingCheckInbox")}</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {t("settings.forwardingCheckInbox")}
+        </p>
       ) : (
         <p className="mt-2 text-xs text-muted-foreground">
           {t("settings.forwardingVerifyRequired")}
@@ -1645,7 +1800,9 @@ function SignatureField({
 }) {
   return (
     <div>
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <label className="text-xs font-medium text-muted-foreground">
+        {label}
+      </label>
       <div className="relative mt-1.5">
         <Icon
           className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500"
@@ -1679,7 +1836,9 @@ function SignatureModal({
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState(s.name || displayName || account.ownerName);
-  const [jobTitle, setJobTitle] = useState(s.jobTitle || account.mailPreferences.jobTitle);
+  const [jobTitle, setJobTitle] = useState(
+    s.jobTitle || account.mailPreferences.jobTitle,
+  );
   const [includePhoto, setIncludePhoto] = useState(s.includePhoto);
   const [phone, setPhone] = useState(s.phone);
   const [website, setWebsite] = useState(s.website);
@@ -1687,7 +1846,9 @@ function SignatureModal({
   const [linkedin, setLinkedin] = useState(s.linkedin);
   const [facebook, setFacebook] = useState(s.facebook);
   const [instagram, setInstagram] = useState(s.instagram);
-  const [includeInNewEmails, setIncludeInNewEmails] = useState(s.includeInNewEmails);
+  const [includeInNewEmails, setIncludeInNewEmails] = useState(
+    s.includeInNewEmails,
+  );
   const [includeInReplies, setIncludeInReplies] = useState(s.includeInReplies);
 
   const previewSettings: SignatureSettings = {
@@ -1707,7 +1868,9 @@ function SignatureModal({
     linkedin && { Icon: Linkedin, handle: linkedin },
     facebook && { Icon: Facebook, handle: facebook },
     instagram && { Icon: Instagram, handle: instagram },
-  ].filter((item): item is { Icon: LucideIcon; handle: string } => Boolean(item));
+  ].filter((item): item is { Icon: LucideIcon; handle: string } =>
+    Boolean(item),
+  );
   const hasPreviewContent = Boolean(
     name || jobTitle || phone || website || address || socialIcons.length > 0,
   );
@@ -1742,7 +1905,9 @@ function SignatureModal({
         className="relative flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl shadow-slate-300/60 dark:shadow-black/40"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{t("settings.signatureTitle")}</h2>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            {t("settings.signatureTitle")}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -1863,7 +2028,9 @@ function SignatureModal({
                     ))}
                   <div className="flex min-w-0 flex-col gap-1">
                     {name && (
-                      <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{name}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                        {name}
+                      </p>
                     )}
                     {jobTitle && (
                       <p className="flex items-center gap-1.5 truncate text-sm text-slate-600 dark:text-slate-400">
@@ -1876,19 +2043,28 @@ function SignatureModal({
                     )}
                     {phone && (
                       <p className="flex items-center gap-1.5 truncate text-sm text-slate-600 dark:text-slate-400">
-                        <Phone className="size-3.5 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+                        <Phone
+                          className="size-3.5 shrink-0 text-slate-400 dark:text-slate-500"
+                          strokeWidth={1.5}
+                        />
                         <span className="truncate">{phone}</span>
                       </p>
                     )}
                     {website && (
                       <p className="flex items-center gap-1.5 truncate text-sm text-slate-600 dark:text-slate-400">
-                        <Globe className="size-3.5 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+                        <Globe
+                          className="size-3.5 shrink-0 text-slate-400 dark:text-slate-500"
+                          strokeWidth={1.5}
+                        />
                         <span className="truncate">{website}</span>
                       </p>
                     )}
                     {address && (
                       <p className="flex items-center gap-1.5 truncate text-sm text-slate-600 dark:text-slate-400">
-                        <MapPin className="size-3.5 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+                        <MapPin
+                          className="size-3.5 shrink-0 text-slate-400 dark:text-slate-500"
+                          strokeWidth={1.5}
+                        />
                         <span className="truncate">{address}</span>
                       </p>
                     )}
@@ -1900,8 +2076,13 @@ function SignatureModal({
                             title={handle}
                             className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400"
                           >
-                            <Icon className="size-3.5 shrink-0 text-slate-500 dark:text-slate-400" strokeWidth={1.5} />
-                            <span className="max-w-[110px] truncate">{handle}</span>
+                            <Icon
+                              className="size-3.5 shrink-0 text-slate-500 dark:text-slate-400"
+                              strokeWidth={1.5}
+                            />
+                            <span className="max-w-[110px] truncate">
+                              {handle}
+                            </span>
                           </span>
                         ))}
                       </div>
@@ -2000,7 +2181,13 @@ const IMPORT_PROVIDERS: ImportProvider[] = [
 const IMPORT_FIELD_CLASS =
   "mt-1.5 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 outline-none transition-all duration-200 placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20";
 
-function ImportProviderBadge({ provider, large }: { provider: ImportProvider; large?: boolean }) {
+function ImportProviderBadge({
+  provider,
+  large,
+}: {
+  provider: ImportProvider;
+  large?: boolean;
+}) {
   const dimension = large ? "size-11" : "size-9";
   if (provider.id === "imap") {
     return (
@@ -2038,10 +2225,12 @@ function ImportMailModal({
   onComplete: (provider: string) => void;
 }) {
   const t = useTranslations("Dashboard.mailPage");
-  const [step, setStep] = useState<"select" | "connect" | "options" | "importing" | "success">(
-    "select",
+  const [step, setStep] = useState<
+    "select" | "connect" | "options" | "importing" | "success"
+  >("select");
+  const [providerId, setProviderId] = useState<ImportProvider["id"] | null>(
+    null,
   );
-  const [providerId, setProviderId] = useState<ImportProvider["id"] | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [imapHost, setImapHost] = useState("");
@@ -2059,7 +2248,10 @@ function ImportMailModal({
     if (step !== "importing") return;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const next = Math.min(IMPORT_TOTAL_MESSAGES, prev + Math.round(IMPORT_TOTAL_MESSAGES / 12));
+        const next = Math.min(
+          IMPORT_TOTAL_MESSAGES,
+          prev + Math.round(IMPORT_TOTAL_MESSAGES / 12),
+        );
         if (next >= IMPORT_TOTAL_MESSAGES) {
           clearInterval(interval);
           setTimeout(() => setStep("success"), 400);
@@ -2081,7 +2273,9 @@ function ImportMailModal({
   }
 
   const canContinueFromConnect =
-    provider?.id === "imap" ? Boolean(imapHost.trim() && email.trim()) : Boolean(email.trim());
+    provider?.id === "imap"
+      ? Boolean(imapHost.trim() && email.trim())
+      : Boolean(email.trim());
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -2122,7 +2316,9 @@ function ImportMailModal({
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                   {t("import.selectTitle")}
                 </h3>
-                <p className="mt-1 text-sm text-muted-foreground">{t("import.selectDescription")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("import.selectDescription")}
+                </p>
               </div>
               <div className="flex flex-col gap-2.5">
                 {IMPORT_PROVIDERS.map((p) => (
@@ -2137,7 +2333,9 @@ function ImportMailModal({
                       <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
                         {t(p.labelKey)}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">{t(p.sublabelKey)}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {t(p.sublabelKey)}
+                      </p>
                     </div>
                   </button>
                 ))}
@@ -2153,7 +2351,9 @@ function ImportMailModal({
                   {t("import.connectTitle", { provider: providerLabel })}
                 </h3>
               </div>
-              <p className="text-sm text-muted-foreground">{t("import.connectDescription")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("import.connectDescription")}
+              </p>
 
               {provider.id === "imap" && (
                 <div>
@@ -2168,7 +2368,11 @@ function ImportMailModal({
                   />
                 </div>
               )}
-              <div className={cn(provider.id === "imap" && "grid grid-cols-2 gap-3")}>
+              <div
+                className={cn(
+                  provider.id === "imap" && "grid grid-cols-2 gap-3",
+                )}
+              >
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">
                     {t("import.emailAddress")}
@@ -2272,7 +2476,9 @@ function ImportMailModal({
                 </label>
                 <select
                   value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
+                  onChange={(e) =>
+                    setDateRange(e.target.value as typeof dateRange)
+                  }
                   className={IMPORT_FIELD_CLASS}
                 >
                   <option value="all">{t("import.dateRangeAll")}</option>
@@ -2301,7 +2507,10 @@ function ImportMailModal({
 
           {step === "importing" && (
             <div className="flex flex-col items-center gap-4 p-10 text-center">
-              <Loader2 className="size-8 animate-spin text-primary" strokeWidth={1.5} />
+              <Loader2
+                className="size-8 animate-spin text-primary"
+                strokeWidth={1.5}
+              />
               <h3 className="text-base font-semibold text-slate-900 dark:text-slate-50">
                 {t("import.importingTitle", { provider: providerLabel })}
               </h3>
@@ -2312,11 +2521,16 @@ function ImportMailModal({
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                   <div
                     className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
-                    style={{ width: `${(progress / IMPORT_TOTAL_MESSAGES) * 100}%` }}
+                    style={{
+                      width: `${(progress / IMPORT_TOTAL_MESSAGES) * 100}%`,
+                    }}
                   />
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {t("import.importingCount", { count: progress, total: IMPORT_TOTAL_MESSAGES })}
+                  {t("import.importingCount", {
+                    count: progress,
+                    total: IMPORT_TOTAL_MESSAGES,
+                  })}
                 </p>
               </div>
             </div>
@@ -2382,7 +2596,8 @@ function MailSettingsView({
   }) => Promise<boolean>;
   onSaveSignature: (payload: SignatureSettings) => Promise<boolean>;
   onImportComplete: (provider: string) => void;
-  initialModal?: "profile" | "security" | "forwarding" | "signature" | "import" | null;
+  initialModal?:
+    "profile" | "security" | "forwarding" | "signature" | "import" | null;
 }) {
   const t = useTranslations("Dashboard.mailPage");
   const [activeModal, setActiveModal] = useState<
@@ -2392,8 +2607,12 @@ function MailSettingsView({
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 pt-4">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">{t("settingsNav")}</h2>
-        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{t("settings.pageSubtitle")}</p>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+          {t("settingsNav")}
+        </h2>
+        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+          {t("settings.pageSubtitle")}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -2477,7 +2696,13 @@ function MailSettingsView({
   );
 }
 
-const VOICE_CARD_COLORS = ["#FBB02D", "#FB6107", "#5C8001", "#7c3aed", "#0891b2"];
+const VOICE_CARD_COLORS = [
+  "#FBB02D",
+  "#FB6107",
+  "#5C8001",
+  "#7c3aed",
+  "#0891b2",
+];
 const VOICE_WAVEFORM_BAR_COUNT = 28;
 
 function VoiceMessageCard({
@@ -2505,7 +2730,10 @@ function VoiceMessageCard({
 
   const bars = useMemo(
     () =>
-      Array.from({ length: VOICE_WAVEFORM_BAR_COUNT }, (_, i) => 25 + ((i * 37) % 65)),
+      Array.from(
+        { length: VOICE_WAVEFORM_BAR_COUNT },
+        (_, i) => 25 + ((i * 37) % 65),
+      ),
     [],
   );
 
@@ -2545,7 +2773,8 @@ function VoiceMessageCard({
   }
 
   const displaySeconds = currentTime > 0 ? currentTime : totalSeconds;
-  const progress = totalSeconds > 0 ? Math.min(1, currentTime / totalSeconds) : 0;
+  const progress =
+    totalSeconds > 0 ? Math.min(1, currentTime / totalSeconds) : 0;
 
   return (
     <div className="flex w-full max-w-xs items-center gap-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm">
@@ -2555,7 +2784,11 @@ function VoiceMessageCard({
       >
         {recorderAvatarDataUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={recorderAvatarDataUrl} alt="" className="size-full object-cover" />
+          <img
+            src={recorderAvatarDataUrl}
+            alt=""
+            className="size-full object-cover"
+          />
         ) : (
           <span className="text-sm font-semibold text-white">
             {(recorderName || "?").charAt(0).toUpperCase()}
@@ -2575,14 +2808,19 @@ function VoiceMessageCard({
           <button
             type="button"
             onClick={togglePlay}
-            aria-label={isPlaying ? t("pauseVoiceMessage") : t("playVoiceMessage")}
+            aria-label={
+              isPlaying ? t("pauseVoiceMessage") : t("playVoiceMessage")
+            }
             style={{ backgroundColor: color }}
             className="flex size-7 shrink-0 items-center justify-center rounded-full text-white transition-transform hover:scale-105"
           >
             {isPlaying ? (
               <Pause className="size-3.5 fill-current" strokeWidth={1.5} />
             ) : (
-              <Play className="ml-0.5 size-3.5 fill-current" strokeWidth={1.5} />
+              <Play
+                className="ml-0.5 size-3.5 fill-current"
+                strokeWidth={1.5}
+              />
             )}
           </button>
           <div className="flex h-6 min-w-0 flex-1 items-center gap-[2px] overflow-hidden">
@@ -2595,7 +2833,10 @@ function VoiceMessageCard({
                     "w-[2px] shrink-0 rounded-full",
                     !active && "bg-slate-200 dark:bg-slate-700",
                   )}
-                  style={{ height: `${height}%`, backgroundColor: active ? color : undefined }}
+                  style={{
+                    height: `${height}%`,
+                    backgroundColor: active ? color : undefined,
+                  }}
                 />
               );
             })}
@@ -2615,7 +2856,9 @@ function VoiceMessageCard({
           <X className="size-3.5" strokeWidth={1.5} />
         </button>
       )}
-      {audioDataUrl && <audio ref={audioRef} src={audioDataUrl} className="hidden" />}
+      {audioDataUrl && (
+        <audio ref={audioRef} src={audioDataUrl} className="hidden" />
+      )}
     </div>
   );
 }
@@ -2659,8 +2902,11 @@ function VoiceRecorderPanel({
   useEffect(() => {
     return () => {
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-      if (visualizerFrameRef.current) cancelAnimationFrame(visualizerFrameRef.current);
-      mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+      if (visualizerFrameRef.current)
+        cancelAnimationFrame(visualizerFrameRef.current);
+      mediaRecorderRef.current?.stream
+        .getTracks()
+        .forEach((track) => track.stop());
       audioContextRef.current?.close();
     };
   }, []);
@@ -2679,7 +2925,10 @@ function VoiceRecorderPanel({
     analyserRef.current = analyser;
 
     const data = new Uint8Array(analyser.frequencyBinCount);
-    const step = Math.max(1, Math.floor(data.length / VOICE_WAVEFORM_BAR_COUNT));
+    const step = Math.max(
+      1,
+      Math.floor(data.length / VOICE_WAVEFORM_BAR_COUNT),
+    );
 
     function tick() {
       if (!analyserRef.current) return;
@@ -2770,7 +3019,9 @@ function VoiceRecorderPanel({
   async function handleAttach() {
     const blob = audioBlobRef.current;
     if (!audioDataUrl || !blob) return;
-    const name = t("voiceMessageName", { duration: formatDuration(durationSec) });
+    const name = t("voiceMessageName", {
+      duration: formatDuration(durationSec),
+    });
 
     const data = new Uint8Array(await blob.arrayBuffer());
     const [uploaded] = await uploadFiles([
@@ -2835,7 +3086,11 @@ function VoiceRecorderPanel({
             >
               {recorderAvatarDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={recorderAvatarDataUrl} alt="" className="size-full object-cover" />
+                <img
+                  src={recorderAvatarDataUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
               ) : (
                 <span className="text-lg font-semibold text-white">
                   {(recorderName || "?").charAt(0).toUpperCase()}
@@ -2865,28 +3120,35 @@ function VoiceRecorderPanel({
                       style={{ backgroundColor: cardColor }}
                       className="flex size-16 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105"
                     >
-                      <Square className="size-6 fill-current" strokeWidth={1.5} />
+                      <Square
+                        className="size-6 fill-current"
+                        strokeWidth={1.5}
+                      />
                     </button>
                     <span className="size-9 shrink-0" aria-hidden />
                   </div>
                   <div className="flex h-10 w-full items-end justify-center gap-[3px] px-2">
-                    {Array.from({ length: VOICE_WAVEFORM_BAR_COUNT }).map((_, i) => (
-                      <span
-                        key={i}
-                        ref={(el) => {
-                          barRefs.current[i] = el;
-                        }}
-                        className="w-[3px] shrink-0 rounded-full transition-[height] duration-75 ease-out"
-                        style={{ height: "12%", backgroundColor: cardColor }}
-                      />
-                    ))}
+                    {Array.from({ length: VOICE_WAVEFORM_BAR_COUNT }).map(
+                      (_, i) => (
+                        <span
+                          key={i}
+                          ref={(el) => {
+                            barRefs.current[i] = el;
+                          }}
+                          className="w-[3px] shrink-0 rounded-full transition-[height] duration-75 ease-out"
+                          style={{ height: "12%", backgroundColor: cardColor }}
+                        />
+                      ),
+                    )}
                   </div>
                   <span className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                     <span className="relative flex size-2">
                       <span className="absolute inline-flex size-full animate-ping rounded-full bg-destructive opacity-75" />
                       <span className="relative inline-flex size-2 rounded-full bg-destructive" />
                     </span>
-                    <span className="font-mono">{formatDuration(recordingSeconds)}</span>
+                    <span className="font-mono">
+                      {formatDuration(recordingSeconds)}
+                    </span>
                   </span>
                 </>
               ) : audioDataUrl ? (
@@ -2921,7 +3183,9 @@ function VoiceRecorderPanel({
           </div>
 
           <div className="mt-5">
-            <p className="text-xs font-medium text-muted-foreground">{t("cardColor")}</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              {t("cardColor")}
+            </p>
             <div className="mt-2 flex items-center gap-2">
               {VOICE_CARD_COLORS.map((color) => (
                 <button
@@ -2950,7 +3214,8 @@ function VoiceRecorderPanel({
             style={audioDataUrl ? { backgroundColor: cardColor } : undefined}
             className={cn(
               "w-full rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:brightness-95 active:scale-95",
-              !audioDataUrl && "cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500",
+              !audioDataUrl &&
+                "cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500",
             )}
           >
             {t("attachToMail")}
@@ -3049,7 +3314,11 @@ const ComposerBody = forwardRef<
 
   function saveSelection() {
     const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0 && editorRef.current?.contains(sel.anchorNode)) {
+    if (
+      sel &&
+      sel.rangeCount > 0 &&
+      editorRef.current?.contains(sel.anchorNode)
+    ) {
       savedRangeRef.current = sel.getRangeAt(0).cloneRange();
     }
   }
@@ -3060,13 +3329,20 @@ const ComposerBody = forwardRef<
     exec("createLink", url);
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, kind: "doc" | "image") {
+  async function handleFileChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+    kind: "doc" | "image",
+  ) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
 
     const type: EmailAttachment["type"] =
-      kind === "image" ? "image" : file.name.toLowerCase().endsWith(".pdf") ? "pdf" : "doc";
+      kind === "image"
+        ? "image"
+        : file.name.toLowerCase().endsWith(".pdf")
+          ? "pdf"
+          : "doc";
     const placeholder: EmailAttachment = {
       name: file.name,
       sizeKb: Math.max(1, Math.round(file.size / 1024)),
@@ -3332,7 +3608,9 @@ const ComposerBody = forwardRef<
 
       {schedule?.enabled && (
         <div className="flex items-center gap-2 px-4 pt-3">
-          <label className="text-xs font-medium text-muted-foreground">{t("sendAt")}</label>
+          <label className="text-xs font-medium text-muted-foreground">
+            {t("sendAt")}
+          </label>
           <input
             type="datetime-local"
             value={schedule.date}
@@ -3348,7 +3626,10 @@ const ComposerBody = forwardRef<
             type="button"
             title={t("formattingOptions")}
             onClick={() => setFormattingOpen((v) => !v)}
-            className={cn(toolbarButtonClass, formattingOpen && "bg-primary/10 text-primary")}
+            className={cn(
+              toolbarButtonClass,
+              formattingOpen && "bg-primary/10 text-primary",
+            )}
           >
             <Type className="size-4" strokeWidth={1.5} />
           </button>
@@ -3380,7 +3661,11 @@ const ComposerBody = forwardRef<
           </button>
           <button
             type="button"
-            title={voiceNotesEnabled ? t("recordVoiceMessage") : t("voiceNotesUpsellTitle")}
+            title={
+              voiceNotesEnabled
+                ? t("recordVoiceMessage")
+                : t("voiceNotesUpsellTitle")
+            }
             onClick={() => {
               if (!voiceNotesEnabled) {
                 show(t("voiceNotesUpsell"), "info");
@@ -3396,13 +3681,18 @@ const ComposerBody = forwardRef<
             type="button"
             title={confidential ? t("confidentialOn") : t("confidentialMode")}
             onClick={() => setConfidential((v) => !v)}
-            className={cn(toolbarButtonClass, confidential && "bg-primary/10 text-primary")}
+            className={cn(
+              toolbarButtonClass,
+              confidential && "bg-primary/10 text-primary",
+            )}
           >
             <Lock className="size-4" strokeWidth={1.5} />
           </button>
           <button
             type="button"
-            title={signature.trim() ? t("insertSignature") : t("noSignatureSet")}
+            title={
+              signature.trim() ? t("insertSignature") : t("noSignatureSet")
+            }
             onMouseDown={preserveSelection}
             onClick={handleInsertSignature}
             className={toolbarButtonClass}
@@ -3412,9 +3702,14 @@ const ComposerBody = forwardRef<
           {schedule && (
             <button
               type="button"
-              title={schedule.enabled ? t("scheduleSendOff") : t("scheduleSend")}
+              title={
+                schedule.enabled ? t("scheduleSendOff") : t("scheduleSend")
+              }
               onClick={schedule.onToggle}
-              className={cn(toolbarButtonClass, schedule.enabled && "bg-primary/10 text-primary")}
+              className={cn(
+                toolbarButtonClass,
+                schedule.enabled && "bg-primary/10 text-primary",
+              )}
             >
               <Clock className="size-4" strokeWidth={1.5} />
             </button>
@@ -3548,7 +3843,12 @@ function ReplyComposer({
         )}
       >
         {header}
-        <div className={cn("flex flex-col", expanded && "min-h-0 flex-1 overflow-y-auto")}>
+        <div
+          className={cn(
+            "flex flex-col",
+            expanded && "min-h-0 flex-1 overflow-y-auto",
+          )}
+        >
           <ComposerBody
             ref={composerRef}
             signature={signature}
@@ -3598,7 +3898,9 @@ function MailSidebar({
 }) {
   const t = useTranslations("Dashboard.mailPage");
   const tNav = useTranslations("Dashboard.nav");
-  const foldersActive = viewMode === "folders" || (viewMode === "mail" && selection.type === "custom");
+  const foldersActive =
+    viewMode === "folders" ||
+    (viewMode === "mail" && selection.type === "custom");
 
   const navButtonClass = (active: boolean) =>
     cn(
@@ -3608,7 +3910,12 @@ function MailSidebar({
     );
 
   const navIconClass = (active: boolean) =>
-    cn("size-5 shrink-0", active ? "text-primary" : "text-slate-500 dark:text-slate-400 group-hover:text-primary");
+    cn(
+      "size-5 shrink-0",
+      active
+        ? "text-primary"
+        : "text-slate-500 dark:text-slate-400 group-hover:text-primary",
+    );
 
   const navLabelClass = (active: boolean) =>
     cn(
@@ -3635,148 +3942,184 @@ function MailSidebar({
           collapsed ? "lg:w-[72px]" : "lg:w-64",
         )}
       >
-      <div
-        className={cn(
-          "flex h-16 items-center gap-2 px-4",
-          collapsed && "justify-center px-0",
-        )}
-      >
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          aria-label={collapsed ? tNav("expand") : tNav("collapse")}
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 transition-colors hover:bg-primary/10 hover:text-primary"
-        >
-          <Menu className="size-5" strokeWidth={1.5} />
-        </button>
-        {!collapsed && <Logo className="h-6 w-auto text-foreground" />}
-      </div>
-
-      <div className="px-3 pb-2">
-        <Button
+        <div
           className={cn(
-            "w-full hover:brightness-110",
-            premiumButton,
+            "flex h-16 items-center gap-2 px-4",
             collapsed && "justify-center px-0",
           )}
-          onClick={() => {
-            onCompose();
-            onCloseMobile();
-          }}
         >
-          <SquarePen className="size-5" strokeWidth={1.5} />
-          {!collapsed && t("compose")}
-        </Button>
-      </div>
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? tNav("expand") : tNav("collapse")}
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 transition-colors hover:bg-primary/10 hover:text-primary"
+          >
+            <Menu className="size-5" strokeWidth={1.5} />
+          </button>
+          {!collapsed && <Logo className="h-6 w-auto text-foreground" />}
+        </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pt-2">
-        {FOLDER_ORDER.map((folder) => {
-          const Icon = FOLDER_ICONS[folder];
-          const active =
-            viewMode === "mail" && selection.type === "folder" && selection.folder === folder;
-          const count = unreadCounts[folder] ?? 0;
-          return (
+        <div className="px-3 pb-2">
+          <Button
+            className={cn(
+              "w-full hover:brightness-110",
+              premiumButton,
+              collapsed && "justify-center px-0",
+            )}
+            onClick={() => {
+              onCompose();
+              onCloseMobile();
+            }}
+          >
+            <SquarePen className="size-5" strokeWidth={1.5} />
+            {!collapsed && t("compose")}
+          </Button>
+        </div>
+
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pt-2">
+          {FOLDER_ORDER.map((folder) => {
+            const Icon = FOLDER_ICONS[folder];
+            const active =
+              viewMode === "mail" &&
+              selection.type === "folder" &&
+              selection.folder === folder;
+            const count = unreadCounts[folder] ?? 0;
+            return (
+              <button
+                key={folder}
+                type="button"
+                title={collapsed ? t(`folders.${folder}`) : undefined}
+                onClick={() => {
+                  onSelectFolder(folder);
+                  onCloseMobile();
+                }}
+                className={navButtonClass(active)}
+              >
+                <span
+                  className={cn(
+                    "flex items-center gap-2.5",
+                    collapsed && "justify-center",
+                  )}
+                >
+                  <Icon className={navIconClass(active)} strokeWidth={1.5} />
+                  {!collapsed && (
+                    <span className={navLabelClass(active)}>
+                      {t(`folders.${folder}`)}
+                    </span>
+                  )}
+                </span>
+                {!collapsed && count > 0 && (
+                  <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          <div className="mt-1 flex flex-col gap-1">
             <button
-              key={folder}
               type="button"
-              title={collapsed ? t(`folders.${folder}`) : undefined}
+              title={collapsed ? t("foldersSection") : undefined}
               onClick={() => {
-                onSelectFolder(folder);
+                onFolders();
                 onCloseMobile();
               }}
-              className={navButtonClass(active)}
+              className={navButtonClass(foldersActive)}
             >
-              <span className={cn("flex items-center gap-2.5", collapsed && "justify-center")}>
-                <Icon className={navIconClass(active)} strokeWidth={1.5} />
-                {!collapsed && <span className={navLabelClass(active)}>{t(`folders.${folder}`)}</span>}
+              <span
+                className={cn(
+                  "flex items-center gap-2.5",
+                  collapsed && "justify-center",
+                )}
+              >
+                <Folder
+                  className={navIconClass(foldersActive)}
+                  strokeWidth={1.5}
+                />
+                {!collapsed && (
+                  <span className={navLabelClass(foldersActive)}>
+                    {t("foldersSection")}
+                  </span>
+                )}
               </span>
-              {!collapsed && count > 0 && (
-                <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                  {count}
-                </span>
-              )}
             </button>
-          );
-        })}
+            <button
+              type="button"
+              title={collapsed ? t("contacts") : undefined}
+              onClick={() => {
+                onContacts();
+                onCloseMobile();
+              }}
+              className={navButtonClass(viewMode === "contacts")}
+            >
+              <span
+                className={cn(
+                  "flex items-center gap-2.5",
+                  collapsed && "justify-center",
+                )}
+              >
+                <Users
+                  className={navIconClass(viewMode === "contacts")}
+                  strokeWidth={1.5}
+                />
+                {!collapsed && (
+                  <span className={navLabelClass(viewMode === "contacts")}>
+                    {t("contacts")}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              title={collapsed ? t("settingsNav") : undefined}
+              onClick={() => {
+                onSettings();
+                onCloseMobile();
+              }}
+              className={navButtonClass(viewMode === "settings")}
+            >
+              <span
+                className={cn(
+                  "flex items-center gap-2.5",
+                  collapsed && "justify-center",
+                )}
+              >
+                <SettingsIcon
+                  className={navIconClass(viewMode === "settings")}
+                  strokeWidth={1.5}
+                />
+                {!collapsed && (
+                  <span className={navLabelClass(viewMode === "settings")}>
+                    {t("settingsNav")}
+                  </span>
+                )}
+              </span>
+            </button>
+          </div>
+        </nav>
 
-        <div className="mt-1 flex flex-col gap-1">
+        <div className="border-t border-slate-200 dark:border-slate-800 p-3">
           <button
             type="button"
-            title={collapsed ? t("foldersSection") : undefined}
-            onClick={() => {
-              onFolders();
-              onCloseMobile();
-            }}
-            className={navButtonClass(foldersActive)}
+            title={collapsed ? t("logout") : undefined}
+            onClick={onLogout}
+            className={cn(
+              "group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-destructive/10",
+              collapsed && "justify-center",
+            )}
           >
-            <span className={cn("flex items-center gap-2.5", collapsed && "justify-center")}>
-              <Folder className={navIconClass(foldersActive)} strokeWidth={1.5} />
-              {!collapsed && (
-                <span className={navLabelClass(foldersActive)}>{t("foldersSection")}</span>
-              )}
-            </span>
-          </button>
-          <button
-            type="button"
-            title={collapsed ? t("contacts") : undefined}
-            onClick={() => {
-              onContacts();
-              onCloseMobile();
-            }}
-            className={navButtonClass(viewMode === "contacts")}
-          >
-            <span className={cn("flex items-center gap-2.5", collapsed && "justify-center")}>
-              <Users className={navIconClass(viewMode === "contacts")} strokeWidth={1.5} />
-              {!collapsed && (
-                <span className={navLabelClass(viewMode === "contacts")}>{t("contacts")}</span>
-              )}
-            </span>
-          </button>
-          <button
-            type="button"
-            title={collapsed ? t("settingsNav") : undefined}
-            onClick={() => {
-              onSettings();
-              onCloseMobile();
-            }}
-            className={navButtonClass(viewMode === "settings")}
-          >
-            <span className={cn("flex items-center gap-2.5", collapsed && "justify-center")}>
-              <SettingsIcon
-                className={navIconClass(viewMode === "settings")}
-                strokeWidth={1.5}
-              />
-              {!collapsed && (
-                <span className={navLabelClass(viewMode === "settings")}>
-                  {t("settingsNav")}
-                </span>
-              )}
-            </span>
+            <LogOut
+              className="size-5 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-destructive"
+              strokeWidth={1.5}
+            />
+            {!collapsed && (
+              <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-destructive">
+                {t("logout")}
+              </span>
+            )}
           </button>
         </div>
-      </nav>
-
-      <div className="border-t border-slate-200 dark:border-slate-800 p-3">
-        <button
-          type="button"
-          title={collapsed ? t("logout") : undefined}
-          onClick={onLogout}
-          className={cn(
-            "group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-destructive/10",
-            collapsed && "justify-center",
-          )}
-        >
-          <LogOut
-            className="size-5 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-destructive"
-            strokeWidth={1.5}
-          />
-          {!collapsed && (
-            <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-destructive">
-              {t("logout")}
-            </span>
-          )}
-        </button>
-      </div>
       </div>
     </>
   );
@@ -3794,7 +4137,10 @@ export default function MailPage() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [messages, setMessages] = useState<EmailMessage[]>([]);
-  const [selection, setSelection] = useState<Selection>({ type: "folder", folder: "inbox" });
+  const [selection, setSelection] = useState<Selection>({
+    type: "folder",
+    folder: "inbox",
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [replyOpen, setReplyOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -3802,64 +4148,110 @@ export default function MailPage() {
   const [composeTo, setComposeTo] = useState<string | undefined>(undefined);
   const [composeAutoSchedule, setComposeAutoSchedule] = useState(false);
   const [forwardingId, setForwardingId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"mail" | "contacts" | "folders" | "settings">("mail");
-  const [settingsAutoOpenModal, setSettingsAutoOpenModal] = useState<"signature" | null>(null);
+  const [viewMode, setViewMode] = useState<
+    "mail" | "contacts" | "folders" | "settings"
+  >("mail");
+  const [settingsAutoOpenModal, setSettingsAutoOpenModal] = useState<
+    "signature" | null
+  >(null);
   const [folders, setFolders] = useState<FolderRecord[]>([]);
   const [displayName, setDisplayName] = useState("");
   const signature = account
-    ? buildSignatureHtml(account.mailPreferences.signature, account.mailPreferences.avatarDataUrl)
+    ? buildSignatureHtml(
+        account.mailPreferences.signature,
+        account.mailPreferences.avatarDataUrl,
+      )
     : "";
-  const [detailContact, setDetailContact] = useState<SenderContact | null>(null);
+  const [detailContact, setDetailContact] = useState<SenderContact | null>(
+    null,
+  );
   const [contactSearch, setContactSearch] = useState("");
 
   useEffect(() => {
-    const stored = loadAccount();
-    if (!stored) {
-      router.replace("/onboarding");
-      return;
-    }
-    setAccount(stored);
-    setDisplayName(stored.ownerName);
-    setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "1");
-    setChecked(true);
+    (async () => {
+      // loadAccount() only ever reflects the device/browser the onboarding
+      // wizard was completed on — a new device or a cleared browser means
+      // it comes back null even for a fully onboarded user. In that case,
+      // build the same shape from real backend data instead of bouncing
+      // the user out of their own mailbox; the getMailAccountProfile()/
+      // getSignature() calls below fill in the parts that matter (2FA,
+      // forwarding, signature) from the server either way.
+      let account = loadAccount();
+      if (!account) {
+        const [domains, user] = await Promise.all([
+          listDomains(),
+          getProfile(),
+        ]);
+        if (domains.length === 0) {
+          router.replace("/onboarding");
+          return;
+        }
+        account = {
+          hasDomain: true,
+          domain: domains[0].name,
+          domainPrice: null,
+          plan: "core",
+          mailboxes: [],
+          roleAliases: [],
+          dnsVerified: domains[0].verified,
+          stage: "complete",
+          createdAt: new Date().toISOString(),
+          branding: defaultBranding(),
+          ownerName: user ? `${user.firstName} ${user.lastName}`.trim() : "",
+          mailPreferences: defaultMailPreferences(),
+          subscriptionStatus: "active",
+          subscriptionId: null,
+        };
+      }
+      setAccount(account);
+      setDisplayName(account.ownerName);
+      setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "1");
+      setChecked(true);
 
-    fetchAllMailMessages().then(setMessages);
-    getFolders().then(setFolders);
+      fetchAllMailMessages().then(setMessages);
+      getFolders().then(setFolders);
 
-    getMailAccountProfile().then((profile) => {
-      if (!profile) return;
-      setAccount((prev) =>
-        prev
-          ? {
-              ...prev,
-              mailPreferences: {
-                ...prev.mailPreferences,
-                twoFactorEnabled: profile.twoFactorEnabled ?? prev.mailPreferences.twoFactorEnabled,
-                forwardingEmail: profile.forwardingEmail ?? prev.mailPreferences.forwardingEmail,
-                forwardingVerified:
-                  profile.forwardingVerified ?? prev.mailPreferences.forwardingVerified,
-                keepForwardedCopy:
-                  profile.keepForwardedCopy ?? prev.mailPreferences.keepForwardedCopy,
-              },
-            }
-          : prev,
-      );
-    });
+      getMailAccountProfile().then((profile) => {
+        if (!profile) return;
+        setAccount((prev) =>
+          prev
+            ? {
+                ...prev,
+                mailPreferences: {
+                  ...prev.mailPreferences,
+                  twoFactorEnabled:
+                    profile.twoFactorEnabled ??
+                    prev.mailPreferences.twoFactorEnabled,
+                  forwardingEmail:
+                    profile.forwardingEmail ??
+                    prev.mailPreferences.forwardingEmail,
+                  forwardingVerified:
+                    profile.forwardingVerified ??
+                    prev.mailPreferences.forwardingVerified,
+                  keepForwardedCopy:
+                    profile.keepForwardedCopy ??
+                    prev.mailPreferences.keepForwardedCopy,
+                },
+              }
+            : prev,
+        );
+      });
 
-    getSignature().then((signature) => {
-      if (!signature) return;
-      setAccount((prev) =>
-        prev
-          ? {
-              ...prev,
-              mailPreferences: {
-                ...prev.mailPreferences,
-                signature: signatureToSettings(signature),
-              },
-            }
-          : prev,
-      );
-    });
+      getSignature().then((signature) => {
+        if (!signature) return;
+        setAccount((prev) =>
+          prev
+            ? {
+                ...prev,
+                mailPreferences: {
+                  ...prev.mailPreferences,
+                  signature: signatureToSettings(signature),
+                },
+              }
+            : prev,
+        );
+      });
+    })();
   }, [router]);
 
   const unreadCounts = useMemo(() => {
@@ -3867,9 +4259,12 @@ export default function MailPage() {
     for (const folder of FOLDER_ORDER) {
       counts[folder] =
         folder === "important"
-          ? messages.filter((m) => m.starred && !m.read && m.folder !== "trash").length
+          ? messages.filter((m) => m.starred && !m.read && m.folder !== "trash")
+              .length
           : folder === "inbox"
-            ? messages.filter((m) => m.folder === "inbox" && !m.read && !m.archived).length
+            ? messages.filter(
+                (m) => m.folder === "inbox" && !m.read && !m.archived,
+              ).length
             : messages.filter((m) => m.folder === folder && !m.read).length;
     }
     return counts;
@@ -3877,7 +4272,9 @@ export default function MailPage() {
 
   const folderMessages = useMemo(() => {
     if (selection.type === "custom") {
-      return messages.filter((m) => m.folderId === selection.id && m.folder !== "trash");
+      return messages.filter(
+        (m) => m.folderId === selection.id && m.folder !== "trash",
+      );
     }
     if (selection.folder === "important") {
       return messages.filter((m) => m.starred && m.folder !== "trash");
@@ -3899,11 +4296,16 @@ export default function MailPage() {
             m.preview.toLowerCase().includes(query),
         )
       : folderMessages;
-    return [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return [...filtered].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
   }, [folderMessages, search]);
 
   const contacts = useMemo(() => {
-    const map = new Map<string, { name: string; lastActivity: string; messageCount: number }>();
+    const map = new Map<
+      string,
+      { name: string; lastActivity: string; messageCount: number }
+    >();
     function record(email: string, name: string, date: string) {
       const existing = map.get(email);
       if (existing) {
@@ -3928,9 +4330,15 @@ export default function MailPage() {
         name: info.name,
         lastActivity: info.lastActivity,
         messageCount: info.messageCount,
-        isTeam: domain ? email.toLowerCase().endsWith(`@${domain.toLowerCase()}`) : false,
+        isTeam: domain
+          ? email.toLowerCase().endsWith(`@${domain.toLowerCase()}`)
+          : false,
       }))
-      .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.lastActivity).getTime() -
+          new Date(a.lastActivity).getTime(),
+      );
   }, [messages, account]);
 
   const selected = messages.find((m) => m.id === selectedId) ?? null;
@@ -3977,7 +4385,9 @@ export default function MailPage() {
     }
     setFolders((prev) => prev.filter((f) => f.id !== folder.id));
     setMessages((prev) =>
-      prev.map((m) => (m.folderId === folder.id ? { ...m, folderId: null } : m)),
+      prev.map((m) =>
+        m.folderId === folder.id ? { ...m, folderId: null } : m,
+      ),
     );
     if (selection.type === "custom" && selection.id === folder.id) {
       selectFolder("inbox");
@@ -3985,7 +4395,9 @@ export default function MailPage() {
   }
 
   function handleMoveToFolder(id: string, folderId: number | null) {
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, folderId } : m)));
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, folderId } : m)),
+    );
     moveMailToFolder(Number(id), { folderId });
   }
 
@@ -3994,7 +4406,9 @@ export default function MailPage() {
     setReplyOpen(false);
     const message = messages.find((m) => m.id === id);
     if (message && !message.read) {
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, read: true } : m)));
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, read: true } : m)),
+      );
       markMailRead(Number(id), true);
     }
   }
@@ -4003,7 +4417,9 @@ export default function MailPage() {
     const message = messages.find((m) => m.id === id);
     if (!message) return;
     const starred = !message.starred;
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, starred } : m)));
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, starred } : m)),
+    );
     markMailImportant(Number(id), { important: starred });
   }
 
@@ -4016,7 +4432,9 @@ export default function MailPage() {
   }
 
   function archiveMessage(id: string) {
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, archived: true } : m)));
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, archived: true } : m)),
+    );
     show(t("messageArchived"), "info");
     setSelectedId(null);
     setReplyOpen(false);
@@ -4027,7 +4445,9 @@ export default function MailPage() {
     if (!message) return;
     const nowSpam = message.folder !== "spam";
     setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, folder: nowSpam ? "spam" : "inbox" } : m)),
+      prev.map((m) =>
+        m.id === id ? { ...m, folder: nowSpam ? "spam" : "inbox" } : m,
+      ),
     );
     markMailSpam(Number(id), { isSpam: nowSpam });
     show(nowSpam ? t("movedToSpam") : t("markedNotSpam"), "info");
@@ -4043,7 +4463,9 @@ export default function MailPage() {
       permanentlyDeleteMail(Number(id));
       show(t("messageDeleted"), "info");
     } else {
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, folder: "trash" } : m)));
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, folder: "trash" } : m)),
+      );
       trashMailApi(Number(id));
       show(t("movedToTrash"), "info");
     }
@@ -4057,7 +4479,9 @@ export default function MailPage() {
   async function restoreMessage(id: string) {
     const mail = await restoreMailApi(Number(id));
     if (!mail) return;
-    setMessages((prev) => prev.map((m) => (m.id === id ? mailToEmailMessage(mail) : m)));
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? mailToEmailMessage(mail) : m)),
+    );
     show(t("messageRestored"), "info");
     setSelectedId(null);
   }
@@ -4065,7 +4489,9 @@ export default function MailPage() {
   async function cancelScheduledMessage(id: string) {
     const mail = await cancelScheduledMail(Number(id));
     if (!mail) return;
-    setMessages((prev) => prev.map((m) => (m.id === id ? mailToEmailMessage(mail) : m)));
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? mailToEmailMessage(mail) : m)),
+    );
     show(t("scheduleCancelled"), "info");
     setSelectedId(null);
   }
@@ -4078,13 +4504,18 @@ export default function MailPage() {
     return list.length > 0 ? list : undefined;
   }
 
-  function attachmentIdsOf(attachments: EmailAttachment[]): number[] | undefined {
-    const ids = attachments.map((a) => a.fileId).filter((id): id is number => id != null);
+  function attachmentIdsOf(
+    attachments: EmailAttachment[],
+  ): number[] | undefined {
+    const ids = attachments
+      .map((a) => a.fileId)
+      .filter((id): id is number => id != null);
     return ids.length > 0 ? ids : undefined;
   }
 
   async function handleSend(payload: ComposeSendPayload) {
-    const { to, cc, bcc, subject, bodyText, attachments, scheduledFor } = payload;
+    const { to, cc, bcc, subject, bodyText, attachments, scheduledFor } =
+      payload;
     const toAddresses = splitAddresses(to);
     if (!toAddresses) return;
     const attachmentIds = attachmentIdsOf(attachments);
@@ -4136,9 +4567,15 @@ export default function MailPage() {
     show(scheduledFor ? t("messageScheduled") : t("messageSent"), "success");
   }
 
-  async function handleSendReply(payload: { bodyText: string; attachments: EmailAttachment[]; confidential: boolean }) {
+  async function handleSendReply(payload: {
+    bodyText: string;
+    attachments: EmailAttachment[];
+    confidential: boolean;
+  }) {
     if (!selected) return;
-    const subject = selected.subject.startsWith("Re: ") ? selected.subject : `Re: ${selected.subject}`;
+    const subject = selected.subject.startsWith("Re: ")
+      ? selected.subject
+      : `Re: ${selected.subject}`;
     const mail = await sendMailApi({
       to: [selected.fromEmail],
       subject,
@@ -4183,13 +4620,18 @@ export default function MailPage() {
       lastName: rest.length > 0 ? rest.join(" ") : undefined,
       email,
     });
-    show(contact ? t("contactAdded") : t("addContactFailed"), contact ? "success" : "error");
+    show(
+      contact ? t("contactAdded") : t("addContactFailed"),
+      contact ? "success" : "error",
+    );
   }
 
   function handleOpenMessageFromPanel(message: EmailMessage) {
     setDetailContact(null);
     setViewMode("mail");
-    const folder = message.folderId ? folders.find((f) => f.id === message.folderId) : undefined;
+    const folder = message.folderId
+      ? folders.find((f) => f.id === message.folderId)
+      : undefined;
     if (folder) {
       setSelection({ type: "custom", id: folder.id, name: folder.name });
     } else {
@@ -4256,7 +4698,9 @@ export default function MailPage() {
     keepForwardedCopy: boolean;
   }): Promise<boolean> {
     if (!account) return false;
-    const ok = await updateForwardingPreferences({ keepForwardedCopy: payload.keepForwardedCopy });
+    const ok = await updateForwardingPreferences({
+      keepForwardedCopy: payload.keepForwardedCopy,
+    });
     if (!ok) return false;
 
     const next: OnboardingAccount = {
@@ -4272,7 +4716,9 @@ export default function MailPage() {
     return true;
   }
 
-  async function handleSaveSignature(payload: SignatureSettings): Promise<boolean> {
+  async function handleSaveSignature(
+    payload: SignatureSettings,
+  ): Promise<boolean> {
     if (!account) return false;
     const parsed = updateSignatureSchema.safeParse(payload);
     if (!parsed.success) return false;
@@ -4282,7 +4728,10 @@ export default function MailPage() {
 
     const next: OnboardingAccount = {
       ...account,
-      mailPreferences: { ...account.mailPreferences, signature: signatureToSettings(saved) },
+      mailPreferences: {
+        ...account.mailPreferences,
+        signature: signatureToSettings(saved),
+      },
     };
     saveAccount(next);
     setAccount(next);
@@ -4313,7 +4762,10 @@ export default function MailPage() {
     const imported = generateImportedMessages(provider, mailboxEmail);
     setMessages((prev) => [...imported, ...prev]);
     selectFolder("inbox");
-    show(t("import.importedToast", { count: imported.length, provider }), "success");
+    show(
+      t("import.importedToast", { count: imported.length, provider }),
+      "success",
+    );
   }
 
   function avatarNameFor(message: EmailMessage) {
@@ -4360,7 +4812,10 @@ export default function MailPage() {
           <Menu className="size-4" strokeWidth={1.5} />
         </button>
         {account && (
-          <ThemeMenu theme={account.mailPreferences.theme} onSelect={handleSelectTheme} />
+          <ThemeMenu
+            theme={account.mailPreferences.theme}
+            onSelect={handleSelectTheme}
+          />
         )}
         {viewMode === "settings" ? (
           <div className="flex-1 overflow-y-auto p-6 pt-16 sm:p-10 sm:pt-16 lg:pt-16">
@@ -4396,7 +4851,9 @@ export default function MailPage() {
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <Folder className="size-5" strokeWidth={1.5} />
                     </span>
-                    <span className="truncate text-sm font-medium text-foreground">{folder.name}</span>
+                    <span className="truncate text-sm font-medium text-foreground">
+                      {folder.name}
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -4416,7 +4873,9 @@ export default function MailPage() {
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
                   <Plus className="size-5" strokeWidth={1.5} />
                 </span>
-                <span className="truncate text-sm font-medium">{t("addFolder")}</span>
+                <span className="truncate text-sm font-medium">
+                  {t("addFolder")}
+                </span>
               </button>
             </div>
           </div>
@@ -4454,12 +4913,16 @@ export default function MailPage() {
 
               if (contacts.length === 0) {
                 return (
-                  <p className="mt-6 text-sm text-muted-foreground">{t("contactsEmpty")}</p>
+                  <p className="mt-6 text-sm text-muted-foreground">
+                    {t("contactsEmpty")}
+                  </p>
                 );
               }
               if (filtered.length === 0) {
                 return (
-                  <p className="mt-6 text-sm text-muted-foreground">{t("noContactsFound")}</p>
+                  <p className="mt-6 text-sm text-muted-foreground">
+                    {t("noContactsFound")}
+                  </p>
                 );
               }
 
@@ -4504,16 +4967,23 @@ export default function MailPage() {
                             </div>
                           </button>
                           <p className="hidden shrink-0 text-right text-xs text-muted-foreground sm:block">
-                            {t("messagesCount", { count: contact.messageCount })}
+                            {t("messagesCount", {
+                              count: contact.messageCount,
+                            })}
                             <br />
                             {t("lastContacted", {
-                              date: formatMessageTime(contact.lastActivity, locale),
+                              date: formatMessageTime(
+                                contact.lastActivity,
+                                locale,
+                              ),
                             })}
                           </p>
                           <button
                             type="button"
                             title={t("composeToContact")}
-                            onClick={() => handleComposeToContact(contact.email)}
+                            onClick={() =>
+                              handleComposeToContact(contact.email)
+                            }
                             className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 dark:text-slate-500 opacity-0 transition-all group-hover:opacity-100 hover:bg-primary/10 hover:text-primary"
                           >
                             <Mail className="size-4" strokeWidth={1.5} />
@@ -4546,260 +5016,305 @@ export default function MailPage() {
               {t("backToList")}
             </button>
             <div className="flex min-h-0 flex-1 justify-center">
-            <div className="relative flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-lg shadow-slate-100/80 dark:shadow-black/40">
-              {!replyOpen && (
-                <button
-                  type="button"
-                  title={t("aiAssistant")}
-                  onClick={() => show(t("aiComingSoon"), "info")}
-                  className="absolute right-6 bottom-6 z-10 flex size-12 items-center justify-center rounded-full bg-ai-accent text-ai-accent-foreground shadow-lg shadow-ai-accent/30 transition-transform hover:scale-105"
-                >
-                  <Sparkles className="size-5" strokeWidth={1.5} />
-                </button>
-              )}
-              <div className="shrink-0 p-8 pb-0 md:p-12 md:pb-0">
-                <div className="mb-8 flex items-center justify-start gap-1 rounded-xl border border-primary/10 bg-primary/5 px-2 py-1.5 shadow-xs">
+              <div className="relative flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-lg shadow-slate-100/80 dark:shadow-black/40">
+                {!replyOpen && (
                   <button
                     type="button"
-                    title={t("archive")}
-                    onClick={() => archiveMessage(selected.id)}
-                    className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
+                    title={t("aiAssistant")}
+                    onClick={() => show(t("aiComingSoon"), "info")}
+                    className="absolute right-6 bottom-6 z-10 flex size-12 items-center justify-center rounded-full bg-ai-accent text-ai-accent-foreground shadow-lg shadow-ai-accent/30 transition-transform hover:scale-105"
                   >
-                    <Archive className="size-4" strokeWidth={1.5} />
+                    <Sparkles className="size-5" strokeWidth={1.5} />
                   </button>
-                  <button
-                    type="button"
-                    title={selected.folder === "spam" ? t("notSpam") : t("markSpam")}
-                    onClick={() => toggleSpam(selected.id)}
-                    className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
-                  >
-                    <ShieldAlert
-                      className={cn("size-4", selected.folder === "spam" && "text-destructive")}
-                      strokeWidth={1.5}
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    title={selected.folder === "trash" ? t("deleteForever") : t("delete")}
-                    onClick={() => deleteMessage(selected.id)}
-                    className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-destructive/10 hover:text-destructive hover:shadow-xs"
-                  >
-                    <Trash2 className="size-4" strokeWidth={1.5} />
-                  </button>
-                  {selected.folder === "trash" && (
+                )}
+                <div className="shrink-0 p-8 pb-0 md:p-12 md:pb-0">
+                  <div className="mb-8 flex items-center justify-start gap-1 rounded-xl border border-primary/10 bg-primary/5 px-2 py-1.5 shadow-xs">
                     <button
                       type="button"
-                      title={t("restore")}
-                      onClick={() => restoreMessage(selected.id)}
+                      title={t("archive")}
+                      onClick={() => archiveMessage(selected.id)}
                       className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
                     >
-                      <ArchiveRestore className="size-4" strokeWidth={1.5} />
+                      <Archive className="size-4" strokeWidth={1.5} />
                     </button>
-                  )}
-                  {selected.folder === "scheduled" && (
                     <button
                       type="button"
-                      title={t("cancelSchedule")}
-                      onClick={() => cancelScheduledMessage(selected.id)}
+                      title={
+                        selected.folder === "spam"
+                          ? t("notSpam")
+                          : t("markSpam")
+                      }
+                      onClick={() => toggleSpam(selected.id)}
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
+                    >
+                      <ShieldAlert
+                        className={cn(
+                          "size-4",
+                          selected.folder === "spam" && "text-destructive",
+                        )}
+                        strokeWidth={1.5}
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      title={
+                        selected.folder === "trash"
+                          ? t("deleteForever")
+                          : t("delete")
+                      }
+                      onClick={() => deleteMessage(selected.id)}
                       className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-destructive/10 hover:text-destructive hover:shadow-xs"
                     >
-                      <X className="size-4" strokeWidth={1.5} />
+                      <Trash2 className="size-4" strokeWidth={1.5} />
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    title={selected.read ? t("markUnread") : t("markRead")}
-                    onClick={() => toggleRead(selected.id)}
-                    className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
-                  >
-                    {selected.read ? (
-                      <Mail className="size-4" strokeWidth={1.5} />
-                    ) : (
-                      <MailOpen className="size-4" strokeWidth={1.5} />
+                    {selected.folder === "trash" && (
+                      <button
+                        type="button"
+                        title={t("restore")}
+                        onClick={() => restoreMessage(selected.id)}
+                        className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
+                      >
+                        <ArchiveRestore className="size-4" strokeWidth={1.5} />
+                      </button>
                     )}
-                  </button>
-                  <div
-                    title={t("moveToFolder")}
-                    className="relative flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
-                  >
-                    <FolderInput className="pointer-events-none size-4" strokeWidth={1.5} />
-                    <select
-                      value={selected.folderId ?? ""}
-                      onChange={(e) =>
-                        handleMoveToFolder(selected.id, e.target.value ? Number(e.target.value) : null)
-                      }
-                      aria-label={t("moveToFolder")}
-                      className="absolute inset-0 size-full cursor-pointer opacity-0"
+                    {selected.folder === "scheduled" && (
+                      <button
+                        type="button"
+                        title={t("cancelSchedule")}
+                        onClick={() => cancelScheduledMessage(selected.id)}
+                        className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-destructive/10 hover:text-destructive hover:shadow-xs"
+                      >
+                        <X className="size-4" strokeWidth={1.5} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      title={selected.read ? t("markUnread") : t("markRead")}
+                      onClick={() => toggleRead(selected.id)}
+                      className="flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
                     >
-                      <option value="">{t("noFolder")}</option>
-                      {folders.map((folder) => (
-                        <option key={folder.id} value={folder.id}>
-                          {folder.name}
-                        </option>
-                      ))}
-                    </select>
+                      {selected.read ? (
+                        <Mail className="size-4" strokeWidth={1.5} />
+                      ) : (
+                        <MailOpen className="size-4" strokeWidth={1.5} />
+                      )}
+                    </button>
+                    <div
+                      title={t("moveToFolder")}
+                      className="relative flex size-8 items-center justify-center rounded-lg text-slate-900 dark:text-slate-50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900 hover:text-primary hover:shadow-xs"
+                    >
+                      <FolderInput
+                        className="pointer-events-none size-4"
+                        strokeWidth={1.5}
+                      />
+                      <select
+                        value={selected.folderId ?? ""}
+                        onChange={(e) =>
+                          handleMoveToFolder(
+                            selected.id,
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                        aria-label={t("moveToFolder")}
+                        className="absolute inset-0 size-full cursor-pointer opacity-0"
+                      >
+                        <option value="">{t("noFolder")}</option>
+                        {folders.map((folder) => (
+                          <option key={folder.id} value={folder.id}>
+                            {folder.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      title={selected.starred ? t("unstar") : t("star")}
+                      onClick={() => toggleStar(selected.id)}
+                      className={cn(
+                        "flex size-8 items-center justify-center rounded-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-xs",
+                        selected.starred
+                          ? "text-primary"
+                          : "text-slate-900 dark:text-slate-50",
+                      )}
+                    >
+                      <Star
+                        className={cn(
+                          "size-4",
+                          selected.starred && "fill-primary",
+                        )}
+                        strokeWidth={1.5}
+                      />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    title={selected.starred ? t("unstar") : t("star")}
-                    onClick={() => toggleStar(selected.id)}
-                    className={cn(
-                      "flex size-8 items-center justify-center rounded-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-xs",
-                      selected.starred ? "text-primary" : "text-slate-900 dark:text-slate-50",
-                    )}
-                  >
-                    <Star
-                      className={cn("size-4", selected.starred && "fill-primary")}
-                      strokeWidth={1.5}
-                    />
-                  </button>
-                </div>
 
-                <div className="mt-4 flex min-w-0 items-start gap-3">
-                  <SenderPreviewCard
-                    name={avatarNameFor(selected)}
-                    email={selected.fromEmail}
-                    onSendMail={handleComposeToContact}
-                    onScheduleMail={handleScheduleToContact}
-                    onAddToContacts={handleAddContact}
-                    onViewDetails={(c) => setDetailContact(c)}
-                  >
-                    <ContactAvatar
+                  <div className="mt-4 flex min-w-0 items-start gap-3">
+                    <SenderPreviewCard
                       name={avatarNameFor(selected)}
                       email={selected.fromEmail}
-                      className="size-11 text-sm"
-                    />
-                  </SenderPreviewCard>
-                  <div className="min-w-0">
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50 sm:text-2xl">
-                      {selected.subject}
-                    </h2>
-                    <p className="mt-1.5 truncate text-sm">
-                      <span className="text-muted-foreground">{t("from")}: </span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-50">{selected.fromName}</span>{" "}
-                      <span className="font-normal text-slate-400 dark:text-slate-500">
-                        &lt;{selected.fromEmail}&gt;
-                      </span>
-                    </p>
-                    {selected.ccEmail && (
-                      <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                        {t("cc")}: {selected.ccEmail}
+                      onSendMail={handleComposeToContact}
+                      onScheduleMail={handleScheduleToContact}
+                      onAddToContacts={handleAddContact}
+                      onViewDetails={(c) => setDetailContact(c)}
+                    >
+                      <ContactAvatar
+                        name={avatarNameFor(selected)}
+                        email={selected.fromEmail}
+                        className="size-11 text-sm"
+                      />
+                    </SenderPreviewCard>
+                    <div className="min-w-0">
+                      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50 sm:text-2xl">
+                        {selected.subject}
+                      </h2>
+                      <p className="mt-1.5 truncate text-sm">
+                        <span className="text-muted-foreground">
+                          {t("from")}:{" "}
+                        </span>
+                        <span className="font-semibold text-slate-900 dark:text-slate-50">
+                          {selected.fromName}
+                        </span>{" "}
+                        <span className="font-normal text-slate-400 dark:text-slate-500">
+                          &lt;{selected.fromEmail}&gt;
+                        </span>
                       </p>
-                    )}
-                    {selected.bccEmail && (
-                      <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                        {t("bcc")}: {selected.bccEmail}
-                      </p>
-                    )}
-                    {selected.scheduledFor && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t("sendsAt", {
-                          date: formatMessageTime(selected.scheduledFor, locale),
-                        })}
-                      </p>
-                    )}
+                      {selected.ccEmail && (
+                        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                          {t("cc")}: {selected.ccEmail}
+                        </p>
+                      )}
+                      {selected.bccEmail && (
+                        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                          {t("bcc")}: {selected.bccEmail}
+                        </p>
+                      )}
+                      {selected.scheduledFor && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {t("sendsAt", {
+                            date: formatMessageTime(
+                              selected.scheduledFor,
+                              locale,
+                            ),
+                          })}
+                        </p>
+                      )}
+                    </div>
                   </div>
+
+                  {selected.attachments && selected.attachments.length > 0 && (
+                    <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+                      {selected.attachments.map((att, i) =>
+                        att.type === "voice" ? (
+                          <div key={i} className="sm:col-span-2">
+                            <VoiceMessageCard
+                              audioDataUrl={att.audioDataUrl}
+                              durationSec={att.durationSec}
+                              recorderName={selected.fromName}
+                              recorderAvatarDataUrl={
+                                selected.fromName === "You"
+                                  ? (account?.mailPreferences.avatarDataUrl ??
+                                    null)
+                                  : null
+                              }
+                              cardColor={att.cardColor}
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            key={i}
+                            className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-3"
+                          >
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400">
+                              {(() => {
+                                const AttIcon = ATTACHMENT_ICONS[att.type];
+                                return (
+                                  <AttIcon
+                                    className="size-4"
+                                    strokeWidth={1.5}
+                                  />
+                                );
+                              })()}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {att.name}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {formatFileSize(att.sizeKb)}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              aria-label={t("downloadAttachment")}
+                              onClick={() =>
+                                show(t("downloadComingSoon"), "info")
+                              }
+                              className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary"
+                            >
+                              <Download className="size-4" strokeWidth={1.5} />
+                            </button>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-6 border-t border-slate-100 dark:border-slate-800" />
                 </div>
 
-                {selected.attachments && selected.attachments.length > 0 && (
-                  <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
-                    {selected.attachments.map((att, i) =>
-                      att.type === "voice" ? (
-                        <div key={i} className="sm:col-span-2">
-                          <VoiceMessageCard
-                            audioDataUrl={att.audioDataUrl}
-                            durationSec={att.durationSec}
-                            recorderName={selected.fromName}
-                            recorderAvatarDataUrl={
-                              selected.fromName === "You"
-                                ? (account?.mailPreferences.avatarDataUrl ?? null)
-                                : null
-                            }
-                            cardColor={att.cardColor}
-                          />
-                        </div>
-                      ) : (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-3"
-                        >
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400">
-                            {(() => {
-                              const AttIcon = ATTACHMENT_ICONS[att.type];
-                              return <AttIcon className="size-4" strokeWidth={1.5} />;
-                            })()}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-300">
-                              {att.name}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {formatFileSize(att.sizeKb)}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            aria-label={t("downloadAttachment")}
-                            onClick={() => show(t("downloadComingSoon"), "info")}
-                            className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary"
-                          >
-                            <Download className="size-4" strokeWidth={1.5} />
-                          </button>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                )}
+                <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-8 pb-8 md:px-12 md:pb-12">
+                  <p className="pt-6 text-sm leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-300 sm:text-base">
+                    {selected.body}
+                  </p>
 
-                <div className="mt-6 border-t border-slate-100 dark:border-slate-800" />
+                  {!replyOpen && (
+                    <div className="mt-6 inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/70 p-1 shadow-xs">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full border border-primary/30 bg-primary/10 text-primary transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-sm"
+                        onClick={() => setReplyOpen(true)}
+                      >
+                        <Reply className="size-4" strokeWidth={1.5} />
+                        {t("reply")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50 hover:shadow-xs"
+                        onClick={() => {
+                          setForwardingId(selected.id);
+                          setComposeOpen(true);
+                        }}
+                      >
+                        <Forward className="size-4" strokeWidth={1.5} />
+                        {t("forward")}
+                      </Button>
+                    </div>
+                  )}
+
+                  {replyOpen && (
+                    <ReplyComposer
+                      toEmail={selected.fromEmail}
+                      signature={signature}
+                      autoInsertSignature={
+                        account?.mailPreferences.signature.includeInReplies
+                      }
+                      onRequestCreateSignature={handleRequestCreateSignature}
+                      composerDisplayName={
+                        displayName || account?.ownerName || "You"
+                      }
+                      composerAvatarDataUrl={
+                        account?.mailPreferences.avatarDataUrl ?? null
+                      }
+                      voiceNotesEnabled={
+                        account ? hasVoiceNotes(account) : false
+                      }
+                      onDiscard={() => setReplyOpen(false)}
+                      onSend={handleSendReply}
+                    />
+                  )}
+                </div>
               </div>
-
-              <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-8 pb-8 md:px-12 md:pb-12">
-                <p className="pt-6 text-sm leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-300 sm:text-base">
-                  {selected.body}
-                </p>
-
-                {!replyOpen && (
-                  <div className="mt-6 inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/70 p-1 shadow-xs">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-full border border-primary/30 bg-primary/10 text-primary transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-sm"
-                      onClick={() => setReplyOpen(true)}
-                    >
-                      <Reply className="size-4" strokeWidth={1.5} />
-                      {t("reply")}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-full border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50 hover:shadow-xs"
-                      onClick={() => {
-                        setForwardingId(selected.id);
-                        setComposeOpen(true);
-                      }}
-                    >
-                      <Forward className="size-4" strokeWidth={1.5} />
-                      {t("forward")}
-                    </Button>
-                  </div>
-                )}
-
-                {replyOpen && (
-                  <ReplyComposer
-                    toEmail={selected.fromEmail}
-                    signature={signature}
-                    autoInsertSignature={account?.mailPreferences.signature.includeInReplies}
-                    onRequestCreateSignature={handleRequestCreateSignature}
-                    composerDisplayName={displayName || account?.ownerName || "You"}
-                    composerAvatarDataUrl={account?.mailPreferences.avatarDataUrl ?? null}
-                    voiceNotesEnabled={account ? hasVoiceNotes(account) : false}
-                    onDiscard={() => setReplyOpen(false)}
-                    onSend={handleSendReply}
-                  />
-                )}
-              </div>
-            </div>
             </div>
           </div>
         ) : (
@@ -4855,7 +5370,9 @@ export default function MailPage() {
                         <span
                           className={cn(
                             "truncate text-sm",
-                            !m.read ? "font-semibold text-slate-900 dark:text-slate-50" : "font-medium text-slate-500 dark:text-slate-400",
+                            !m.read
+                              ? "font-semibold text-slate-900 dark:text-slate-50"
+                              : "font-medium text-slate-500 dark:text-slate-400",
                           )}
                         >
                           {m.fromName}
@@ -4865,11 +5382,15 @@ export default function MailPage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {!m.read && <span className="size-2 shrink-0 rounded-full bg-primary" />}
+                        {!m.read && (
+                          <span className="size-2 shrink-0 rounded-full bg-primary" />
+                        )}
                         <span
                           className={cn(
                             "truncate text-sm",
-                            !m.read ? "font-semibold text-slate-900 dark:text-slate-50" : "font-normal text-slate-500 dark:text-slate-400",
+                            !m.read
+                              ? "font-semibold text-slate-900 dark:text-slate-50"
+                              : "font-normal text-slate-500 dark:text-slate-400",
                           )}
                         >
                           {m.subject}
@@ -4886,7 +5407,9 @@ export default function MailPage() {
                           </span>
                         )}
                       </div>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">{m.preview}</p>
+                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        {m.preview}
+                      </p>
                     </button>
                   </div>
                 ))
@@ -4904,7 +5427,9 @@ export default function MailPage() {
           }}
           onSend={handleSend}
           signature={signature}
-          autoInsertSignature={account?.mailPreferences.signature.includeInNewEmails}
+          autoInsertSignature={
+            account?.mailPreferences.signature.includeInNewEmails
+          }
           onRequestCreateSignature={handleRequestCreateSignature}
           composerDisplayName={displayName || account?.ownerName || "You"}
           composerAvatarDataUrl={account?.mailPreferences.avatarDataUrl ?? null}
@@ -4921,7 +5446,9 @@ export default function MailPage() {
           isTeam={
             contacts.find((c) => c.email === detailContact.email)?.isTeam ??
             (account?.domain
-              ? detailContact.email.toLowerCase().endsWith(`@${account.domain.toLowerCase()}`)
+              ? detailContact.email
+                  .toLowerCase()
+                  .endsWith(`@${account.domain.toLowerCase()}`)
               : false)
           }
           onClose={() => setDetailContact(null)}
