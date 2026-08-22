@@ -201,8 +201,8 @@ export default function DashboardPage() {
 
       {/* Hero card: workspace profile */}
       <div className="mt-12 rounded-2xl border border-border bg-card p-7 shadow-[0_20px_48px_-28px_rgba(0,0,0,0.18)] sm:p-9">
-        <div className="flex gap-8 flex-col lg:flex-row">
-          <div className="lg:flex-1 w-full">
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <div className="lg:flex-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-foreground/75">
               {t("hero.label")}
             </span>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="flex-1 w-full border-t border-border/70 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+          <div className="flex flex-col justify-center border-t border-border/70 pt-6 lg:flex-1 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
             <StatList
               items={[
                 { icon: Globe, label: t("hero.domains"), value: domainCount },
