@@ -116,7 +116,7 @@ export function DomainSearchStep({
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="flex items-center justify-between gap-4 rounded-xl border border-border p-4"
+              className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
             >
               <div className="flex items-center gap-3">
                 <span className="shimmer size-5 shrink-0 rounded-full" />
@@ -145,7 +145,7 @@ export function DomainSearchStep({
                 onClick={() => option.available && setSelected(option)}
                 style={isSelected || isExactMatch ? { borderColor: "var(--primary)" } : undefined}
                 className={cn(
-                  "flex items-center justify-between gap-4 rounded-xl border p-4 text-left transition-all duration-300 ease-out",
+                  "flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-300 ease-out sm:flex-row sm:items-center sm:justify-between sm:gap-4",
                   !option.available
                     ? "cursor-not-allowed border-border bg-muted/30 opacity-60"
                     : isSelected
@@ -155,7 +155,7 @@ export function DomainSearchStep({
                         : "border-border bg-card hover:-translate-y-1 hover:border-primary/30 hover:shadow-md",
                 )}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-3">
                   <span
                     className={cn(
                       "flex size-5 shrink-0 items-center justify-center rounded-full",
@@ -166,7 +166,7 @@ export function DomainSearchStep({
                   </span>
                   <span
                     className={cn(
-                      "font-medium",
+                      "break-all font-medium",
                       option.available ? "text-foreground" : "text-muted-foreground line-through",
                     )}
                   >
