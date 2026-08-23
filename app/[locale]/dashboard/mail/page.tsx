@@ -300,6 +300,19 @@ const FONT_SIZES = [
   { labelKey: "fontSizeHuge", value: "7" },
 ] as const;
 
+/** Toolbar commands whose pressed state is reflected from the cursor via queryCommandState. */
+const TRACKED_FORMATS = [
+  "bold",
+  "italic",
+  "underline",
+  "insertUnorderedList",
+  "insertOrderedList",
+  "justifyLeft",
+  "justifyCenter",
+  "justifyRight",
+  "justifyFull",
+] as const;
+
 function formatFileSize(kb: number) {
   if (kb >= 1024) return `${(kb / 1024).toFixed(1)} MB`;
   return `${kb} KB`;
@@ -3317,6 +3330,7 @@ const ComposerBody = forwardRef<
   const [confidential, setConfidential] = useState(false);
   const [formattingOpen, setFormattingOpen] = useState(false);
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
+  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
   const savedRangeRef = useRef<Range | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -3343,6 +3357,21 @@ const ComposerBody = forwardRef<
       sel.addRange(savedRangeRef.current);
     }
     document.execCommand(command, false, value);
+    updateActiveFormats();
+  }
+
+  // Reflects the formatting under the cursor onto the toolbar — so Bold
+  // shows pressed while you're inside bold text, not just right after you
+  // clicked it. queryCommandState is legacy but matches execCommand, which
+  // this editor already relies on for every formatting action.
+  function updateActiveFormats() {
+    const sel = window.getSelection();
+    if (!sel || !editorRef.current?.contains(sel.anchorNode)) return;
+    const next = new Set<string>();
+    for (const command of TRACKED_FORMATS) {
+      if (document.queryCommandState(command)) next.add(command);
+    }
+    setActiveFormats(next);
   }
 
   function preserveSelection(e: React.MouseEvent) {
@@ -3416,6 +3445,14 @@ const ComposerBody = forwardRef<
   const toolbarButtonClass =
     "flex size-8 items-center justify-center rounded-lg text-slate-800 dark:text-slate-100 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary";
 
+  function toolbarBtnClass(command: (typeof TRACKED_FORMATS)[number]) {
+    return cn(
+      toolbarButtonClass,
+      activeFormats.has(command) &&
+        "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
+    );
+  }
+
   return (
     <>
       <div
@@ -3423,6 +3460,9 @@ const ComposerBody = forwardRef<
         contentEditable
         suppressContentEditableWarning
         data-placeholder={placeholder}
+        onKeyUp={updateActiveFormats}
+        onMouseUp={updateActiveFormats}
+        onFocus={updateActiveFormats}
         className={cn(
           "rich-text-editor bg-white dark:bg-slate-900 p-6 text-sm leading-relaxed text-slate-700 dark:text-slate-300 outline-none",
           grow ? "min-h-0 flex-1 overflow-y-auto" : "min-h-[180px]",
@@ -3479,7 +3519,7 @@ const ComposerBody = forwardRef<
       )}
 
       {formattingOpen && (
-        <div className="flex flex-wrap items-center gap-0.5 px-4 pt-3">
+        <div className="mx-4 mt-3 flex flex-wrap items-center gap-0.5 rounded-xl border border-slate-200/70 bg-slate-50/70 p-1.5 dark:border-slate-800/70 dark:bg-slate-800/40">
           <select
             title={t("fontFamily")}
             defaultValue=""
@@ -3489,7 +3529,7 @@ const ComposerBody = forwardRef<
               exec("fontName", e.target.value);
               e.target.value = "";
             }}
-            className="h-8 rounded-lg border-none bg-transparent px-1.5 text-xs text-slate-600 dark:text-slate-400 outline-none hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="h-8 rounded-lg border-none bg-transparent px-1.5 text-xs text-slate-600 dark:text-slate-400 outline-none hover:bg-slate-200/60 dark:hover:bg-slate-700"
           >
             <option value="" disabled>
               {t("fontFamily")}
@@ -3509,7 +3549,7 @@ const ComposerBody = forwardRef<
               exec("fontSize", e.target.value);
               e.target.value = "";
             }}
-            className="h-8 rounded-lg border-none bg-transparent px-1.5 text-xs text-slate-600 dark:text-slate-400 outline-none hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="h-8 rounded-lg border-none bg-transparent px-1.5 text-xs text-slate-600 dark:text-slate-400 outline-none hover:bg-slate-200/60 dark:hover:bg-slate-700"
           >
             <option value="" disabled>
               {t("fontSize")}
@@ -3526,7 +3566,8 @@ const ComposerBody = forwardRef<
             title={t("bold")}
             onMouseDown={preserveSelection}
             onClick={() => exec("bold")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("bold")}
+            className={toolbarBtnClass("bold")}
           >
             <Bold className="size-4" strokeWidth={1.5} />
           </button>
@@ -3535,7 +3576,8 @@ const ComposerBody = forwardRef<
             title={t("italic")}
             onMouseDown={preserveSelection}
             onClick={() => exec("italic")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("italic")}
+            className={toolbarBtnClass("italic")}
           >
             <Italic className="size-4" strokeWidth={1.5} />
           </button>
@@ -3544,7 +3586,8 @@ const ComposerBody = forwardRef<
             title={t("underline")}
             onMouseDown={preserveSelection}
             onClick={() => exec("underline")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("underline")}
+            className={toolbarBtnClass("underline")}
           >
             <Underline className="size-4" strokeWidth={1.5} />
           </button>
@@ -3572,7 +3615,8 @@ const ComposerBody = forwardRef<
             title={t("bulletList")}
             onMouseDown={preserveSelection}
             onClick={() => exec("insertUnorderedList")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("insertUnorderedList")}
+            className={toolbarBtnClass("insertUnorderedList")}
           >
             <List className="size-4" strokeWidth={1.5} />
           </button>
@@ -3581,7 +3625,8 @@ const ComposerBody = forwardRef<
             title={t("numberedList")}
             onMouseDown={preserveSelection}
             onClick={() => exec("insertOrderedList")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("insertOrderedList")}
+            className={toolbarBtnClass("insertOrderedList")}
           >
             <ListOrdered className="size-4" strokeWidth={1.5} />
           </button>
@@ -3609,7 +3654,8 @@ const ComposerBody = forwardRef<
             title={t("alignLeft")}
             onMouseDown={preserveSelection}
             onClick={() => exec("justifyLeft")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("justifyLeft")}
+            className={toolbarBtnClass("justifyLeft")}
           >
             <AlignLeft className="size-4" strokeWidth={1.5} />
           </button>
@@ -3618,7 +3664,8 @@ const ComposerBody = forwardRef<
             title={t("alignCenter")}
             onMouseDown={preserveSelection}
             onClick={() => exec("justifyCenter")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("justifyCenter")}
+            className={toolbarBtnClass("justifyCenter")}
           >
             <AlignCenter className="size-4" strokeWidth={1.5} />
           </button>
@@ -3627,7 +3674,8 @@ const ComposerBody = forwardRef<
             title={t("alignRight")}
             onMouseDown={preserveSelection}
             onClick={() => exec("justifyRight")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("justifyRight")}
+            className={toolbarBtnClass("justifyRight")}
           >
             <AlignRight className="size-4" strokeWidth={1.5} />
           </button>
@@ -3636,7 +3684,8 @@ const ComposerBody = forwardRef<
             title={t("alignJustify")}
             onMouseDown={preserveSelection}
             onClick={() => exec("justifyFull")}
-            className={toolbarButtonClass}
+            aria-pressed={activeFormats.has("justifyFull")}
+            className={toolbarBtnClass("justifyFull")}
           >
             <AlignJustify className="size-4" strokeWidth={1.5} />
           </button>
@@ -3658,14 +3707,15 @@ const ComposerBody = forwardRef<
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 p-4">
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5 rounded-xl border border-slate-200/70 bg-slate-50/70 p-1 dark:border-slate-800/70 dark:bg-slate-800/40">
           <button
             type="button"
             title={t("formattingOptions")}
             onClick={() => setFormattingOpen((v) => !v)}
+            aria-pressed={formattingOpen}
             className={cn(
               toolbarButtonClass,
-              formattingOpen && "bg-primary/10 text-primary",
+              formattingOpen && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
             )}
           >
             <Type className="size-4" strokeWidth={1.5} />
@@ -3718,9 +3768,10 @@ const ComposerBody = forwardRef<
             type="button"
             title={confidential ? t("confidentialOn") : t("confidentialMode")}
             onClick={() => setConfidential((v) => !v)}
+            aria-pressed={confidential}
             className={cn(
               toolbarButtonClass,
-              confidential && "bg-primary/10 text-primary",
+              confidential && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
             )}
           >
             <Lock className="size-4" strokeWidth={1.5} />
@@ -3743,9 +3794,10 @@ const ComposerBody = forwardRef<
                 schedule.enabled ? t("scheduleSendOff") : t("scheduleSend")
               }
               onClick={schedule.onToggle}
+              aria-pressed={schedule.enabled}
               className={cn(
                 toolbarButtonClass,
-                schedule.enabled && "bg-primary/10 text-primary",
+                schedule.enabled && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
               )}
             >
               <Clock className="size-4" strokeWidth={1.5} />
