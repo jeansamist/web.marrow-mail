@@ -4,10 +4,10 @@ import {
   OnboardingCreateEmailSchema,
   OnboardingRegisterDomainSchema,
 } from "@/schemas/onboarding.schemas"
-import { MailAccount, Record } from "@/types"
+import { Domain, MailAccount, Record } from "@/types"
 
 export const registerDomain = async (data: OnboardingRegisterDomainSchema) => {
-  return POST<OnboardingRegisterDomainSchema, Record[]>(
+  return POST<OnboardingRegisterDomainSchema, Domain>(
     "/onboarding/register-domain",
     data
   )

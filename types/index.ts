@@ -166,6 +166,7 @@ export type Domain = {
   name: string
   description: string | null
   verified: boolean
+  mailFromVerified: boolean
   customLoginHostname: string | null
   customLoginHostnameVerified: boolean
   createdAt: string
