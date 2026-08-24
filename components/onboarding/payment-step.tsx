@@ -9,7 +9,7 @@ import { formatUsd, formatXaf, type BillingMonths, type PlanId } from "@/lib/onb
 import {
   OrangeMoneyLogo,
   MtnMoneyLogo,
-  VisaLogo,
+  // VisaLogo, // TEMPORARY: unused while card/Stripe payments are blocked
 } from "@/components/marketing/payment-logos";
 import { premiumButton, softShadow } from "@/components/onboarding/styles";
 import { useToast } from "@/components/dashboard/toast";
@@ -34,7 +34,8 @@ type PaymentMethod = "orange" | "mtn" | "visa";
 const methods: { id: PaymentMethod; name: string; Logo: typeof OrangeMoneyLogo }[] = [
   { id: "orange", name: "Orange Money", Logo: OrangeMoneyLogo },
   { id: "mtn", name: "MTN MoMo", Logo: MtnMoneyLogo },
-  { id: "visa", name: "Card", Logo: VisaLogo },
+  // TEMPORARY: card/Stripe payments are blocked for now. Uncomment to re-enable.
+  // { id: "visa", name: "Card", Logo: VisaLogo },
 ];
 
 const MAX_POLL_ATTEMPTS = 40;

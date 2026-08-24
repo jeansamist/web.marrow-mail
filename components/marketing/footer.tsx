@@ -4,13 +4,14 @@ import { Logo } from "@/components/brand/logo";
 import {
   OrangeMoneyLogo,
   MtnMoneyLogo,
-  VisaLogo,
+  // VisaLogo, // TEMPORARY: unused while card/Stripe payments are blocked
 } from "@/components/marketing/payment-logos";
 
 const paymentMethods = [
   { name: "Orange Money", Logo: OrangeMoneyLogo },
   { name: "MTN Money", Logo: MtnMoneyLogo },
-  { name: "Visa", Logo: VisaLogo },
+  // TEMPORARY: card/Stripe payments are blocked for now. Uncomment to re-enable.
+  // { name: "Visa", Logo: VisaLogo },
 ];
 
 export function Footer() {
