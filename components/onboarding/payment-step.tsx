@@ -313,6 +313,16 @@ export function PaymentStep({
     setCheckoutStatus("awaiting-approval");
   }
 
+  // Abandons the in-flight attempt (e.g. the prompt went to a wrong number)
+  // and returns to the form so the phone number or method can be changed.
+  function handleStartOver() {
+    pollAttemptsRef.current = 0;
+    setPendingId(null);
+    setClientSecret(null);
+    setDeclineReason(null);
+    setCheckoutStatus("idle");
+  }
+
   const isPending = checkoutStatus === "creating" || checkoutStatus === "awaiting-approval";
   const isDeclined = checkoutStatus === "declined";
 
@@ -427,9 +437,14 @@ export function PaymentStep({
             <p className="font-semibold text-foreground">{t("waitingTimeoutTitle")}</p>
             <p className="mt-0.5 text-muted-foreground">{t("waitingTimeoutDescription")}</p>
           </div>
-          <Button variant="outline" onClick={handleKeepWaiting}>
-            {t("keepWaiting")}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" onClick={handleKeepWaiting}>
+              {t("keepWaiting")}
+            </Button>
+            <Button variant="ghost" onClick={handleStartOver}>
+              {t("changePaymentDetails")}
+            </Button>
+          </div>
         </div>
       )}
 

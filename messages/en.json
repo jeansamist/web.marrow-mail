@@ -562,6 +562,7 @@
       "waitingTimeoutTitle": "Still waiting for approval",
       "waitingTimeoutDescription": "This is taking longer than expected. You can keep waiting or try a different payment method.",
       "keepWaiting": "Keep waiting",
+      "changePaymentDetails": "Use a different number or method",
       "cardSectionLabel": "Card details",
       "genericErrorTitle": "Something went wrong",
       "genericErrorDescription": "We couldn't reach the payment provider. Please try again.",

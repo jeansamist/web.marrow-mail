@@ -562,6 +562,7 @@
       "waitingTimeoutTitle": "Toujours en attente de validation",
       "waitingTimeoutDescription": "Cela prend plus de temps que prévu. Vous pouvez continuer à attendre ou essayer un autre moyen de paiement.",
       "keepWaiting": "Continuer à attendre",
+      "changePaymentDetails": "Utiliser un autre numéro ou moyen de paiement",
       "cardSectionLabel": "Détails de la carte",
       "genericErrorTitle": "Une erreur est survenue",
       "genericErrorDescription": "Impossible de contacter le prestataire de paiement. Veuillez réessayer.",
