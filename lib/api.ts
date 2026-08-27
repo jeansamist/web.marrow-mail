@@ -2,6 +2,9 @@
 
 import { isAxiosError } from "axios"
 import { axiosInstance } from "./axios-instance"
+import { createLogger, redactUrl } from "./logger"
+
+const log = createLogger("api")
 type Response<T> =
   | { success: true; data: T; message?: string }
   | { success: false; data: null; message?: string }
@@ -61,6 +64,7 @@ const apiRequest: ApiFunction = async <PAYLOAD, RESPONSE, RETURN = RESPONSE>(
     } else {
       // Handle error responses
       const errorMessage = response.message || "Unknown error"
+      log.warn(`${method} ${redactUrl(url)} failed: ${errorMessage}`)
       return onError
         ? onError(new Error(errorMessage))
         : new Error(errorMessage)
@@ -75,10 +79,13 @@ const apiRequest: ApiFunction = async <PAYLOAD, RESPONSE, RETURN = RESPONSE>(
         const apiError = Object.assign(new Error(error.response.data.message), {
           status: error.response.status,
         })
+        log.warn(
+          `${method} ${redactUrl(url)} failed status: ${error.response.status}: ${apiError.message}`
+        )
         return onError ? onError(apiError) : apiError
       }
     }
-    console.error("[API] Unexpected error:", error)
+    log.error(`${method} ${redactUrl(url)} unexpected error`, error)
 
     return unknownError
   }

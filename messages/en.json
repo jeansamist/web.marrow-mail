@@ -551,6 +551,7 @@
       "pay": "Pay {amount}",
       "declinedTitle": "Payment couldn't be completed",
       "declinedDescription": "Your {method} payment was declined. No charge was made — try again or use a different payment method.",
+      "declinedReason": "Reason: {reason}",
       "retry": "Retry payment",
       "simulateDecline": "Preview: simulate a declined payment",
       "phoneLabel": "Mobile money phone number",

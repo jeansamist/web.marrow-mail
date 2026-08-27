@@ -148,6 +148,12 @@ export type Subscription = {
   updatedAt: string | null
 }
 
+/**
+ * Subscription status endpoint payload: the subscription plus the latest
+ * payment's failure reason (null unless that payment failed).
+ */
+export type SubscriptionStatusResult = Subscription & { failureReason: string | null }
+
 export type CheckoutResult =
   | (Subscription & { clientSecret: string | null })
   | (Subscription & { transactionId: string })

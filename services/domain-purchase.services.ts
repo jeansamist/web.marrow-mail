@@ -1,6 +1,9 @@
 "use server"
 import { GET, POST } from "@/lib/api"
+import { createLogger } from "@/lib/logger"
 import { CreateDomainPurchaseCheckoutSchema } from "@/schemas/onboarding.schemas"
+
+const log = createLogger("domain-purchase")
 
 export type DomainPurchaseCheckoutResult =
   | { paymentId: number; clientSecret: string | null }
@@ -21,6 +24,7 @@ export interface DomainSearchResult {
 // than firing one request per TLD — much less fragile (one bad TLD lookup
 // no longer drops the whole search).
 export const searchDomains = async (slug: string) => {
+  log.info(`Search domains slug: ${slug}`)
   return POST<{ slug: string }, DomainSearchResult[]>("/domain-purchase/search", {
     slug,
   })
@@ -29,6 +33,9 @@ export const searchDomains = async (slug: string) => {
 export const createDomainPurchaseCheckout = async (
   data: CreateDomainPurchaseCheckoutSchema
 ) => {
+  log.info(
+    `Create domain purchase checkout domainName: ${data.domainName} method: ${data.paymentMethod} hasPhone: ${Boolean(data.customerPhone)} registrantEmail: ${data.registrantContact.email}`
+  )
   return POST<CreateDomainPurchaseCheckoutSchema, DomainPurchaseCheckoutResult>(
     "/domain-purchase/checkout",
     data

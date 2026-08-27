@@ -87,6 +87,9 @@ export function PaymentStep({
   // Subscription id (mailbox variant) or payment id (domain variant) — same
   // slot, since only one variant is ever mounted at a time.
   const [pendingId, setPendingId] = useState<number | null>(null);
+  // Provider-supplied reason for the last declined payment, shown next to the
+  // generic declined message so the user knows what to fix.
+  const [declineReason, setDeclineReason] = useState<string | null>(null);
   const pollAttemptsRef = useRef(0);
 
   async function handlePay() {
@@ -95,6 +98,7 @@ export function PaymentStep({
       return;
     }
     setPhoneError(false);
+    setDeclineReason(null);
     setCheckoutStatus("creating");
 
     const paymentMethod =
@@ -223,6 +227,7 @@ export function PaymentStep({
         }
         if (subscription?.status === "failed") {
           clearInterval(interval);
+          setDeclineReason(subscription.failureReason ?? null);
           setCheckoutStatus("declined");
           return;
         }
@@ -233,6 +238,7 @@ export function PaymentStep({
           if (subscription.planId === plan) {
             onPaid();
           } else {
+            setDeclineReason(subscription.failureReason ?? null);
             setCheckoutStatus("declined");
           }
           return;
@@ -366,7 +372,7 @@ export function PaymentStep({
         ))}
       </div>
 
-      {method !== "visa" && checkoutStatus === "idle" && (
+      {method !== "visa" && (checkoutStatus === "idle" || checkoutStatus === "declined") && (
         <div className="mt-4">
           <label className="text-xs font-medium text-muted-foreground">{t("phoneLabel")}</label>
           <input
@@ -389,6 +395,11 @@ export function PaymentStep({
           <TriangleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
           <div>
             <p className="font-semibold">{t("declinedTitle")}</p>
+            {declineReason && (
+              <p className="mt-0.5 font-medium">
+                {t("declinedReason", { reason: declineReason })}
+              </p>
+            )}
             <p className="mt-0.5 text-destructive/85">
               {t("declinedDescription", {
                 method: methods.find((m) => m.id === method)?.name ?? "",

@@ -551,6 +551,7 @@
       "pay": "Payer {amount}",
       "declinedTitle": "Le paiement n'a pas abouti",
       "declinedDescription": "Votre paiement {method} a été refusé. Aucun montant n'a été débité — réessayez ou utilisez un autre moyen de paiement.",
+      "declinedReason": "Motif : {reason}",
       "retry": "Réessayer le paiement",
       "simulateDecline": "Aperçu : simuler un paiement refusé",
       "phoneLabel": "Numéro de téléphone Mobile Money",
