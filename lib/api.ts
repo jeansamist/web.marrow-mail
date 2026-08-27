@@ -85,7 +85,14 @@ const apiRequest: ApiFunction = async <PAYLOAD, RESPONSE, RETURN = RESPONSE>(
         return onError ? onError(apiError) : apiError
       }
     }
-    log.error(`${method} ${redactUrl(url)} unexpected error`, error)
+    // Log only code + message: a raw axios error serialises its request
+    // config, which carries the Authorization header.
+    const detail = isAxiosError(error)
+      ? `${error.code ?? "AXIOS_ERROR"} ${error.message}`
+      : error instanceof Error
+        ? error.message
+        : String(error)
+    log.error(`${method} ${redactUrl(url)} unexpected error: ${detail}`)
 
     return unknownError
   }

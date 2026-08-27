@@ -344,7 +344,7 @@ export const cancelScheduledMail = async (id: number): Promise<Mail | null> => {
 export const setupMailAccountProfile = async (
   data: SetupMailAccountProfileSchema
 ): Promise<MailAccountProfile | Error> => {
-  log.info(`Setup mail account profile cuid: ${data.cuid}`)
+  log.info("Setup mail account profile")
   return POST<SetupMailAccountProfileSchema, MailAccountProfile>("/setup-profile", data)
 }
 

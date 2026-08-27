@@ -43,10 +43,12 @@ export const createDomainPurchaseCheckout = async (
 }
 
 export const getDomainPurchaseStatus = async (paymentId: number) => {
+  log.info(`Get domain purchase status paymentId: ${paymentId}`)
   return GET<DomainPurchaseStatus>(`/domain-purchase/status/${paymentId}`)
 }
 
 export const getDomainRegistrationStatus = async (domainName: string) => {
+  log.info(`Get domain registration status domainName: ${domainName}`)
   return GET<{ registrationStatus: string }>(
     `/domain-purchase/registration-status/${domainName}`
   )
